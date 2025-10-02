@@ -2,7 +2,7 @@ from pybaseball import chadwick_register
 from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
 from models.players import PlayerSearchResult, PlayerDetail
-from typing import List, Optional
+from typing import List
 
 class PlayerSearchService:
     """Service for searching baseball players using pybaseball database"""

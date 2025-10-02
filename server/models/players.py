@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 
 class PlayerSearchResult(BaseModel):
@@ -8,19 +8,6 @@ class PlayerSearchResult(BaseModel):
     score: float
     image_url: str
     years_active: str
-
-class PlayerInfo(BaseModel):
-    """Player information to be saved"""
-    id: int
-    name: str
-    # Add any other fields your friend's code might use
-    
-    class Config:
-        extra = "allow"  # Allow additional fields
-
-class AddPlayerRequest(BaseModel):
-    """Request model for adding a player"""
-    player_info: dict
 
 class AddPlayerResponse(BaseModel):
     """Response after adding a player"""
