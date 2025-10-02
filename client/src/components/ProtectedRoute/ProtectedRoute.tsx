@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import Spinner from "../Spinner";
 
@@ -16,7 +14,7 @@ export default function ProtectedRoute({
   requireAuth = true,
   redirectTo
 }: ProtectedRouteProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
 
@@ -26,10 +24,10 @@ export default function ProtectedRoute({
 
       if (requireAuth && !isAuth) {
         // Need auth but not logged in → redirect to login
-        router.push(redirectTo || "/login");
+        navigate(redirectTo || "/login");
       } else if (!requireAuth && isAuth) {
         // Don't need auth but logged in → redirect to dashboard
-        router.push(redirectTo || "/dashboard");
+        navigate(redirectTo || "/dashboard");
       } else {
         // All good, show the page
         setIsAuthorized(true);
@@ -39,7 +37,7 @@ export default function ProtectedRoute({
     };
 
     checkAuth();
-  }, [router, requireAuth, redirectTo]);
+  }, [navigate, requireAuth, redirectTo]);
 
   if (isChecking) {
     return <Spinner />;

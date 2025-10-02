@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { Spinner } from "@/components";
 import styles from "./LandingPage.module.css";
@@ -31,15 +29,15 @@ export default function LandingPage() {
         <p className={styles.description}>Welcome to the Cybermetrics platform</p>
         <div className={styles.buttons}>
           {isAuthenticated ? (
-            <Link href="/dashboard" className={styles.button}>
+            <Link to="/dashboard" className={styles.button}>
               Dashboard
             </Link>
           ) : (
             <>
-              <Link href="/login" className={styles.button}>
+              <Link to="/login" className={styles.button}>
                 Login
               </Link>
-              <Link href="/signup" className={styles.buttonSecondary}>
+              <Link to="/signup" className={styles.buttonSecondary}>
                 Sign Up
               </Link>
             </>

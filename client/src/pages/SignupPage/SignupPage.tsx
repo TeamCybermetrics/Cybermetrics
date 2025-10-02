@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, FormEvent } from "react";
 import { AuthCard, Input, Button, Alert, Link, ProtectedRoute } from "@/components";
 import { authActions } from "@/actions/auth";

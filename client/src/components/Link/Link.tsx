@@ -1,4 +1,4 @@
-import NextLink from 'next/link';
+import { Link as RouterLink } from 'react-router-dom';
 import styles from './Link.module.css';
 
 interface LinkProps {
@@ -9,9 +9,9 @@ interface LinkProps {
 
 export default function Link({ href, children, className }: LinkProps) {
   return (
-    <NextLink href={href} className={className ? `${styles.link} ${className}` : styles.link}>
+    <RouterLink to={href} className={className ? `${styles.link} ${className}` : styles.link}>
       {children}
-    </NextLink>
+    </RouterLink>
   );
 }
 
