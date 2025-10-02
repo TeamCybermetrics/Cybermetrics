@@ -5,7 +5,8 @@ from .players import (
     AddPlayerRequest,
     AddPlayerResponse,
     DeletePlayerResponse,
-    SavedPlayer
+    SavedPlayer,
+    PlayerDetail
 )
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "AddPlayerRequest",
     "AddPlayerResponse",
     "DeletePlayerResponse",
-    "SavedPlayer"
+    "SavedPlayer",
+    "PlayerDetail"
 ]
 

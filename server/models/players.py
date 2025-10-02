@@ -6,6 +6,8 @@ class PlayerSearchResult(BaseModel):
     id: int
     name: str
     score: float
+    image_url: str
+    years_active: str
 
 class PlayerInfo(BaseModel):
     """Player information to be saved"""
@@ -33,7 +35,23 @@ class SavedPlayer(BaseModel):
     """Saved player data"""
     id: int
     name: str
+    image_url: Optional[str] = None
+    years_active: Optional[str] = None
     
     class Config:
         extra = "allow"  # Allow additional fields from Firestore
+
+class PlayerDetail(BaseModel):
+    """Detailed player information"""
+    id: int
+    name: str
+    image_url: str
+    years_active: str
+    first_name: str
+    last_name: str
+    mlb_played_first: Optional[str] = None
+    mlb_played_last: Optional[str] = None
+    key_retro: Optional[str] = None
+    key_bbref: Optional[str] = None
+    key_fangraphs: Optional[int] = None
 
