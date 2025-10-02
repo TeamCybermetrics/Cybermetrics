@@ -1,0 +1,51 @@
+.main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+.container {
+  text-align: center;
+  padding: 20px;
+}
+
+.title {
+  font-size: 48px;
+  margin: 0 0 16px 0;
+  color: #000;
+}
+
+.description {
+  font-size: 18px;
+  margin: 0 0 32px 0;
+  color: #333;
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.button {
+  padding: 12px 24px;
+  text-decoration: none;
+  background: #000;
+  color: #fff;
+}
+
+.buttonSecondary {
+  padding: 12px 24px;
+  text-decoration: none;
+  border: 1px solid #000;
+  color: #000;
+  background: white;
+}
+
+.button:hover,
+.buttonSecondary:hover {
+  opacity: 0.8;
+}
+

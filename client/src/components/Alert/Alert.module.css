@@ -1,0 +1,14 @@
+.error {
+  padding: 10px;
+  background-color: #fee;
+  color: #c00;
+  font-size: 14px;
+}
+
+.success {
+  padding: 10px;
+  background-color: #efe;
+  color: #060;
+  font-size: 14px;
+}
+

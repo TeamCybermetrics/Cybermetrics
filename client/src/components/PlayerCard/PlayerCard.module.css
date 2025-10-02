@@ -1,0 +1,126 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border: 2px solid #000;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.closeButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 32px;
+  cursor: pointer;
+  color: #000;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  opacity: 0.7;
+}
+
+.loading {
+  padding: 60px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.errorMessage {
+  color: #666;
+  font-size: 14px;
+  margin: 12px 0 20px 0;
+}
+
+.content {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #000;
+  margin-bottom: 20px;
+}
+
+.playerImage {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 1px solid #000;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.playerName {
+  font-size: 24px;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+.yearsActive {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.label {
+  font-weight: bold;
+  color: #000;
+  font-size: 14px;
+}
+
+.value {
+  color: #666;
+  font-size: 14px;
+}
+

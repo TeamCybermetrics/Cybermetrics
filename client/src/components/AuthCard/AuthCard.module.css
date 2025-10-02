@@ -1,0 +1,33 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.title {
+  font-size: 32px;
+  margin: 0 0 8px 0;
+  color: #000;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 32px 0;
+}
+
+.footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
