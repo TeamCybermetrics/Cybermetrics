@@ -88,92 +88,91 @@ server/
 ### Structure
 Routes define API endpoints. They handle HTTP and delegate logic to services.
 
-### 1. Create Model (`models/stats.py`)
+### 1. Create Model (`models/new_feature.py`)
 ```python
 from pydantic import BaseModel
 from typing import Optional
 
-class StatsRequest(BaseModel):
+class NewFeatureRequest(BaseModel):
     player_id: int
-    season: int
+    data: str
 
-class StatsResponse(BaseModel):
+class NewFeatureResponse(BaseModel):
+    id: str
     player_id: int
-    batting_avg: float
-    home_runs: int
-    rbi: int
+    data: str
+    status: str
 ```
 
-### 2. Create Service (`services/stats_service.py`)
+### 2. Create Service (`services/new_feature_service.py`)
 ```python
 from fastapi import HTTPException, status
-from models.stats import StatsResponse
+from models.new_feature import NewFeatureResponse
 
-class StatsService:
-    """Service for handling player statistics"""
+class NewFeatureService:
+    """Service for handling new feature"""
     
-    async def get_stats(self, player_id: int, season: int) -> StatsResponse:
-        """Get player stats for a specific season"""
+    async def get_feature(self, feature_id: str) -> NewFeatureResponse:
+        """Get feature by ID"""
         try:
             # Business logic here
             # Query database, process data, etc.
             
-            return StatsResponse(
-                player_id=player_id,
-                batting_avg=0.300,
-                home_runs=25,
-                rbi=80
+            return NewFeatureResponse(
+                id=feature_id,
+                player_id=123,
+                data="sample",
+                status="active"
             )
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch stats: {str(e)}"
+                detail=f"Failed to fetch feature: {str(e)}"
             )
 
 # Singleton instance
-stats_service = StatsService()
+new_feature_service = NewFeatureService()
 ```
 
-### 3. Create Route (`routes/stats.py`)
+### 3. Create Route (`routes/new_feature.py`)
 ```python
 from fastapi import APIRouter, status, Depends
-from models.stats import StatsRequest, StatsResponse
-from services.stats_service import stats_service
+from models.new_feature import NewFeatureRequest, NewFeatureResponse
+from services.new_feature_service import new_feature_service
 from middleware.auth import get_current_user
 
-router = APIRouter(prefix="/api/stats", tags=["statistics"])
+router = APIRouter(prefix="/api/new-feature", tags=["new-feature"])
 
-@router.get("/{player_id}", response_model=StatsResponse)
-async def get_player_stats(
-    player_id: int,
-    season: int,
+@router.get("/{feature_id}", response_model=NewFeatureResponse)
+async def get_feature(
+    feature_id: str,
     current_user: str = Depends(get_current_user)  # Protected route
 ):
-    """Get statistics for a specific player and season"""
-    return await stats_service.get_stats(player_id, season)
+    """Get feature by ID"""
+    return await new_feature_service.get_feature(feature_id)
 
-@router.post("/", response_model=StatsResponse, status_code=status.HTTP_201_CREATED)
-async def create_stats(stats_data: StatsRequest):
-    """Create new player statistics (public route)"""
-    return await stats_service.create_stats(stats_data)
+@router.post("/", response_model=NewFeatureResponse, status_code=status.HTTP_201_CREATED)
+async def create_feature(feature_data: NewFeatureRequest):
+    """Create new feature (public route)"""
+    return await new_feature_service.create_feature(feature_data)
 ```
 
 ### 4. Register Route (`routes/__init__.py`)
 ```python
 from routes.auth import router as auth_router
 from routes.players import router as players_router
-from routes.stats import router as stats_router  # Add this
+from routes.new_feature import router as new_feature_router  # Add this
 
-__all__ = ['auth_router', 'players_router', 'stats_router']
+__all__ = ['auth_router', 'players_router', 'new_feature_router']
 ```
 
 ### 5. Include in Main App (`main.py`)
 ```python
-from routes import auth_router, players_router, stats_router
+from routes import auth_router, players_router, new_feature_router
 
 app.include_router(auth_router)
 app.include_router(players_router)
-app.include_router(stats_router)  # Add this
+app.include_router(new_feature_router)  # Add this
 ```
 
 ---
