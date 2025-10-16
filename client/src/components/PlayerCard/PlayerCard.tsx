@@ -3,6 +3,7 @@ import { PlayerDetail, SeasonStats } from "@/api/players";
 import { playerActions } from "@/actions/players";
 import Button from "@/components/Button";
 import Spinner from "@/components/Spinner";
+import StatRow from "@/components/StatRow";
 import styles from "./PlayerCard.module.css";
 
 interface PlayerCardProps {
@@ -55,108 +56,50 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
         {/* Basic Stats */}
         <div className={styles.statsSection}>
           <h4>Basic Stats</h4>
-          <div className={styles.statRow}>
-            <span>Games:</span> <strong>{stats.games}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>PA:</span> <strong>{stats.plate_appearances}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>AB:</span> <strong>{stats.at_bats}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>Hits:</span> <strong>{stats.hits}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>2B:</span> <strong>{stats.doubles}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>3B:</span> <strong>{stats.triples}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>HR:</span> <strong>{stats.home_runs}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>R:</span> <strong>{stats.runs}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>RBI:</span> <strong>{stats.rbi}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>BB:</span> <strong>{stats.walks}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>SO:</span> <strong>{stats.strikeouts}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>SB:</span> <strong>{stats.stolen_bases}</strong>
-          </div>
+          <StatRow label="Games" value={stats.games} />
+          <StatRow label="PA" value={stats.plate_appearances} />
+          <StatRow label="AB" value={stats.at_bats} />
+          <StatRow label="Hits" value={stats.hits} />
+          <StatRow label="2B" value={stats.doubles} />
+          <StatRow label="3B" value={stats.triples} />
+          <StatRow label="HR" value={stats.home_runs} />
+          <StatRow label="R" value={stats.runs} />
+          <StatRow label="RBI" value={stats.rbi} />
+          <StatRow label="BB" value={stats.walks} />
+          <StatRow label="SO" value={stats.strikeouts} />
+          <StatRow label="SB" value={stats.stolen_bases} />
         </div>
 
         {/* Rate Stats */}
         <div className={styles.statsSection}>
           <h4>Rate Stats</h4>
-          <div className={styles.statRow}>
-            <span>AVG:</span> <strong>{formatStat(stats.batting_average)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>OBP:</span> <strong>{formatStat(stats.on_base_percentage)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>SLG:</span> <strong>{formatStat(stats.slugging_percentage)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>OPS:</span> <strong>{formatStat(stats.ops)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>ISO:</span> <strong>{formatStat(stats.isolated_power)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>BABIP:</span> <strong>{formatStat(stats.babip)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>BB%:</span> <strong>{formatStat(stats.walk_rate * 100, 1)}%</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>K%:</span> <strong>{formatStat(stats.strikeout_rate * 100, 1)}%</strong>
-          </div>
+          <StatRow label="AVG" value={formatStat(stats.batting_average)} />
+          <StatRow label="OBP" value={formatStat(stats.on_base_percentage)} />
+          <StatRow label="SLG" value={formatStat(stats.slugging_percentage)} />
+          <StatRow label="OPS" value={formatStat(stats.ops)} />
+          <StatRow label="ISO" value={formatStat(stats.isolated_power)} />
+          <StatRow label="BABIP" value={formatStat(stats.babip)} />
+          <StatRow label="BB%" value={formatStat(stats.walk_rate * 100, 1)} suffix="%" />
+          <StatRow label="K%" value={formatStat(stats.strikeout_rate * 100, 1)} suffix="%" />
         </div>
 
         {/* Advanced Stats */}
         <div className={styles.statsSection}>
           <h4>Advanced Stats</h4>
-          <div className={styles.statRow}>
-            <span>wOBA:</span> <strong>{formatStat(stats.woba)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>wRC+:</span> <strong>{formatStat(stats.wrc_plus, 0)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>WAR:</span> <strong>{formatStat(stats.war, 1)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>Off:</span> <strong>{formatStat(stats.off, 1)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>Def:</span> <strong>{formatStat(stats.def_, 1)}</strong>
-          </div>
-          <div className={styles.statRow}>
-            <span>BsR:</span> <strong>{formatStat(stats.base_running, 1)}</strong>
-          </div>
+          <StatRow label="wOBA" value={formatStat(stats.woba)} />
+          <StatRow label="wRC+" value={formatStat(stats.wrc_plus, 0)} />
+          <StatRow label="WAR" value={formatStat(stats.war, 1)} />
+          <StatRow label="Off" value={formatStat(stats.off, 1)} />
+          <StatRow label="Def" value={formatStat(stats.def_, 1)} />
+          <StatRow label="BsR" value={formatStat(stats.base_running, 1)} />
           {stats.hard_hit_rate !== null && stats.hard_hit_rate !== undefined && (
-            <div className={styles.statRow}>
-              <span>Hard Hit%:</span> <strong>{formatStat(stats.hard_hit_rate * 100, 1)}%</strong>
-            </div>
+            <StatRow label="Hard Hit%" value={formatStat(stats.hard_hit_rate * 100, 1)} suffix="%" />
           )}
           {stats.barrel_rate !== null && stats.barrel_rate !== undefined && (
-            <div className={styles.statRow}>
-              <span>Barrel%:</span> <strong>{formatStat(stats.barrel_rate * 100, 1)}%</strong>
-            </div>
+            <StatRow label="Barrel%" value={formatStat(stats.barrel_rate * 100, 1)} suffix="%" />
           )}
           {stats.avg_exit_velocity !== null && stats.avg_exit_velocity !== undefined && (
-            <div className={styles.statRow}>
-              <span>Avg EV:</span> <strong>{formatStat(stats.avg_exit_velocity, 1)} mph</strong>
-            </div>
+            <StatRow label="Avg EV" value={formatStat(stats.avg_exit_velocity, 1)} suffix=" mph" />
           )}
         </div>
       </div>
