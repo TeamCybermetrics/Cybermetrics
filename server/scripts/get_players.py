@@ -106,25 +106,6 @@ def get_player_stats_for_year(fangraphs_id: int, year: int, batting_stats_df) ->
     }
 
 
-def offensive_player_score(player_stats: Dict) -> float:
-    """
-    Calculate overall offensive stat using wRC+ (weighted Runs Created Plus)
-    wRC+ is a comprehensive offensive metric where 100 is average
-    Falls back to manual calculation if wRC+ is not available
-    """
-    # Use wRC+ if available (best overall offensive metric)
-    wrc_plus = player_stats.get("wrc_plus", 0)
-    if wrc_plus and wrc_plus > 0:
-        return wrc_plus / 100  # Normalize to ~1.0 scale
-    
-    # Fallback: manual calculation using key stats
-    return ((1 - player_stats.get("strikeout_rate", 0)) + 
-            player_stats.get("walk_rate", 0) + 
-            player_stats.get("on_base_percentage", 0) + 
-            player_stats.get("isolated_power", 0) + 
-            player_stats.get("base_running", 0))
-
-
 def get_all_player_seasons(fangraphs_id: int, player_name: str, yearly_stats_cache: Dict[int, any]) -> Dict[str, Dict]:
     """Get stats for all seasons a player has played"""
     all_seasons = {}
@@ -143,37 +124,6 @@ def get_all_player_seasons(fangraphs_id: int, player_name: str, yearly_stats_cac
             continue
     
     return all_seasons
-
-
-def calculate_overall_score(seasons: Dict[str, Dict]) -> float:
-    """
-    Calculate overall score based on most recent complete year + current year stats
-    Most recent complete year = 2023, current year = 2024
-    """
-    if not seasons:
-        return 0.0
-    
-    # Try to get 2023 (most recent complete year)
-    complete_year_stats = seasons.get("2023")
-    current_year_stats = seasons.get(str(current_season))
-    
-    # If we have both, average them
-    if complete_year_stats and current_year_stats:
-        complete_score = offensive_player_score(complete_year_stats)
-        current_score = offensive_player_score(current_year_stats)
-        return (complete_score + current_score) / 2
-    
-    # If we only have current year, use that
-    if current_year_stats:
-        return offensive_player_score(current_year_stats)
-    
-    # If we only have complete year, use that
-    if complete_year_stats:
-        return offensive_player_score(complete_year_stats)
-    
-    # Otherwise, use the most recent year available
-    most_recent_year = max(seasons.keys())
-    return offensive_player_score(seasons[most_recent_year])
 
 
 def upload_all_players() -> None:
@@ -250,11 +200,12 @@ def upload_all_players() -> None:
             print(f"  Skipping - no meaningful stats (likely pitcher or < 50 PA)")
             continue
         
-        # Calculate overall score
-        overall_score = calculate_overall_score(all_seasons)
-        
         # Get current team abbreviation
         team_abbrev = current_team if current_team != "- - -" else None
+        
+        # Get most recent wRC+ as overall_score (no calculation, just raw stat)
+        most_recent_year = max(all_seasons.keys())
+        overall_score = all_seasons[most_recent_year].get("wrc_plus", 0)
         
         player_data = {
             "mlbam_id": mlbam_id,
@@ -266,7 +217,7 @@ def upload_all_players() -> None:
         }
         
         all_players.append(player_data)
-        print(f"  ✓ Added: {player_name} - Team: {team_abbrev or 'Free Agent'} - Score: {overall_score:.3f} - Seasons: {len(all_seasons)}")
+        print(f"  ✓ Added: {player_name} - Team: {team_abbrev or 'Free Agent'} - wRC+: {overall_score} - Seasons: {len(all_seasons)}")
     
     print(f"\n{'='*60}")
     print(f"Uploading {len(all_players)} players to Firebase...")
