@@ -33,7 +33,7 @@ export default function DashboardPage() {
 
   const loadSavedPlayers = async () => {
     const result = await playerActions.getSavedPlayers();
-    if (result.success) {
+    if (result.success && result.data) {
       setSavedPlayers(result.data);
     }
   };
@@ -50,10 +50,10 @@ export default function DashboardPage() {
     const result = await playerActions.searchPlayers(query);
     setIsSearching(false);
 
-    if (result.success) {
+    if (result.success && result.data) {
       setSearchResults(result.data);
     } else {
-      setError(result.error);
+      setError(result.error || "Search failed");
       setSearchResults([]);
     }
   }, []);
@@ -83,7 +83,7 @@ export default function DashboardPage() {
       await loadSavedPlayers();
       setTimeout(() => setSuccess(""), 3000);
     } else {
-      setError(result.error);
+      setError(result.error || "Failed to add player");
     }
   };
 
@@ -98,7 +98,7 @@ export default function DashboardPage() {
       await loadSavedPlayers();
       setTimeout(() => setSuccess(""), 3000);
     } else {
-      setError(result.error);
+      setError(result.error || "Failed to remove player");
     }
   };
 
