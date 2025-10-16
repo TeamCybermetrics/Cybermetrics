@@ -26,7 +26,7 @@ team_ids = {
 }
 team_names = {
     "ARI": "Arizona Diamondbacks",
-     "ATL": "Atlanta Braves",
+      "ATL": "Atlanta Braves",
     "BAL": "Baltimore Orioles",
     "BOS": "Boston Red Sox",
     "CHC": "Chicago Cubs",
