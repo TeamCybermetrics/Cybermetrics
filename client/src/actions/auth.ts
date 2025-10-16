@@ -1,4 +1,4 @@
-import { authApi, LoginRequest, SignupRequest } from "@/api/auth";
+import { authApi } from "@/api/auth";
 
 export const authActions = {
   login: async (email: string, password: string) => {
