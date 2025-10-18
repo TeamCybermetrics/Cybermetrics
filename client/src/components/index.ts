@@ -6,4 +6,5 @@ export { default as Link } from './Link';
 export { default as ProtectedRoute } from './ProtectedRoute';
 export { default as Spinner } from './Spinner';
 export { default as PlayerCard } from './PlayerCard';
-
+export { default as Sidebar } from './Sidebar/Sidebar';
+export { default as UserBadge } from './UserBadge/UserBadge';

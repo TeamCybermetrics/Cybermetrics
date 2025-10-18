@@ -1,141 +1,643 @@
-.container {
-  min-height: 100vh;
+.dashboard {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 32px;
+  color: #f4f6fb;
+  height: 100%;
+  position: relative;
+}
+
+.lineupPanel {
+  background: linear-gradient(180deg, rgba(22, 25, 39, 0.96) 0%, rgba(12, 13, 22, 0.96) 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.lineupHeader {
+  padding: 28px 24px 12px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: white;
-  padding: 20px;
-}
-
-.content {
-  width: 100%;
-  max-width: 800px;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.title {
-  font-size: 32px;
-  margin: 0 0 8px 0;
-  color: #000;
-}
-
-.email {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-}
-
-.section {
-  margin-bottom: 32px;
-  padding: 20px;
-  border: 1px solid #000;
-}
-
-.sectionTitle {
-  font-size: 20px;
-  margin: 0 0 16px 0;
-  color: #000;
-}
-
-.searchBox {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.searchingIndicator {
-  font-size: 12px;
-  color: #666;
-  font-style: italic;
-}
-
-.resultsList,
-.savedList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.resultItem,
-.savedItem {
-  display: flex;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.lineupTitle {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.lineupHint {
+  font-size: 13px;
+  opacity: 0.65;
+  margin-top: 4px;
+}
+
+.lineupAction {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f4f6fb;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.lineupAction:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.lineupList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px;
+  overflow: auto;
+  flex: 1;
+}
+
+.lineupEmpty {
+  margin: auto;
+  text-align: center;
+  padding: 32px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.emptyHint {
+  font-size: 13px;
+  opacity: 0.68;
+  margin-top: 8px;
+}
+
+.emptyButton {
+  margin-top: 20px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  background: #6d7bff;
+  color: #0f111d;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.emptyButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(109, 123, 255, 0.35);
+}
+
+.lineupItem {
+  display: flex;
   align-items: center;
   padding: 12px;
-  border: 1px solid #ccc;
-  background: white;
-}
-
-.resultItem:hover,
-.savedItem:hover {
-  border-color: #000;
-}
-
-.playerClickable {
-  display: flex;
+  background: rgba(8, 9, 17, 0.88);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   gap: 12px;
+}
+
+.lineupProfile {
+  display: flex;
   align-items: center;
-  flex: 1;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
+  text-align: left;
+  flex: 1;
 }
 
-.playerClickable:hover .playerName {
-  text-decoration: underline;
-}
-
-.playerImage {
-  width: 60px;
-  height: 60px;
+.lineupProfile img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   object-fit: cover;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.playerInfo {
+.lineupInfo {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
 }
 
 .playerName {
-  font-size: 14px;
-  font-weight: bold;
-  color: #000;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .playerMeta {
   font-size: 13px;
-  color: #666;
+  opacity: 0.7;
 }
 
 .playerId {
+  display: block;
   font-size: 11px;
-  color: #999;
+  opacity: 0.55;
+  margin-top: 2px;
 }
 
-.emptyMessage {
+.lineupRemove {
+  border: none;
+  background: rgba(255, 92, 92, 0.14);
+  color: #ff8484;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.lineupRemove:hover {
+  background: rgba(255, 92, 92, 0.22);
+}
+
+.lineupFooter {
+  padding: 16px 24px 24px;
+}
+
+.footerButton {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 12px 0;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f6fb;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.footerButton:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.analytics {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.statsCard {
+  background: linear-gradient(160deg, rgba(30, 32, 54, 0.92) 0%, rgba(14, 16, 30, 0.94) 100%);
+  border-radius: 28px;
+  padding: 28px 32px 32px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+.statsHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.pageTitle {
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.pageSubtitle {
+  margin-top: 6px;
   font-size: 14px;
-  color: #999;
-  text-align: center;
-  padding: 20px;
+  opacity: 0.68;
 }
 
-.bottomActions {
+.statsActions {
   display: flex;
   gap: 12px;
-  margin-top: 32px;
-  padding-top: 32px;
-  border-top: 1px solid #ccc;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.bottomActions button {
+.utilityButton {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f6fb;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.utilityButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.utilityButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statBlocks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.statBlock {
+  background: rgba(12, 13, 24, 0.7);
+  padding: 20px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statLabel {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.positive {
+  color: #56ff92;
+}
+
+.lowerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
   flex: 1;
+  min-height: 0;
+}
+
+.teamsCard,
+.performanceCard {
+  background: rgba(16, 17, 28, 0.9);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 24px 28px;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.cardHeader h3 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.headerLink {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.headerLink:hover {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.teamTable {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+}
+
+.teamHeadings {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
+
+.teamTable ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.teamMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.teamMeta img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.teamName {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.teamValue {
+  display: block;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.teamScorePositive {
+  color: #4de37e;
+  font-weight: 600;
+}
+
+.teamScoreNegative {
+  color: #ff5f5f;
+  font-weight: 600;
+}
+
+.performanceCard {
+  align-items: center;
+}
+
+.radarWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.radarChart {
+  width: 100%;
+  max-width: 320px;
+}
+
+.radarGrid {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+}
+
+.radarShape {
+  fill: rgba(77, 127, 255, 0.26);
+  stroke: #4d7fff;
+  stroke-width: 2;
+  filter: drop-shadow(0 6px 16px rgba(77, 127, 255, 0.35));
+}
+
+.radarLabel {
+  fill: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.searchOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 7, 12, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 30;
+}
+
+.searchCard {
+  background: rgba(12, 14, 24, 0.96);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: min(720px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.42);
+}
+
+.searchHeader {
+  padding: 28px 32px 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.searchHeader h3 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.searchHeader p {
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.closeButton {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 16px;
+  color: #f4f6fb;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.searchBody {
+  padding: 0 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: auto;
+}
+
+.searchFieldWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.searchField {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(24, 25, 40, 0.9);
+  color: #f4f6fb;
+  font-size: 15px;
+}
+
+.searchField::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.searchField:focus {
+  outline: none;
+  border-color: rgba(109, 123, 255, 0.8);
+  box-shadow: 0 0 0 2px rgba(109, 123, 255, 0.25);
+}
+
+.searchStatus {
+  font-size: 12px;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.resultsList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(10, 11, 20, 0.88);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.resultProfile {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: transparent;
+  border: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  flex: 1;
+}
+
+.resultProfile img {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.addButton {
+  background: #6d7bff;
+  border: none;
+  color: #0f111d;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.addButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(109, 123, 255, 0.35);
+}
+
+.emptyCopy {
+  font-size: 14px;
+  opacity: 0.65;
+}
+
+.feedback {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 40;
+}
+
+@media (max-width: 1180px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .lineupPanel {
+    order: 2;
+  }
+
+  .analytics {
+    order: 1;
+  }
+
+  .statBlocks {
+    grid-template-columns: 1fr;
+  }
+
+  .lowerGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .feedback {
+    right: 16px;
+    left: 16px;
+  }
+
+  .statsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .statsActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .searchOverlay {
+    padding: 16px;
+  }
+
+  .searchCard {
+    border-radius: 20px;
+  }
+
+  .searchHeader,
+  .searchBody {
+    padding: 20px;
+  }
 }
