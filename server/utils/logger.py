@@ -4,6 +4,10 @@ import sys
 def setup_logger(name: str) -> logging.Logger:
     """Set up logger with consistent formatting"""
     logger = logging.getLogger(name)
+    # Avoid adding multiple handlers if logger already configured
+    if logger.handlers:
+        return logger
+
     logger.setLevel(logging.INFO)
     
     # Console handler
@@ -18,4 +22,9 @@ def setup_logger(name: str) -> logging.Logger:
     
     logger.addHandler(handler)
     return logger
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Backwards-compatible alias used across the codebase"""
+    return setup_logger(name)
 
