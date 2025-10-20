@@ -1,7 +1,11 @@
-from fastapi import Header, HTTPException, status
-from services.auth_service import auth_service
+from fastapi import Header, HTTPException, status, Depends
+from dependency.dependencies import get_auth_service
+from services.auth_service import AuthService
 
-async def get_current_user(authorization: str = Header(None)) -> str:
+async def get_current_user(
+    authorization: str = Header(None), 
+    auth_service: AuthService = Depends(get_auth_service)
+    ) -> str:
     """
     Dependency to extract and verify the current user from the Authorization header.
     Returns the user_id (uid) of the authenticated user.
