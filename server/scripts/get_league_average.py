@@ -114,7 +114,7 @@ async def main():
         else:
             logger.info(f"No roster_average computed for team {team_id}")
 
-    # After processing all teams compute league-level aggregates
+    # After processing all teams, compute league-level aggregates
     try:
         included_teams = [t for t in team_averages if t.get("avg")]
         num_teams = len(included_teams)
