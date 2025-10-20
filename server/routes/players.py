@@ -1,7 +1,16 @@
 from fastapi import APIRouter, Query, status, Depends
-from models.players import PlayerSearchResult, AddPlayerResponse, DeletePlayerResponse, SavedPlayer, PlayerDetail
+from models.players import (
+    PlayerSearchResult, 
+    AddPlayerResponse, 
+    DeletePlayerResponse, 
+    SavedPlayer, 
+    PlayerDetail,
+    RosterAvgRequest,
+    RosterAvgResponse
+)
 from services.player_search_service import player_search_service
 from services.saved_players_service import saved_players_service
+from services.roster_avg_service import roster_avg_service
 from middleware.auth import get_current_user
 from typing import List
 
@@ -36,3 +45,19 @@ async def get_saved_player(player_id: str, current_user: str = Depends(get_curre
 async def delete_saved_player(player_id: str, current_user: str = Depends(get_current_user)):
     """Delete a player from the current user's saved players collection"""
     return await saved_players_service.delete_player(current_user, player_id)
+
+@router.post("/roster-averages", response_model=RosterAvgResponse, tags=["stats"])
+async def get_roster_averages(request: RosterAvgRequest):
+    """
+    Get career average statistics for multiple players.
+    
+    Returns the career averages across all seasons for:
+    - Strikeout rate (K%)
+    - Walk rate (BB%)
+    - Isolated power (ISO)
+    - On-base percentage (OBP)
+    - Base running value (BsR)
+    
+    Public endpoint - no authentication required.
+    """
+    return await roster_avg_service.get_roster_averages(request.player_ids)
