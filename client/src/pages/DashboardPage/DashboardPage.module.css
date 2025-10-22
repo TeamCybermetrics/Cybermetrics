@@ -1,9 +1,40 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 0;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.pageTitle {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.pageSubtitle {
+  font-size: 15px;
+  opacity: 0.68;
+}
+
+.pageMeta {
+  font-size: 13px;
+  opacity: 0.65;
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 32px;
   color: #f4f6fb;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   position: relative;
 }
 
@@ -211,15 +242,15 @@
   margin-bottom: 28px;
 }
 
-.pageTitle {
-  font-size: 30px;
+.statsTitle {
+  font-size: 24px;
   font-weight: 600;
 }
 
-.pageSubtitle {
+.statsSubtitle {
   margin-top: 6px;
-  font-size: 14px;
-  opacity: 0.68;
+  font-size: 13px;
+  opacity: 0.6;
 }
 
 .statsActions {
@@ -327,6 +358,7 @@
 }
 
 .teamTable {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;

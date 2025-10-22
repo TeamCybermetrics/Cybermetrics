@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
 import styles from "./TeamBuilderPage.module.css";
@@ -35,6 +35,7 @@ export default function TeamBuilderPage() {
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [error, setError] = useState("");
+  const searchControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -48,23 +49,44 @@ export default function TeamBuilderPage() {
   }, []);
 
   const performSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      searchControllerRef.current?.abort();
+      searchControllerRef.current = null;
       setSearchResults([]);
       setIsSearching(false);
+      setError("");
       return;
     }
 
+    searchControllerRef.current?.abort();
+    const controller = new AbortController();
+    searchControllerRef.current = controller;
+
     setIsSearching(true);
     setError("");
-    const result = await playerActions.searchPlayers(query);
+    const result = await playerActions.searchPlayers(trimmed, controller.signal);
+
+    if (searchControllerRef.current !== controller) {
+      return;
+    }
+
     setIsSearching(false);
 
     if (result.success && result.data) {
       setSearchResults(result.data);
-    } else {
-      setSearchResults([]);
-      setError(result.error || "Search failed");
+      searchControllerRef.current = null;
+      return;
     }
+
+    if (result.aborted) {
+      searchControllerRef.current = null;
+      return;
+    }
+
+    setSearchResults([]);
+    setError(result.error || "Search failed");
+    searchControllerRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -74,6 +96,12 @@ export default function TeamBuilderPage() {
 
     return () => clearTimeout(timer);
   }, [performSearch, searchTerm]);
+
+  useEffect(() => {
+    return () => {
+      searchControllerRef.current?.abort();
+    };
+  }, []);
 
   const availablePlayers = useMemo(() => {
     if (searchTerm.trim()) {
@@ -160,41 +188,47 @@ export default function TeamBuilderPage() {
               const isActive = activePosition === position;
 
               return (
-                <button
+                <div
                   key={position}
-                  type="button"
                   className={`${styles.positionNode} ${isActive ? styles.active : ""} ${
                     assigned ? styles.filled : ""
                   }`}
                   style={positionCoordinates[position]}
-                  onClick={() => setActivePosition(position)}
                 >
-                  <span className={styles.positionLabel}>{position}</span>
+                  <button
+                    type="button"
+                    className={styles.positionTrigger}
+                    onClick={() => setActivePosition(position)}
+                    aria-pressed={isActive}
+                  >
+                    <span className={styles.positionLabel}>{position}</span>
+                    {assigned && (
+                      <span className={styles.positionPlayer}>
+                        <img
+                          src={assigned.image_url || DEFAULT_PLAYER_IMAGE}
+                          alt={assigned.name}
+                          onError={(e) => {
+                            e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
+                          }}
+                        />
+                        <span className={styles.positionName}>{assigned.name}</span>
+                      </span>
+                    )}
+                  </button>
                   {assigned && (
-                    <span className={styles.positionPlayer}>
-                      <img
-                        src={assigned.image_url || DEFAULT_PLAYER_IMAGE}
-                        alt={assigned.name}
-                        onError={(e) => {
-                          e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                        }}
-                      />
-                      <span className={styles.positionName}>{assigned.name}</span>
-                    </span>
-                  )}
-                  {assigned && (
-                    <span
-                      role="button"
+                    <button
+                      type="button"
                       className={styles.clearSlot}
                       onClick={(event) => {
                         event.stopPropagation();
                         handleClearSlot(position);
                       }}
+                      aria-label={`Clear ${position} position`}
                     >
                       ×
-                    </span>
+                    </button>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>

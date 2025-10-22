@@ -85,8 +85,10 @@ export interface DeletePlayerResponse {
 }
 
 export const playersApi = {
-  search: async (query: string): Promise<PlayerSearchResult[]> => {
-    return apiClient.get<PlayerSearchResult[]>(`/api/players/search?q=${encodeURIComponent(query)}`);
+  search: async (query: string, signal?: AbortSignal): Promise<PlayerSearchResult[]> => {
+    return apiClient.get<PlayerSearchResult[]>(`/api/players/search?q=${encodeURIComponent(query)}`, {
+      signal
+    });
   },
 
   getDetail: async (playerId: number): Promise<PlayerDetail> => {
@@ -105,4 +107,3 @@ export const playersApi = {
     return apiClient.delete<DeletePlayerResponse>(`/api/players/saved/${playerId}`);
   },
 };
-
