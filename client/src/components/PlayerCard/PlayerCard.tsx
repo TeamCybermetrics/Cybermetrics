@@ -154,11 +154,15 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
                 <div className={styles.heroStats}>
                   <div className={styles.metric}>
                     <span>Overall Score</span>
-                    <strong>{player.overall_score.toFixed(3)}</strong>
+                    <strong>
+                      {typeof player.overall_score === "number"
+                        ? player.overall_score.toFixed(3)
+                        : "N/A"}
+                    </strong>
                   </div>
                   <div className={styles.metric}>
                     <span>Fangraphs ID</span>
-                    <strong>{player.fangraphs_id}</strong>
+                    <strong>{player.fangraphs_id ?? "N/A"}</strong>
                   </div>
                 </div>
               </div>
@@ -171,7 +175,7 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
               </div>
               <div className={styles.token}>
                 <span className={styles.tokenLabel}>FanGraphs ID</span>
-                <span className={styles.tokenValue}>{player.fangraphs_id}</span>
+                <span className={styles.tokenValue}>{player.fangraphs_id ?? "N/A"}</span>
               </div>
               {player.team_abbrev && (
                 <div className={styles.token}>
