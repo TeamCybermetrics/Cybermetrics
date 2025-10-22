@@ -440,6 +440,7 @@
 .radarChart {
   width: 100%;
   max-width: 320px;
+  overflow: visible;
 }
 
 .radarGrid {
@@ -449,10 +450,11 @@
 }
 
 .radarShape {
-  fill: rgba(77, 127, 255, 0.26);
+  fill: url(#radarFill);
   stroke: #4d7fff;
   stroke-width: 2;
   filter: drop-shadow(0 6px 16px rgba(77, 127, 255, 0.35));
+  transition: all 0.6s ease-out;
 }
 
 .radarLabel {

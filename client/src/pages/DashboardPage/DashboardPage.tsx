@@ -16,6 +16,15 @@ type TeamSummary = {
   logo: string;
 };
 
+type RadarMetric = {
+  id: string;
+  label: string;
+  value: number;
+  max?: number;
+};
+
+type PlayerRadarProfile = Record<RadarMetric["id"], number>;
+
 const DEFAULT_PLAYER_IMAGE =
   "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
 
@@ -52,14 +61,255 @@ const sampleTeams: TeamSummary[] = [
   }
 ];
 
-const performanceMetrics = [
-  { label: "Strikeouts", value: 0.65 },
-  { label: "Walk Rate", value: 0.52 },
-  { label: "Isolated Power", value: 0.78 },
-  { label: "On Base Percent", value: 0.68 },
-  { label: "Durability Factor", value: 0.58 },
-  { label: "Age", value: 0.62 }
-] as const;
+const BASE_PERFORMANCE_METRICS: RadarMetric[] = [
+  { id: "avg", label: "AVG", value: 0.287, max: 0.35 },
+  { id: "obp", label: "OBP", value: 0.365, max: 0.45 },
+  { id: "slg", label: "SLG", value: 0.512, max: 0.65 },
+  { id: "iso", label: "ISO", value: 0.225, max: 0.3 },
+  { id: "wrcPlus", label: "wRC+", value: 132, max: 160 }
+];
+
+const RADAR_LEVELS = [1, 0.75, 0.5, 0.25];
+
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+function clamp(value: number, min = 0, max = 1) {
+  return Math.min(Math.max(value, min), max);
+}
+
+const DEFAULT_PLAYER_PROFILE: PlayerRadarProfile = BASE_PERFORMANCE_METRICS.reduce(
+  (acc, metric) => {
+    acc[metric.id] = metric.value;
+    return acc;
+  },
+  {} as PlayerRadarProfile
+);
+
+const PLAYER_METRIC_LIBRARY: Record<string, PlayerRadarProfile> = {
+  "Shohei Ohtani": {
+    avg: 0.304,
+    obp: 0.406,
+    slg: 0.654,
+    iso: 0.350,
+    wrcPlus: 180
+  },
+  "Juan Soto": {
+    avg: 0.289,
+    obp: 0.430,
+    slg: 0.556,
+    iso: 0.267,
+    wrcPlus: 164
+  },
+  "Ronald Acuna Jr.": {
+    avg: 0.337,
+    obp: 0.414,
+    slg: 0.596,
+    iso: 0.259,
+    wrcPlus: 170
+  },
+  "Corey Seager": {
+    avg: 0.327,
+    obp: 0.390,
+    slg: 0.623,
+    iso: 0.296,
+    wrcPlus: 169
+  }
+};
+
+function generateFallbackProfile(player: SavedPlayer, index: number): PlayerRadarProfile {
+  const baseSeed = typeof player.id === "number" ? player.id : player.name.length * 31;
+  const seed = (baseSeed + index * 29) % 97;
+
+  return BASE_PERFORMANCE_METRICS.reduce((acc, metric, metricIndex) => {
+    const max = metric.max ?? 1;
+    const base = metric.value;
+    const spread = max * 0.3; // up to +/- 30% of the axis max
+    const variation = ((seed + metricIndex * 17) % 21 - 10) / 10; // -1..1 step .1
+    const adjusted = clamp(base + variation * spread * 0.5, 0, max);
+    acc[metric.id] = adjusted;
+    return acc;
+  }, {} as PlayerRadarProfile);
+}
+
+function resolvePlayerProfile(player: SavedPlayer, index: number): PlayerRadarProfile {
+  const preset = PLAYER_METRIC_LIBRARY[player.name];
+  if (preset) {
+    return preset;
+  }
+  return generateFallbackProfile(player, index);
+}
+
+function PerformanceRadar({ metrics }: { metrics: RadarMetric[] }) {
+  const normalized = useMemo(() => {
+    if (!metrics.length) {
+      return [] as Array<RadarMetric & { normalized: number }>;
+    }
+
+    return metrics.map((metric) => {
+      const max = metric.max ?? 1;
+      const normalizedValue = clamp(max === 0 ? 0 : metric.value / max);
+      return {
+        ...metric,
+        normalized: normalizedValue
+      };
+    });
+  }, [metrics]);
+
+  const targetValues = useMemo(
+    () => normalized.map((metric) => metric.normalized),
+    [normalized]
+  );
+
+  const valuesRef = useRef<number[]>(targetValues);
+  const animationRef = useRef<number | null>(null);
+  const [displayValues, setDisplayValues] = useState<number[]>(targetValues);
+
+  useEffect(() => {
+    if (!targetValues.length) {
+      setDisplayValues([]);
+      valuesRef.current = [];
+      return;
+    }
+
+    const previous = valuesRef.current;
+    const alignedPrevious = previous.length === targetValues.length
+      ? previous
+      : targetValues.map(() => 0);
+
+    valuesRef.current = alignedPrevious;
+
+    const unchanged = alignedPrevious.every(
+      (value, index) => Math.abs(value - targetValues[index]) < 0.0001
+    );
+
+    if (unchanged) {
+      return;
+    }
+
+    setDisplayValues(alignedPrevious);
+
+    const duration = 650; // ms
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (startTime === null) {
+        startTime = timestamp;
+      }
+
+      const progress = clamp((timestamp - startTime) / duration, 0, 1);
+      const eased = easeOutCubic(progress);
+
+      const nextValues = targetValues.map((target, index) => {
+        const starting = alignedPrevious[index] ?? 0;
+        return starting + (target - starting) * eased;
+      });
+
+      setDisplayValues(nextValues);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        valuesRef.current = targetValues;
+        animationRef.current = null;
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [targetValues]);
+
+  if (!normalized.length) {
+    return (
+      <div className={styles.radarWrapper}>
+        <p className={styles.emptyMessage}>No metrics available</p>
+      </div>
+    );
+  }
+
+  const center = 110;
+  const radius = 90;
+  const angleStep = (Math.PI * 2) / normalized.length;
+
+  const polygonPoints = displayValues
+    .map((value, index) => {
+      const angle = angleStep * index - Math.PI / 2;
+      const r = radius * value;
+      const x = center + r * Math.cos(angle);
+      const y = center + r * Math.sin(angle);
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <div className={styles.radarWrapper}>
+      <svg
+        className={styles.radarChart}
+        viewBox="0 0 220 220"
+        role="img"
+        aria-label="Performance radar chart"
+      >
+        <defs>
+          <linearGradient id="radarFill" x1="50%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%" stopColor="#4d7fff" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#4d7fff" stopOpacity="0.2" />
+          </linearGradient>
+        </defs>
+
+        {RADAR_LEVELS.map((ratio) => {
+          const gridPoints = normalized
+            .map((_, index) => {
+              const angle = angleStep * index - Math.PI / 2;
+              const r = radius * ratio;
+              const x = center + r * Math.cos(angle);
+              const y = center + r * Math.sin(angle);
+              return `${x},${y}`;
+            })
+            .join(" ");
+
+          return (
+            <polygon key={ratio} className={styles.radarGrid} points={gridPoints} />
+          );
+        })}
+
+        {normalized.map((_, index) => {
+          const angle = angleStep * index - Math.PI / 2;
+          const x = center + radius * Math.cos(angle);
+          const y = center + radius * Math.sin(angle);
+          return (
+            <line
+              key={`axis-${index}`}
+              className={styles.radarGrid}
+              x1={center}
+              y1={center}
+              x2={x}
+              y2={y}
+            />
+          );
+        })}
+
+        <polygon className={styles.radarShape} points={polygonPoints} fill="url(#radarFill)" />
+
+        {normalized.map((metric, index) => {
+          const angle = angleStep * index - Math.PI / 2;
+          const labelRadius = radius + 22;
+          const x = center + labelRadius * Math.cos(angle);
+          const y = center + labelRadius * Math.sin(angle);
+          return (
+            <text key={metric.id} className={styles.radarLabel} x={x} y={y}>
+              {metric.label}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", {
@@ -85,6 +335,37 @@ export default function DashboardPage() {
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const navigate = useNavigate();
   const latestQueryRef = useRef("");
+
+  const performanceMetrics = useMemo<RadarMetric[]>(() => {
+    console.log("Radar saved players count:", savedPlayers.length);
+
+    if (savedPlayers.length === 0) {
+      return BASE_PERFORMANCE_METRICS;
+    }
+
+    const profiles = savedPlayers.map((player, index) =>
+      resolvePlayerProfile(player, index)
+    );
+
+    return BASE_PERFORMANCE_METRICS.map((metric) => {
+      const max = metric.max ?? 1;
+
+      const sum = profiles.reduce((acc, profile) => {
+        const value = profile[metric.id];
+        if (typeof value === "number" && !Number.isNaN(value)) {
+          return acc + value;
+        }
+        return acc + DEFAULT_PLAYER_PROFILE[metric.id];
+      }, 0);
+
+      const average = sum / profiles.length;
+
+      return {
+        ...metric,
+        value: clamp(average, 0, max)
+      };
+    });
+  }, [savedPlayers]);
 
   useEffect(() => {
     const user = authActions.getCurrentUser();
@@ -431,77 +712,7 @@ export default function DashboardPage() {
               <header className={styles.cardHeader}>
                 <h3>Performance</h3>
               </header>
-              <div className={styles.radarWrapper}>
-              <svg viewBox="0 0 220 220" className={styles.radarChart} role="presentation">
-                {[1, 0.75, 0.5, 0.25].map((ratio) => {
-                  const points = performanceMetrics
-                    .map((_, index) => {
-                      const angle = ((Math.PI * 2) / performanceMetrics.length) * index - Math.PI / 2;
-                      const radius = 90 * ratio;
-                      const x = 110 + radius * Math.cos(angle);
-                      const y = 110 + radius * Math.sin(angle);
-                      return `${x},${y}`;
-                    })
-                    .join(" ");
-
-                  return (
-                    <polygon
-                      key={ratio}
-                      points={points}
-                      className={styles.radarGrid}
-                    />
-                  );
-                })}
-                {performanceMetrics.map((metric, index) => {
-                  const angle =
-                    ((Math.PI * 2) / performanceMetrics.length) * index - Math.PI / 2;
-                  const x = 110 + 90 * Math.cos(angle);
-                  const y = 110 + 90 * Math.sin(angle);
-                  return (
-                    <line
-                      key={metric.label}
-                      x1={110}
-                      y1={110}
-                      x2={x}
-                      y2={y}
-                      className={styles.radarGrid}
-                    />
-                  );
-                })}
-
-                <polygon
-                  className={styles.radarShape}
-                  points={performanceMetrics
-                    .map((metric, index) => {
-                      const angle =
-                        ((Math.PI * 2) / performanceMetrics.length) * index - Math.PI / 2;
-                      const radius = 90 * metric.value;
-                      const x = 110 + radius * Math.cos(angle);
-                      const y = 110 + radius * Math.sin(angle);
-                      return `${x},${y}`;
-                    })
-                    .join(" ")}
-                />
-
-                {performanceMetrics.map((metric, index) => {
-                  const angle =
-                    ((Math.PI * 2) / performanceMetrics.length) * index - Math.PI / 2;
-                  const radius = 105;
-                  const x = 110 + radius * Math.cos(angle);
-                  const y = 110 + radius * Math.sin(angle);
-                  return (
-                    <text
-                      key={metric.label}
-                      x={x}
-                      y={y}
-                      className={styles.radarLabel}
-                    >
-                      {metric.label}
-                    </text>
-                  );
-                })}
-              </svg>
-            </div>
+              <PerformanceRadar metrics={performanceMetrics} />
           </article>
         </div>
       </section>
