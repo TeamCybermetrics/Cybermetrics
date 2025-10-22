@@ -8,12 +8,18 @@ from models.players import (
     RosterAvgRequest,
     RosterAvgResponse
 )
+# player search
 from services.player_search_service import PlayerSearchService
+
+# REMOVE THIS LATER FOR THE SAVED PLAYER
 from services.saved_players_service import saved_players_service
-from services.roster_avg_service import roster_avg_service
+
+# roster average
+from services.roster_avg_service import RosterAvgService
+
 from middleware.auth import get_current_user
 from typing import List
-from dependency.dependencies import get_player_search_service
+from dependency.dependencies import get_player_search_service, get_roster_avg_service
 
 router = APIRouter(prefix="/api/players", tags=["players"])
 
@@ -34,7 +40,7 @@ async def get_saved_players(current_user: str = Depends(get_current_user)):
     return await saved_players_service.get_all_players(current_user)
 
 @router.post("/roster-averages", response_model=RosterAvgResponse, tags=["stats"])
-async def get_roster_averages(request: RosterAvgRequest):
+async def get_roster_averages(request: RosterAvgRequest, roster_avg_service: RosterAvgService = Depends(get_roster_avg_service)):
     """
     Get career average statistics for multiple players.
     

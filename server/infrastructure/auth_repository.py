@@ -7,9 +7,8 @@ import jwt
 from typing import Dict, Optional
 
 class AuthRepositoryFirebase(AuthRepository):
-    def __init__(self):
-        self.db = firebase_service.db
-        self.auth = firebase_service.auth
+    def __init__(self, db):
+        self.db = db
     
     async def create_user(self, signup_data: SignupRequest) -> Dict[str, str]:
         """Create a new user account"""

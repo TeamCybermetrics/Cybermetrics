@@ -6,8 +6,8 @@ from typing import List, Dict, Optional
 from repositories.player_repository import PlayerRepository
 
 class PlayerRepositoryFirebase(PlayerRepository):
-    def __init__(self, db = None):
-        self.db = db or firebase_service.db
+    def __init__(self, db):
+        self.db = db 
         self._players_cache: List[Dict] = []
         self._cache_loaded = False
     
