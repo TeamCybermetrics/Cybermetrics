@@ -129,54 +129,86 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
 
         {player && !isLoading && (
           <div className={styles.content}>
-            <div className={styles.header}>
-              <img
-                src={player.image_url}
-                alt={player.name}
-                className={styles.playerImage}
-                onError={(e) => {
-                  e.currentTarget.src = 'https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current';
-                }}
-              />
-              <div className={styles.headerInfo}>
-                <h2 className={styles.playerName}>{player.name}</h2>
-                <p className={styles.yearsActive}>{player.years_active}</p>
-                {player.team_abbrev && <p className={styles.team}>{player.team_abbrev}</p>}
-                <p className={styles.overallScore}>Overall Score: {player.overall_score.toFixed(3)}</p>
+            <div className={styles.hero}>
+              <div className={styles.portrait}>
+                <img
+                  src={player.image_url}
+                  alt={player.name}
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
+                  }}
+                />
+                <span className={styles.badge}>#{player.mlbam_id}</span>
+              </div>
+
+              <div className={styles.heroMeta}>
+                <div className={styles.titleBlock}>
+                  <p className={styles.subtitle}>{player.years_active}</p>
+                  <h2 className={styles.playerName}>{player.name}</h2>
+                  {player.team_abbrev && (
+                    <span className={styles.teamTag}>{player.team_abbrev}</span>
+                  )}
+                </div>
+
+                <div className={styles.heroStats}>
+                  <div className={styles.metric}>
+                    <span>Overall Score</span>
+                    <strong>
+                      {typeof player.overall_score === "number"
+                        ? player.overall_score.toFixed(3)
+                        : "N/A"}
+                    </strong>
+                  </div>
+                  <div className={styles.metric}>
+                    <span>Fangraphs ID</span>
+                    <strong>{player.fangraphs_id ?? "N/A"}</strong>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className={styles.details}>
-              <div className={styles.detailRow}>
-                <span className={styles.label}>MLBAM ID:</span>
-                <span className={styles.value}>{player.mlbam_id}</span>
+            <div className={styles.tokens}>
+              <div className={styles.token}>
+                <span className={styles.tokenLabel}>MLBAM ID</span>
+                <span className={styles.tokenValue}>{player.mlbam_id}</span>
               </div>
-              <div className={styles.detailRow}>
-                <span className={styles.label}>FanGraphs ID:</span>
-                <span className={styles.value}>{player.fangraphs_id}</span>
+              <div className={styles.token}>
+                <span className={styles.tokenLabel}>FanGraphs ID</span>
+                <span className={styles.tokenValue}>{player.fangraphs_id ?? "N/A"}</span>
               </div>
+              {player.team_abbrev && (
+                <div className={styles.token}>
+                  <span className={styles.tokenLabel}>Current Team</span>
+                  <span className={styles.tokenValue}>{player.team_abbrev}</span>
+                </div>
+              )}
             </div>
 
-            {/* Year Selector */}
             <div className={styles.yearSelector}>
-              <h3>Season Stats</h3>
+              <div>
+                <h3>Season Stats</h3>
+                <p>Tap a season to review the player&apos;s performance profile.</p>
+              </div>
               <div className={styles.yearButtons}>
-                {Object.keys(player.seasons).sort().reverse().map((year) => (
-                  <button
-                    key={year}
-                    className={`${styles.yearButton} ${selectedYear === year ? styles.active : ''}`}
-                    onClick={() => setSelectedYear(year)}
-                  >
-                    {year}
-                  </button>
-                ))}
+                {Object.keys(player.seasons)
+                  .sort()
+                  .reverse()
+                  .map((year) => (
+                    <button
+                      key={year}
+                      className={`${styles.yearButton} ${selectedYear === year ? styles.active : ""}`}
+                      onClick={() => setSelectedYear(year)}
+                    >
+                      {year}
+                    </button>
+                  ))}
               </div>
             </div>
 
-            {/* Stats Display */}
             {selectedYear && player.seasons[selectedYear] && (
               <div className={styles.statsContainer}>
-                <h3>{selectedYear} Season - {player.seasons[selectedYear].team_abbrev || 'N/A'}</h3>
+                <h3>{selectedYear} Season - {player.seasons[selectedYear].team_abbrev || "N/A"}</h3>
                 {renderSeasonStats(player.seasons[selectedYear])}
               </div>
             )}
@@ -186,4 +218,3 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
     </div>
   );
 }
-
