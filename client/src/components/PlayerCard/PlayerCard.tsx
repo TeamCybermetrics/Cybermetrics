@@ -108,8 +108,8 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
 
   return (
     <div className={styles.overlay} onClick={handleOverlayClick}>
-      <div className={styles.dialog}>
-        <button className={styles.closeButton} onClick={onClose} aria-label="Close player card">
+      <div className={styles.modal}>
+        <button className={styles.closeButton} onClick={onClose}>
           ×
         </button>
 
@@ -191,26 +191,25 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
                 <p>Tap a season to review the player&apos;s performance profile.</p>
               </div>
               <div className={styles.yearButtons}>
-                {Object.keys(player.seasons).sort().reverse().map((year) => (
-                  <button
-                    key={year}
-                    className={`${styles.yearButton} ${selectedYear === year ? styles.active : ""}`}
-                    onClick={() => setSelectedYear(year)}
-                  >
-                    {year}
-                  </button>
-                ))}
+                {Object.keys(player.seasons)
+                  .sort()
+                  .reverse()
+                  .map((year) => (
+                    <button
+                      key={year}
+                      className={`${styles.yearButton} ${selectedYear === year ? styles.active : ""}`}
+                      onClick={() => setSelectedYear(year)}
+                      aria-pressed={selectedYear === year}
+                    >
+                      {year}
+                    </button>
+                  ))}
               </div>
             </div>
 
             {selectedYear && player.seasons[selectedYear] && (
               <div className={styles.statsContainer}>
-                <header className={styles.statsHeader}>
-                  <div>
-                    <h3>{selectedYear} Season</h3>
-                    <p>{player.seasons[selectedYear].team_abbrev || "No team listed"}</p>
-                  </div>
-                </header>
+                <h3>{selectedYear} Season - {player.seasons[selectedYear].team_abbrev || "N/A"}</h3>
                 {renderSeasonStats(player.seasons[selectedYear])}
               </div>
             )}
