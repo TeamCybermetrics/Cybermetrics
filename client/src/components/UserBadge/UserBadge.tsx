@@ -3,8 +3,9 @@ import styles from "./UserBadge.module.css";
 
 export default function UserBadge() {
   const { email } = authActions.getCurrentUser();
-  const displayName = email ? email.split("@")[0] : "Guest";
-  const initials = displayName ? displayName.charAt(0).toUpperCase() : "?";
+  const rawName = email ? email.split("@")[0] : "";
+  const displayName = rawName.trim() || "Guest";
+  const initials = displayName.charAt(0)?.toUpperCase() || "?";
 
   return (
     <div className={styles.badge}>

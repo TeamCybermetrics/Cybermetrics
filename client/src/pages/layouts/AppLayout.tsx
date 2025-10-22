@@ -8,13 +8,9 @@ export default function AppLayout() {
       <Sidebar />
 
       <div className={styles.main}>
-        <header className={styles.header}>
-          <div>
-            <p className={styles.heading}>Overview</p>
-            <span className={styles.subheading}>Track your roster and scouting insights.</span>
-          </div>
+        <div className={styles.topBar}>
           <UserBadge />
-        </header>
+        </div>
 
         <div className={styles.content}>
           <ProtectedRoute>

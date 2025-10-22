@@ -1,18 +1,11 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  color: #f4f6fb;
+  composes: page from "../../styles/common-page.module.css";
 }
 
 .heading {
-  font-size: 26px;
-  font-weight: 600;
+  composes: heading from "../../styles/common-page.module.css";
 }
 
 .description {
-  font-size: 15px;
-  opacity: 0.68;
-  max-width: 560px;
-  line-height: 1.6;
+  composes: description from "../../styles/common-page.module.css";
 }

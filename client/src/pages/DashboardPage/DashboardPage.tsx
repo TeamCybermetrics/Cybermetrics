@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Alert from "@/components/Alert";
 import PlayerCard from "@/components/PlayerCard";
 import { authActions } from "@/actions/auth";
 import { healthActions } from "@/actions/health";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
+import { ROUTES } from "@/config";
 import styles from "./DashboardPage.module.css";
 
 type TeamSummary = {
@@ -81,6 +83,8 @@ export default function DashboardPage() {
   const [healthStatus, setHealthStatus] = useState("");
   const [healthError, setHealthError] = useState("");
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const navigate = useNavigate();
+  const latestQueryRef = useRef("");
 
   useEffect(() => {
     const user = authActions.getCurrentUser();
@@ -99,15 +103,24 @@ export default function DashboardPage() {
 
   const performSearch = useCallback(
     async (query: string) => {
-      if (!query.trim()) {
+      const trimmed = query.trim();
+
+      if (!trimmed) {
+        latestQueryRef.current = "";
         setSearchResults([]);
         setIsSearching(false);
+        setError("");
         return;
       }
 
       setIsSearching(true);
       setError("");
-      const result = await playerActions.searchPlayers(query);
+      const result = await playerActions.searchPlayers(trimmed);
+
+      if (latestQueryRef.current !== trimmed) {
+        return;
+      }
+
       setIsSearching(false);
 
       if (result.success && result.data) {
@@ -122,6 +135,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
+      latestQueryRef.current = searchQuery.trim();
       void performSearch(searchQuery);
     }, 250);
 
@@ -165,7 +179,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     authActions.logout();
-    window.location.href = "/login";
+    navigate(ROUTES.LOGIN);
   };
 
   const handleCheckHealth = async () => {
@@ -250,167 +264,174 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className={styles.dashboard}>
-      <section className={styles.lineupPanel}>
-        <header className={styles.lineupHeader}>
-          <div>
-            <h2 className={styles.lineupTitle}>Current Lineup</h2>
-            <p className={styles.lineupHint}>Monitor the roster you&apos;re tracking.</p>
-          </div>
-          <button
-            className={styles.lineupAction}
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-          >
-            Add Players
-          </button>
-        </header>
-
-        <div className={styles.lineupList}>
-          {savedPlayers.length === 0 ? (
-            <div className={styles.lineupEmpty}>
-              <p className={styles.emptyTitle}>No players saved yet</p>
-              <p className={styles.emptyHint}>Use “Add Players” to start building your lineup.</p>
-              <button
-                className={styles.emptyButton}
-                type="button"
-                onClick={() => setIsSearchOpen(true)}
-              >
-                Scout Players
-              </button>
-            </div>
-          ) : (
-            savedPlayers.map((player) => (
-              <article key={player.id} className={styles.lineupItem}>
-                <button
-                  type="button"
-                  className={styles.lineupProfile}
-                  onClick={() => setSelectedPlayerId(player.id)}
-                >
-                  <img
-                    src={player.image_url || DEFAULT_PLAYER_IMAGE}
-                    alt={player.name}
-                    onError={(e) => {
-                      e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                    }}
-                  />
-                  <div className={styles.lineupInfo}>
-                    <span className={styles.playerName}>{player.name}</span>
-                    <span className={styles.playerMeta}>
-                      {player.team ?? player.years_active ?? "Scouting target"}
-                    </span>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  className={styles.lineupRemove}
-                  onClick={() => handleDeletePlayer(player)}
-                >
-                  Remove
-                </button>
-              </article>
-            ))
-          )}
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <div>
+          <h1 className={styles.pageTitle}>Dashboard</h1>
+          <p className={styles.pageSubtitle}>Track your roster and scouting insights.</p>
         </div>
+        {userEmail && <span className={styles.pageMeta}>Signed in as {userEmail}</span>}
+      </header>
 
-        <footer className={styles.lineupFooter}>
-          <button
-            type="button"
-            className={styles.footerButton}
-            onClick={() => setIsSearchOpen(true)}
-          >
-            View All
-          </button>
-        </footer>
-      </section>
-
-      <section className={styles.analytics}>
-        <article className={styles.statsCard}>
-          <header className={styles.statsHeader}>
+      <div className={styles.dashboard}>
+        <section className={styles.lineupPanel}>
+          <header className={styles.lineupHeader}>
             <div>
-              <h1 className={styles.pageTitle}>Dashboard</h1>
-              {userEmail && (
-                <p className={styles.pageSubtitle}>Signed in as {userEmail}</p>
-              )}
+              <h2 className={styles.lineupTitle}>Current Lineup</h2>
+              <p className={styles.lineupHint}>Monitor the roster you&apos;re tracking.</p>
             </div>
-            <div className={styles.statsActions}>
-              <button
-                className={styles.utilityButton}
-                type="button"
-                onClick={handleCheckHealth}
-                disabled={isCheckingHealth}
-              >
-                {isCheckingHealth ? "Checking..." : "Check Health"}
-              </button>
-              <button
-                className={styles.utilityButton}
-                type="button"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            </div>
+            <button
+              className={styles.lineupAction}
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+            >
+              Add Players
+            </button>
           </header>
 
-          <div className={styles.statBlocks}>
-            <div className={styles.statBlock}>
-              <p className={styles.statLabel}>Team Budget</p>
-              <p className={styles.statValue}>{formatCurrency(teamBudget)}</p>
-            </div>
-            <div className={styles.statBlock}>
-              <p className={styles.statLabel}>Team Score</p>
-              <p className={`${styles.statValue} ${styles.positive}`}>
-                {formatScore(teamScore)}
-              </p>
-            </div>
-            <div className={styles.statBlock}>
-              <p className={styles.statLabel}>Target Weakness</p>
-              <p className={styles.statValue}>{targetWeakness}</p>
-            </div>
-          </div>
-        </article>
-
-        <div className={styles.lowerGrid}>
-          <article className={styles.teamsCard}>
-            <header className={styles.cardHeader}>
-              <h3>MLB Teams</h3>
-              <button type="button" className={styles.headerLink}>
-                View All
-              </button>
-            </header>
-            <div className={styles.teamTable}>
-              <div className={styles.teamHeadings}>
-                <span>Team</span>
-                <span>Team Score</span>
+          <div className={styles.lineupList}>
+            {savedPlayers.length === 0 ? (
+              <div className={styles.lineupEmpty}>
+                <p className={styles.emptyTitle}>No players saved yet</p>
+                <p className={styles.emptyHint}>Use “Add Players” to start building your lineup.</p>
+                <button
+                  className={styles.emptyButton}
+                  type="button"
+                  onClick={() => setIsSearchOpen(true)}
+                >
+                  Scout Players
+                </button>
               </div>
-              <ul>
-                {extendedTeamList.map((team) => (
-                  <li key={team.name} className={styles.teamRow}>
-                    <div className={styles.teamMeta}>
-                      <img src={team.logo} alt={team.name} />
-                      <div>
-                        <p className={styles.teamName}>{team.name}</p>
-                        <span className={styles.teamValue}>{formatCurrency(team.value)}</span>
-                      </div>
+            ) : (
+              savedPlayers.map((player) => (
+                <article key={player.id} className={styles.lineupItem}>
+                  <button
+                    type="button"
+                    className={styles.lineupProfile}
+                    onClick={() => setSelectedPlayerId(player.id)}
+                  >
+                    <img
+                      src={player.image_url || DEFAULT_PLAYER_IMAGE}
+                      alt={player.name}
+                      onError={(e) => {
+                        e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
+                      }}
+                    />
+                    <div className={styles.lineupInfo}>
+                      <span className={styles.playerName}>{player.name}</span>
+                      <span className={styles.playerMeta}>
+                        {player.team ?? player.years_active ?? "Scouting target"}
+                      </span>
                     </div>
-                    <span
-                      className={
-                        team.score >= 0 ? styles.teamScorePositive : styles.teamScoreNegative
-                      }
-                    >
-                      {formatScore(team.score)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.lineupRemove}
+                    onClick={() => handleDeletePlayer(player)}
+                  >
+                    Remove
+                  </button>
+                </article>
+              ))
+            )}
+          </div>
+
+          <footer className={styles.lineupFooter}>
+            <button
+              type="button"
+              className={styles.footerButton}
+              onClick={() => setIsSearchOpen(true)}
+            >
+              View All
+            </button>
+          </footer>
+        </section>
+
+        <section className={styles.analytics}>
+          <article className={styles.statsCard}>
+            <header className={styles.statsHeader}>
+              <div>
+                <h2 className={styles.statsTitle}>Team Snapshot</h2>
+                <p className={styles.statsSubtitle}>Budget, score, and focus areas.</p>
+              </div>
+              <div className={styles.statsActions}>
+                <button
+                  className={styles.utilityButton}
+                  type="button"
+                  onClick={handleCheckHealth}
+                  disabled={isCheckingHealth}
+                >
+                  {isCheckingHealth ? "Checking..." : "Check Health"}
+                </button>
+                <button
+                  className={styles.utilityButton}
+                  type="button"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
+            </header>
+
+            <div className={styles.statBlocks}>
+              <div className={styles.statBlock}>
+                <p className={styles.statLabel}>Team Budget</p>
+                <p className={styles.statValue}>{formatCurrency(teamBudget)}</p>
+              </div>
+              <div className={styles.statBlock}>
+                <p className={styles.statLabel}>Team Score</p>
+                <p className={`${styles.statValue} ${styles.positive}`}>
+                  {formatScore(teamScore)}
+                </p>
+              </div>
+              <div className={styles.statBlock}>
+                <p className={styles.statLabel}>Target Weakness</p>
+                <p className={styles.statValue}>{targetWeakness}</p>
+              </div>
             </div>
           </article>
 
-          <article className={styles.performanceCard}>
-            <header className={styles.cardHeader}>
-              <h3>Performance</h3>
-            </header>
-            <div className={styles.radarWrapper}>
+          <div className={styles.lowerGrid}>
+            <article className={styles.teamsCard}>
+              <header className={styles.cardHeader}>
+                <h3>MLB Teams</h3>
+                <button type="button" className={styles.headerLink}>
+                  View All
+                </button>
+              </header>
+              <div className={styles.teamTable}>
+                <div className={styles.teamHeadings}>
+                  <span>Team</span>
+                  <span>Team Score</span>
+                </div>
+                <ul>
+                  {extendedTeamList.map((team) => (
+                    <li key={team.name} className={styles.teamRow}>
+                      <div className={styles.teamMeta}>
+                        <img src={team.logo} alt={team.name} />
+                        <div>
+                          <p className={styles.teamName}>{team.name}</p>
+                          <span className={styles.teamValue}>{formatCurrency(team.value)}</span>
+                        </div>
+                      </div>
+                      <span
+                        className={
+                          team.score >= 0 ? styles.teamScorePositive : styles.teamScoreNegative
+                        }
+                      >
+                        {formatScore(team.score)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+
+            <article className={styles.performanceCard}>
+              <header className={styles.cardHeader}>
+                <h3>Performance</h3>
+              </header>
+              <div className={styles.radarWrapper}>
               <svg viewBox="0 0 220 220" className={styles.radarChart} role="presentation">
                 {[1, 0.75, 0.5, 0.25].map((ratio) => {
                   const points = performanceMetrics
@@ -484,6 +505,7 @@ export default function DashboardPage() {
           </article>
         </div>
       </section>
+      </div>
 
       {isSearchOpen && (
         <div className={styles.searchOverlay}>
@@ -563,7 +585,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {selectedPlayerId && (
+      {selectedPlayerId !== null && (
         <PlayerCard
           playerId={selectedPlayerId}
           onClose={() => setSelectedPlayerId(null)}
