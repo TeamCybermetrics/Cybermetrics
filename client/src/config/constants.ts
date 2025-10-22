@@ -6,3 +6,13 @@ export const STORAGE_KEYS = {
   USER_EMAIL: "user_email",
 } as const;
 
+export const ROUTES = {
+  LANDING: "/",
+  LOGIN: "/login",
+  SIGNUP: "/signup",
+  DASHBOARD: "/dashboard",
+  TEAM_BUILDER: "/team-builder",
+  TEAM_ANALYSIS: "/team-analysis",
+  RECOMMENDATIONS: "/recommendations",
+  MLB_TEAMS: "/mlb-teams"
+} as const;

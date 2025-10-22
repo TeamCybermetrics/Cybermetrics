@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { Spinner } from "@/components";
+import { ROUTES } from "@/config";
 import styles from "./LandingPage.module.css";
 
 export default function LandingPage() {
@@ -29,15 +30,15 @@ export default function LandingPage() {
         <p className={styles.description}>Welcome to the Cybermetrics platform</p>
         <div className={styles.buttons}>
           {isAuthenticated ? (
-            <Link to="/dashboard" className={styles.button}>
+            <Link to={ROUTES.DASHBOARD} className={styles.button}>
               Dashboard
             </Link>
           ) : (
             <>
-              <Link to="/login" className={styles.button}>
+              <Link to={ROUTES.LOGIN} className={styles.button}>
                 Login
               </Link>
-              <Link to="/signup" className={styles.buttonSecondary}>
+              <Link to={ROUTES.SIGNUP} className={styles.buttonSecondary}>
                 Sign Up
               </Link>
             </>
@@ -47,4 +48,3 @@ export default function LandingPage() {
     </main>
   );
 }
-
