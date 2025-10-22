@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, Dict
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, List, Tuple
 
 class PlayerSearchResult(BaseModel):
     """Player search result from the index"""
@@ -92,4 +92,25 @@ class PlayerDetail(BaseModel):
     
     class Config:
         extra = "allow"
+
+
+class RosterAvgRequest(BaseModel):
+    """Request model for roster average stats"""
+    player_ids: List[int] = Field(..., min_items=1, description="List of MLB player IDs (mlbam_id)")
+
+
+class PlayerAvgStats(BaseModel):
+    """Average statistics for a single player"""
+    strikeout_rate: float = Field(..., description="Career average strikeout rate (K%)")
+    walk_rate: float = Field(..., description="Career average walk rate (BB%)")
+    isolated_power: float = Field(..., description="Career average isolated power (ISO)")
+    on_base_percentage: float = Field(..., description="Career average on-base percentage (OBP)")
+    base_running: float = Field(..., description="Career average base running value (BsR)")
+
+
+class RosterAvgResponse(BaseModel):
+    """Response model for roster average stats"""
+    stats: Dict[int, PlayerAvgStats] = Field(..., description="Dictionary mapping player_id to their average stats")
+    total_players: int = Field(..., description="Total number of players with stats returned")
+
 
