@@ -1,227 +1,325 @@
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(3, 4, 8, 0.72);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 32px;
   z-index: 1000;
-  padding: 20px;
 }
 
-.modal {
-  background: white;
-  border: 2px solid #000;
-  max-width: 900px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
+.dialog {
   position: relative;
+  width: min(960px, 100%);
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at top left, rgba(80, 94, 180, 0.18), transparent 45%) rgba(12, 14, 24, 0.96);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.55);
+  color: #f1f4ff;
 }
 
 .closeButton {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: transparent;
+  top: 22px;
+  right: 24px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
   border: none;
-  font-size: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f9ff;
+  font-size: 24px;
   cursor: pointer;
-  color: #000;
-  line-height: 1;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .closeButton:hover {
-  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
 }
 
-.loading {
-  padding: 60px 20px;
+.loading,
+.error {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 80px 24px;
 }
 
 .error {
-  padding: 40px 20px;
+  flex-direction: column;
+  gap: 18px;
   text-align: center;
 }
 
 .errorMessage {
-  color: #666;
   font-size: 14px;
-  margin: 12px 0 20px 0;
+  opacity: 0.68;
 }
 
 .content {
-  padding: 20px;
+  padding: 32px 36px 40px;
+  overflow-y: auto;
+  max-height: 90vh;
 }
 
-.header {
+.hero {
   display: flex;
-  gap: 20px;
+  gap: 28px;
   align-items: center;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #000;
-  margin-bottom: 20px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 28px;
 }
 
-.playerImage {
-  width: 100px;
-  height: 100px;
+.portrait {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.45);
+}
+
+.portrait img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border: 1px solid #000;
-  background: #f5f5f5;
-  flex-shrink: 0;
 }
 
-.headerInfo {
+.badge {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.heroMeta {
   flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
 }
 
 .playerName {
-  font-size: 24px;
-  margin: 0 0 8px 0;
-  color: #000;
-}
-
-.yearsActive {
-  font-size: 16px;
-  color: #666;
   margin: 0;
+  font-size: 32px;
+  font-weight: 700;
 }
 
-.details {
+.teamTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+}
+
+.heroStats {
+  display: flex;
+  gap: 20px;
+}
+
+.metric {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
+  min-width: 130px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.detailRow {
+.metric span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.metric strong {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.token {
+  background: rgba(18, 19, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 12px 16px;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tokenLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+.tokenValue {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.yearSelector {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #ccc;
-}
-
-.label {
-  font-weight: bold;
-  color: #000;
-  font-size: 14px;
-}
-
-.value {
-  color: #666;
-  font-size: 14px;
-}
-
-.team {
-  font-size: 14px;
-  color: #000;
-  margin: 4px 0;
-  font-weight: bold;
-}
-
-.overallScore {
-  font-size: 14px;
-  color: #666;
-  margin: 4px 0;
-}
-
-/* Year Selector */
-.yearSelector {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #000;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 24px;
 }
 
 .yearSelector h3 {
-  font-size: 18px;
-  margin: 0 0 12px 0;
-  color: #000;
+  margin: 0;
+  font-size: 20px;
+}
+
+.yearSelector p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.65;
 }
 
 .yearButtons {
   display: flex;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
 .yearButton {
-  padding: 8px 16px;
-  background: white;
-  border: 2px solid #000;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 10px 20px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: bold;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: background 0.2s ease, border 0.2s ease;
 }
 
 .yearButton:hover {
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.16);
 }
 
-.yearButton.active {
-  background: #000;
-  color: white;
+.active {
+  background: #6d7bff;
+  color: #0f111d;
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(109, 123, 255, 0.4);
 }
 
-/* Stats Container */
 .statsContainer {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #ccc;
+  background: rgba(16, 18, 30, 0.92);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: rgba(235, 238, 255, 0.92);
 }
 
-.statsContainer h3 {
-  font-size: 16px;
-  margin: 0 0 16px 0;
-  color: #000;
+.statsHeader h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.statsHeader p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.6;
 }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
 }
 
 .statsSection {
-  border: 1px solid #ccc;
-  padding: 12px;
-  background: #fafafa;
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(12, 14, 24, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: rgba(237, 240, 255, 0.88);
 }
 
 .statsSection h4 {
-  font-size: 14px;
-  margin: 0 0 12px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #000;
-  color: #000;
-  font-weight: bold;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #ffffff;
 }
 
-.statRow {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 13px;
-}
+@media (max-width: 720px) {
+  .overlay {
+    padding: 16px;
+  }
 
-.statRow span {
-  color: #666;
-}
+  .content {
+    padding: 24px;
+  }
 
-.statRow strong {
-  color: #000;
-  font-weight: bold;
-}
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
+  .heroMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .heroStats {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}

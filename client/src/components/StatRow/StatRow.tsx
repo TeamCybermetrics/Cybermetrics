@@ -1,3 +1,5 @@
+import styles from "./StatRow.module.css";
+
 interface StatRowProps {
   label: string;
   value: string | number;
@@ -6,14 +8,12 @@ interface StatRowProps {
 
 export default function StatRow({ label, value, suffix = "" }: StatRowProps) {
   return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      padding: '4px 0', 
-      fontSize: '13px' 
-    }}>
-      <span style={{ color: '#666' }}>{label}:</span>{' '}
-      <strong style={{ color: '#000', fontWeight: 'bold' }}>{value}{suffix}</strong>
+    <div className={styles.row}>
+      <span className={styles.label}>{label}</span>
+      <strong className={styles.value}>
+        {value}
+        {suffix}
+      </strong>
     </div>
   );
 }
