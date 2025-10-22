@@ -199,6 +199,7 @@ export default function PlayerCard({ playerId, onClose }: PlayerCardProps) {
                       key={year}
                       className={`${styles.yearButton} ${selectedYear === year ? styles.active : ""}`}
                       onClick={() => setSelectedYear(year)}
+                      aria-pressed={selectedYear === year}
                     >
                       {year}
                     </button>
