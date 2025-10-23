@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 class RosterDomain:
     def __init__(self):
-            pass
+        pass
 
     def validate_player_ids(self, player_ids: List[int]) -> None:
         """Validate player IDs input"""

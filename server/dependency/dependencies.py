@@ -15,6 +15,10 @@ from infrastructure.roster_repository import RosterRepositoryFirebase
 from domain.roster_domain import RosterDomain
 from services.roster_avg_service import RosterAvgService
 
+# saved player related
+from infrastructure.saved_players_repository import SavedPlayersRepositoryFirebase
+from domain.saved_players_domain import SavedPlayersDomain
+from services.saved_players_service import SavedPlayersService
 
 # auth related
 def get_auth_repository():
@@ -54,3 +58,17 @@ def get_roster_avg_service():
     roster_avg_repo = get_roster_repository()
     rooster_avg_domain = get_roster_domain()
     return RosterAvgService(roster_avg_repo, roster_avg_domain)
+
+# save players related
+def get_saved_players_repository():
+    return SavedPlayersRepositoryFirebase(firebase_service.db)
+
+def get_saved_players_domain() -> SavedPlayersDomain:
+    return SavedPlayersDomain()
+
+def get_saved_players_service():
+    saved_players_repo = get_saved_players_repository()
+    saved_players_domain = get_saved_players_domain()
+    return SavedPlayersService(saved_players_repo, saved_players_domain)
+
+
