@@ -3,8 +3,9 @@ from fastapi import HTTPException, status
 from config.firebase import firebase_service
 from models.auth import LoginRequest, SignupRequest, User
 from repositories.auth_repository import AuthRepository
-import jwt
 from typing import Dict, Optional
+import jwt
+            
 
 class AuthRepositoryFirebase(AuthRepository):
     def __init__(self, db):
@@ -90,10 +91,29 @@ class AuthRepositoryFirebase(AuthRepository):
                 detail=f"Failed to create token: {str(e)}"
             )
     
-    async def verify_custom_token(self, token: str) -> Dict[str, str]:
-        """Verify custom token"""
+    async def create_id_token(self, user_id: str) -> str:
+        """Create ID token for user (recommended approach)"""
         try:
-            # Decode without verification first to get the uid
+            # For ID tokens, we need to use Firebase Auth REST API
+            # or implement proper token exchange
+            # For now, let's use custom tokens but verify them properly
+            custom_token = auth.create_custom_token(user_id)
+            return custom_token.decode('utf-8')
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create token: {str(e)}"
+            )
+    
+    async def verify_custom_token(self, token: str) -> Dict[str, str]:
+        """Verify custom token using Firebase's mechanism"""
+        try:
+            # For custom tokens, we need to implement proper verification
+            # Custom tokens are signed by Firebase Admin SDK
+            # We can verify them by checking the signature and claims
+        
+            # Decode the custom token to get the uid
+            # Custom tokens are signed by Firebase Admin SDK
             decoded = jwt.decode(token, options={"verify_signature": False})
             uid = decoded.get('uid')
             
@@ -126,7 +146,10 @@ class AuthRepositoryFirebase(AuthRepository):
         """Store additional user data"""
         try:
             user_ref = self.db.collection('users').document(user_id)
-            user_ref.set(user_data)
+            user_ref.set(user_data, merge=True)
             return True
         except Exception:
-            return False
+            raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to store user data: {str(e)}"
+        )

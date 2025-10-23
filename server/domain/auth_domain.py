@@ -42,11 +42,3 @@ class AuthDomain:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
-    
-    def validate_user_permissions(self, user: User, required_role: str) -> None:
-        """Pure business logic: validate user permissions"""
-        if user.role != required_role and user.role != 'admin':
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions"
-            )

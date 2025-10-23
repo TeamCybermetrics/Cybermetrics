@@ -60,11 +60,13 @@ class PlayerDomain:
         )
 
         results = []
-        for name, score, idx in matches:
+        for _name, score, idx in matches:
             player = players[idx]
             mlbam_id = player.get("mlbam_id")
             seasons = player.get("seasons", {})
             
+            if mlbam_id <= 0 or not isinstance(mlbam_id, int):
+                continue
             results.append(PlayerSearchResult(
                 id=mlbam_id,
                 name=player.get("name", ""),

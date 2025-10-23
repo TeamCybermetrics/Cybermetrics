@@ -2,16 +2,23 @@ from fastapi import APIRouter, status, Header, HTTPException, Depends
 from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse  # ← Still need models!
 from dependency.dependencies import get_auth_service
 from services.auth_service import AuthService
+from typing import Annotated
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
-async def signup(signup_data: SignupRequest, auth_service: AuthService = Depends(get_auth_service)):
+async def signup(
+    signup_data: SignupRequest, 
+    auth_service: Annotated[AuthService, Depends(get_auth_service)]
+):
     """Create a new user account with Firebase Authentication"""
     return await auth_service.signup(signup_data)
 
 @router.post("/login", response_model=LoginResponse)
-async def login(login_data: LoginRequest, auth_service: AuthService = Depends(get_auth_service)):
+async def login(
+    login_data: LoginRequest, 
+    auth_service: Annotated[AuthService, Depends(get_auth_service)]
+):
     """
     Authenticate user and generate custom token
     Note: In production, you should use Firebase Client SDK for authentication
@@ -20,7 +27,10 @@ async def login(login_data: LoginRequest, auth_service: AuthService = Depends(ge
     return await auth_service.login(login_data)
 
 @router.get("/verify")
-async def verify_token(authorization: str = Header(None), auth_service: AuthService = Depends(get_auth_service)):
+async def verify_token(
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    authorization: Annotated[str | None, Header()] = None
+):
     """Verify a Firebase custom token from Authorization header"""
     if not authorization:
         raise HTTPException(

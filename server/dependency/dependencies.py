@@ -37,36 +37,45 @@ def get_auth_service():
 
 # player search related
 def get_player_repository():
+    """Create Firebase player repository instance"""
     return PlayerRepositoryFirebase(firebase_service.db)
 
 def get_player_domain():
+    """Create player domain instance"""
     return PlayerDomain()
 
 def get_player_search_service():
+    """Create player search service instance"""
     player_repo = get_player_repository()
     player_domain = get_player_domain()
     return PlayerSearchService(player_repo, player_domain)
 
 # roster avg related
 def get_roster_repository():
+    """Create Firebase roster repository instance"""
     return RosterRepositoryFirebase(firebase_service.db)
 
 def get_roster_domain() -> RosterDomain:
+    """Create roster domain instance"""
     return RosterDomain()
 
 def get_roster_avg_service():
+    """Create roster average service instance"""
     roster_avg_repo = get_roster_repository()
-    rooster_avg_domain = get_roster_domain()
+    roster_avg_domain = get_roster_domain()
     return RosterAvgService(roster_avg_repo, roster_avg_domain)
 
 # save players related
 def get_saved_players_repository():
+    """Create Firebase saved players repository instance"""
     return SavedPlayersRepositoryFirebase(firebase_service.db)
 
 def get_saved_players_domain() -> SavedPlayersDomain:
+    """Create saved players domain instance"""
     return SavedPlayersDomain()
 
 def get_saved_players_service():
+    """Create saved players service instance"""
     saved_players_repo = get_saved_players_repository()
     saved_players_domain = get_saved_players_domain()
     return SavedPlayersService(saved_players_repo, saved_players_domain)
