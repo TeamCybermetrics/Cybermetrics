@@ -95,8 +95,9 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         
         try:
             # Check if player exists
-            player_ref, player_doc = await to_thread.run_sync(fetch_ref_and_doc)
-            player_doc = player_ref.get()
+            player_ref, player_doc = await to_thread.run_sync(
+                lambda: self.fetch_ref_and_doc(user_id, player_id)
+            )
             
             if not player_doc.exists:
                 raise HTTPException(
@@ -114,8 +115,8 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to delete player: {str(e)}"
-            )
+                detail=f"Failed to delete player: {e!s}",
+            ) from e
     
     def fetch_ref_and_doc(self, user_id: str, player_id: str):
         """Gets a reference to Firebase doc and returns it"""

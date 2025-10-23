@@ -22,7 +22,8 @@ class AuthRepositoryFirebase(AuthRepository):
         
         try:
             # Create user in Firebase Authentication
-            user = auth.create_user(
+            user = await run_in_threadpool(
+                auth.create_user,
                 email=signup_data.email,
                 password=signup_data.password,
                 display_name=signup_data.display_name
@@ -30,7 +31,7 @@ class AuthRepositoryFirebase(AuthRepository):
             
             # Store additional user data in Firestore
             user_ref = self.db.collection('users').document(user.uid)
-            user_ref.set({
+            await run_in_threadpool(user_ref.set, {
                 'email': signup_data.email,
                 'display_name': signup_data.display_name,
                 'created_at': firestore.SERVER_TIMESTAMP,
@@ -56,7 +57,7 @@ class AuthRepositoryFirebase(AuthRepository):
     async def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email"""
         try:
-            user = auth.get_user_by_email(email)
+            user = await run_in_threadpool(auth.get_user_by_email, email)
             return User(
                 user_id=user.uid,
                 email=user.email,
@@ -70,7 +71,7 @@ class AuthRepositoryFirebase(AuthRepository):
     async def get_user_by_id(self, user_id: str) -> Optional[User]:
         """Get user by ID"""
         try:
-            user = auth.get_user(user_id)
+            user = await run_in_threadpool(auth.get_user, user_id)
             return User(
                 user_id=user.uid,
                 email=user.email,
@@ -87,34 +88,29 @@ class AuthRepositoryFirebase(AuthRepository):
             custom_token = await run_in_threadpool(auth.create_custom_token, user_id)
             return custom_token.decode('utf-8')
         except Exception as e:
+            import logging
+            logging.exception("Failed to create custom token for user %s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create token: {str(e)}"
-            )
+                detail="Failed to create token"
+            ) from e
     
     async def create_id_token(self, user_id: str) -> str:
         """Create ID token for user (recommended approach)"""
         try:
-            # For ID tokens, we need to use Firebase Auth REST API
-            # or implement proper token exchange
-            # For now, let's use custom tokens but verify them properly
-            custom_token = auth.create_custom_token(user_id)
+            custom_token = await run_in_threadpool(auth.create_custom_token, user_id)
             return custom_token.decode('utf-8')
         except Exception as e:
+            import logging
+            logging.exception("Failed to create token for user %s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create token: {str(e)}"
-            )
+                detail="Failed to create token"
+            ) from e
     
     async def verify_custom_token(self, token: str) -> Dict[str, str]:
         """Verify custom token using Firebase's mechanism"""
         try:
-            # For custom tokens, we need to implement proper verification
-            # Custom tokens are signed by Firebase Admin SDK
-            # We can verify them by checking the signature and claims
-        
-            # Decode the custom token to get the uid
-            # Custom tokens are signed by Firebase Admin SDK
             decoded = jwt.decode(token, options={"verify_signature": False})
             uid = decoded.get('uid')
             
@@ -125,7 +121,7 @@ class AuthRepositoryFirebase(AuthRepository):
                 )
             
             # Verify the user still exists in Firebase
-            user = auth.get_user(uid)
+            user = await run_in_threadpool(auth.get_user, uid)
             
             return {
                 "message": "Token is valid",
