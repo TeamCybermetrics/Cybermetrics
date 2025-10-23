@@ -1,11 +1,21 @@
 import { playersApi } from "@/api/players";
 
 export const playerActions = {
-  searchPlayers: async (query: string) => {
+  searchPlayers: async (query: string, signal?: AbortSignal) => {
     try {
-      const results = await playersApi.search(query);
+      const results = await playersApi.search(query, signal);
       return { success: true, data: results };
     } catch (error) {
+      if (
+        error instanceof Error &&
+        (/cancel/i.test(error.name) || /cancel/i.test(error.message))
+      ) {
+        return {
+          success: false,
+          error: "Request cancelled",
+          aborted: true,
+        };
+      }
       return {
         success: false,
         error: error instanceof Error ? error.message : "Search failed",
@@ -61,4 +71,3 @@ export const playerActions = {
     }
   },
 };
-

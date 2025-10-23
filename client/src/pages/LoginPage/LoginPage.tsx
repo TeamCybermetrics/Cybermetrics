@@ -1,6 +1,8 @@
 import { useState, FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthCard, Input, Button, Alert, Link, ProtectedRoute } from "@/components";
 import { authActions } from "@/actions/auth";
+import { ROUTES } from "@/config";
 import styles from "./LoginPage.module.css";
 
 export default function LoginPage() {
@@ -9,6 +11,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -21,7 +24,7 @@ export default function LoginPage() {
     if (result.success) {
       setSuccess("Login successful!");
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        navigate(ROUTES.DASHBOARD);
       }, 1000);
     } else {
       setError(result.error || "An error occurred");
@@ -37,7 +40,7 @@ export default function LoginPage() {
         subtitle="Welcome back to Cybermetrics"
         footer={
           <p>
-            Don&apos;t have an account? <Link href="/signup">Sign up</Link>
+            Don&apos;t have an account? <Link href={ROUTES.SIGNUP}>Sign up</Link>
           </p>
         }
       >
@@ -73,4 +76,3 @@ export default function LoginPage() {
     </ProtectedRoute>
   );
 }
-

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosRequestConfig } from "axios";
 import { API_BASE_URL, STORAGE_KEYS } from "@/config";
 
 export class ApiClient {
@@ -55,8 +55,8 @@ export class ApiClient {
     );
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    const response = await this.instance.get<T>(endpoint);
+  async get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.instance.get<T>(endpoint, config);
     return response.data;
   }
 
@@ -82,4 +82,3 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
-

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authActions } from "@/actions/auth";
+import { ROUTES } from "@/config";
 import Spinner from "../Spinner";
 
 interface ProtectedRouteProps {
@@ -24,10 +25,10 @@ export default function ProtectedRoute({
 
       if (requireAuth && !isAuth) {
         // Need auth but not logged in → redirect to login
-        navigate(redirectTo || "/login");
+        navigate(redirectTo || ROUTES.LOGIN);
       } else if (!requireAuth && isAuth) {
         // Don't need auth but logged in → redirect to dashboard
-        navigate(redirectTo || "/dashboard");
+        navigate(redirectTo || ROUTES.DASHBOARD);
       } else {
         // All good, show the page
         setIsAuthorized(true);
@@ -45,4 +46,3 @@ export default function ProtectedRoute({
 
   return isAuthorized ? <>{children}</> : null;
 }
-
