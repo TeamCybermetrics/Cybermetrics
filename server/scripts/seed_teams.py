@@ -3,7 +3,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from typing import Dict, List
-from config.firebase import firebase_service  
+from server.config.firebase import firebase_service  
 from pybaseball import playerid_reverse_lookup, batting_stats
 import requests
 from typing import Optional

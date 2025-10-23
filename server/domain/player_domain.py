@@ -65,7 +65,7 @@ class PlayerDomain:
             mlbam_id = player.get("mlbam_id")
             seasons = player.get("seasons", {})
             
-            if mlbam_id <= 0 or not isinstance(mlbam_id, int):
+            if not isinstance(mlbam_id, int) or mlbam_id <= 0:
                 continue
             results.append(PlayerSearchResult(
                 id=mlbam_id,

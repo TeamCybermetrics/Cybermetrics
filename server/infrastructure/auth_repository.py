@@ -5,6 +5,7 @@ from models.auth import LoginRequest, SignupRequest, User
 from repositories.auth_repository import AuthRepository
 from typing import Dict, Optional
 import jwt
+from fastapi.concurrency import run_in_threadpool
             
 
 class AuthRepositoryFirebase(AuthRepository):
@@ -83,7 +84,7 @@ class AuthRepositoryFirebase(AuthRepository):
     async def create_custom_token(self, user_id: str) -> str:
         """Create custom token for user"""
         try:
-            custom_token = auth.create_custom_token(user_id)
+            custom_token = await run_in_threadpool(auth.create_custom_token, user_id)
             return custom_token.decode('utf-8')
         except Exception as e:
             raise HTTPException(

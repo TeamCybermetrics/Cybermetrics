@@ -5,9 +5,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 import asyncio
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
-from config.firebase import firebase_service
-from services.roster_avg_service import roster_avg_service
-from utils.logger import setup_logger
+from server.config.firebase import firebase_service
+from server.services.roster_avg_service import roster_avg_service
+from server.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
