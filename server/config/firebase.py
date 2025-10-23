@@ -3,7 +3,9 @@ from firebase_admin import credentials, firestore, auth
 from .settings import settings
 
 class FirebaseService:
+    """Service for managing Firebase Admin SDK initialization and connections"""
     def __init__(self):
+        """Initialize Firebase service and establish connection"""
         self.db = None
         self.auth = auth
         self._initialize()

@@ -1,33 +1,37 @@
 # Cybermetrics Server
 
-FastAPI backend for baseball player tracking with Firebase integration.
+FastAPI backend for baseball player tracking with Firebase integration, built using Clean Architecture principles.
 
 ---
 
 ## 📐 Architecture & Structure
 
-### Layer Flow
+### Clean Architecture Layers
 ```
-┌─────────────┐
-│   Routes    │  API endpoints & request handling
-└─────────────┘
-       ↓
-┌─────────────┐
-│  Services   │  Business logic & data processing
-└─────────────┘
-       ↓
-┌─────────────┐
-│  Firebase   │  Authentication & Database
-│  pybaseball │  Player data source
-└─────────────┘
+┌─────────────────┐
+│     Routes      │  API endpoints & HTTP handling
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│    Services     │  Use Cases - Pure orchestration
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│     Domain      │  Business logic & validation rules
+└─────────────────┘
+         ↓
+┌─────────────────┐
+│ Infrastructure  │  Firebase, external APIs, data access
+└─────────────────┘
 ```
 
-### Core Principle
-**Separation of concerns through layers:**
-- **Routes** handle HTTP requests/responses
-- **Services** contain business logic
-- **Models** validate data with Pydantic
-- **Middleware** handles cross-cutting concerns (auth, errors)
+### Core Principles
+**Clean Architecture with Dependency Injection:**
+- **Routes** handle HTTP requests/responses only
+- **Services** orchestrate between domain and infrastructure (no business logic)
+- **Domain** contains pure business logic and validation rules
+- **Infrastructure** handles external dependencies (Firebase, APIs)
+- **Dependency Injection** wires everything together cleanly
 
 ---
 
@@ -41,11 +45,33 @@ server/
 │   ├── health.py       # /api/health
 │   └── __init__.py     # Router exports
 │
-├── services/           # Layer 2: Business Logic
+├── services/           # Layer 2: Use Cases (Orchestration)
 │   ├── auth_service.py
 │   ├── player_search_service.py
 │   ├── saved_players_service.py
+│   ├── roster_avg_service.py
 │   └── __init__.py
+│
+├── domain/             # Layer 3: Business Logic
+│   ├── auth_domain.py
+│   ├── player_domain.py
+│   ├── saved_players_domain.py
+│   └── roster_domain.py
+│
+├── repositories/       # Layer 4: Abstract Interfaces (Ports)
+│   ├── auth_repository.py
+│   ├── player_repository.py
+│   ├── saved_players_repository.py
+│   └── roster_repository.py
+│
+├── infrastructure/     # Layer 5: Concrete Implementations (Adapters)
+│   ├── auth_repository.py
+│   ├── player_repository.py
+│   ├── saved_players_repository.py
+│   └── roster_repository.py
+│
+├── dependency/         # Dependency Injection Container
+│   └── dependencies.py # Factory functions for all services
 │
 ├── models/             # Data Models (Pydantic)
 │   ├── auth.py
@@ -76,6 +102,9 @@ server/
 |------|------|---------|
 | Route | `feature.py` | snake_case |
 | Service | `feature_service.py` | snake_case + `_service` suffix |
+| Domain | `feature_domain.py` | snake_case + `_domain` suffix |
+| Repository (Abstract) | `feature_repository.py` | snake_case + `_repository` suffix |
+| Infrastructure | `feature_repository.py` | snake_case + `_repository` suffix |
 | Model | `feature.py` | snake_case |
 | Middleware | `feature.py` | snake_case |
 
@@ -83,215 +112,388 @@ server/
 
 ---
 
-## 🔨 How to Add a New Route
+## 🎯 Understanding Clean Architecture
 
-### Structure
-Routes define API endpoints. They handle HTTP and delegate logic to services.
+### What Each Layer Does
 
-### 1. Create Model (`models/new_feature.py`)
+**Routes (API Layer)**
+- Handle HTTP requests and responses
+- Validate input using Pydantic models
+- Call services and return responses
+- NO business logic here!
+
+**Services (Use Cases)**
+- Orchestrate between domain and infrastructure
+- Coordinate multiple operations
+- Handle the "what" of business operations
+- NO direct database access or business rules
+
+**Domain (Business Logic)**
+- Contains pure business logic and rules
+- Validates business constraints
+- Calculates complex business operations
+- NO external dependencies (Firebase, APIs, etc.)
+
+**Repositories (Abstract Interfaces)**
+- Define contracts for data access
+- Abstract away implementation details
+- Allow easy testing and swapping implementations
+
+**Infrastructure (Concrete Implementations)**
+- Implements repository interfaces
+- Handles Firebase, external APIs, file I/O
+- Contains all external dependencies
+- Can be swapped out without changing business logic
+
+### Dependency Injection
+
+Instead of creating objects inside classes, we inject them from the outside:
+
+```python
+# ❌ OLD WAY - Hard to test, tightly coupled
+class AuthService:
+    def __init__(self):
+        self.db = firebase_service.db  # Hard dependency
+
+# ✅ NEW WAY - Easy to test, loosely coupled
+class AuthService:
+    def __init__(self, auth_repository: AuthRepository, auth_domain: AuthDomain):
+        self.auth_repository = auth_repository  # Injected dependency
+        self.auth_domain = auth_domain
+```
+
+**Benefits:**
+- Easy to test (inject mock objects)
+- Easy to swap implementations
+- Clear separation of concerns
+- Follows dependency inversion principle
+
+## 🔨 How to Add a New Feature (Complete Example)
+
+Let's say you want to add a "teams" feature. Here's the complete process:
+
+### 1. Create Models (`models/teams.py`)
 ```python
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
-class NewFeatureRequest(BaseModel):
-    player_id: int
-    data: str
+class TeamRequest(BaseModel):
+    name: str
+    city: str
+    league: str
 
-class NewFeatureResponse(BaseModel):
+class TeamResponse(BaseModel):
     id: str
-    player_id: int
-    data: str
-    status: str
+    name: str
+    city: str
+    league: str
+    created_at: str
 ```
 
-### 2. Create Service (`services/new_feature_service.py`)
+### 2. Create Domain (`domain/teams_domain.py`)
 ```python
 from fastapi import HTTPException, status
-from models.new_feature import NewFeatureResponse
 
-class NewFeatureService:
-    """Service for handling new feature"""
+class TeamsDomain:
+    """Pure business logic for teams"""
     
-    async def get_feature(self, feature_id: str) -> NewFeatureResponse:
-        """Get feature by ID"""
-        try:
-            # Business logic here
-            # Query database, process data, etc.
-            
-            return NewFeatureResponse(
-                id=feature_id,
-                player_id=123,
-                data="sample",
-                status="active"
+    def __init__(self):
+        pass
+    
+    def validate_team_name(self, name: str) -> None:
+        """Validate team name business rules"""
+        if not name or len(name.strip()) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Team name must be at least 2 characters"
             )
+    
+    def validate_league(self, league: str) -> None:
+        """Validate league business rules"""
+        valid_leagues = ["AL", "NL", "MLB"]
+        if league not in valid_leagues:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"League must be one of: {valid_leagues}"
+            )
+```
+
+### 3. Create Repository Interface (`repositories/teams_repository.py`)
+```python
+from abc import ABC, abstractmethod
+from typing import List, Optional
+from models.teams import TeamResponse
+
+class TeamsRepository(ABC):
+    """Abstract interface for teams data access"""
+    
+    @abstractmethod
+    async def create_team(self, team_data: dict) -> TeamResponse:
+        pass
+    
+    @abstractmethod
+    async def get_team(self, team_id: str) -> Optional[TeamResponse]:
+        pass
+    
+    @abstractmethod
+    async def get_all_teams(self) -> List[TeamResponse]:
+        pass
+```
+
+### 4. Create Infrastructure (`infrastructure/teams_repository.py`)
+```python
+from repositories.teams_repository import TeamsRepository
+from models.teams import TeamResponse
+from fastapi import HTTPException, status
+from typing import List, Optional
+
+class TeamsRepositoryFirebase(TeamsRepository):
+    """Firebase implementation of teams repository"""
+    
+    def __init__(self, db):
+        self.db = db
+    
+    async def create_team(self, team_data: dict) -> TeamResponse:
+        """Create team in Firebase"""
+        try:
+            doc_ref = self.db.collection('teams').document()
+            team_data['id'] = doc_ref.id
+            doc_ref.set(team_data)
+            return TeamResponse(**team_data)
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to fetch feature: {str(e)}"
+                detail=f"Failed to create team: {str(e)}"
             )
-
-# Singleton instance
-new_feature_service = NewFeatureService()
-```
-
-### 3. Create Route (`routes/new_feature.py`)
-```python
-from fastapi import APIRouter, status, Depends
-from models.new_feature import NewFeatureRequest, NewFeatureResponse
-from services.new_feature_service import new_feature_service
-from middleware.auth import get_current_user
-
-router = APIRouter(prefix="/api/new-feature", tags=["new-feature"])
-
-@router.get("/{feature_id}", response_model=NewFeatureResponse)
-async def get_feature(
-    feature_id: str,
-    current_user: str = Depends(get_current_user)  # Protected route
-):
-    """Get feature by ID"""
-    return await new_feature_service.get_feature(feature_id)
-
-@router.post("/", response_model=NewFeatureResponse, status_code=status.HTTP_201_CREATED)
-async def create_feature(feature_data: NewFeatureRequest):
-    """Create new feature (public route)"""
-    return await new_feature_service.create_feature(feature_data)
-```
-
-### 4. Register Route (`routes/__init__.py`)
-```python
-from routes.auth import router as auth_router
-from routes.players import router as players_router
-from routes.new_feature import router as new_feature_router  # Add this
-
-__all__ = ['auth_router', 'players_router', 'new_feature_router']
-```
-
-### 5. Include in Main App (`main.py`)
-```python
-from routes import auth_router, players_router, new_feature_router
-
-app.include_router(auth_router)
-app.include_router(players_router)
-app.include_router(new_feature_router)  # Add this
-```
-
----
-
-## 🎬 How to Create Services
-
-### Structure
-Services contain business logic. They should NOT handle HTTP directly.
-
-### Pattern (FOLLOW THIS EXACTLY)
-```python
-# services/feature_service.py
-from fastapi import HTTPException, status
-from models.feature import FeatureResponse
-from config.firebase import firebase_service
-
-class FeatureService:
-    """Service for [feature description]"""
     
-    def __init__(self):
-        self.db = firebase_service.db
-        # Initialize any resources
-    
-    async def method_name(self, param: str) -> FeatureResponse:
-        """Method description"""
-        # Validate Firebase/resources
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-        
+    async def get_team(self, team_id: str) -> Optional[TeamResponse]:
+        """Get team from Firebase"""
         try:
-            # Business logic here
-            result = self.db.collection('data').document(param).get()
-            
-            return FeatureResponse(data=result.to_dict())
-            
-        except HTTPException:
-            raise  # Re-raise HTTP exceptions
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Operation failed: {str(e)}"
-            )
-
-# Singleton instance
-feature_service = FeatureService()
-```
-
-### Service Rules
-1. **Always use async methods** (`async def`)
-2. **Always raise HTTPException** for errors
-3. **Re-raise HTTPException** in except blocks (don't wrap twice)
-4. **Return Pydantic models** for type safety
-5. **Create singleton instance** at bottom of file
-
-### Example: Complete Service
-```python
-# services/team_service.py
-from fastapi import HTTPException, status
-from models.teams import Team, TeamResponse
-from config.firebase import firebase_service
-from typing import List
-
-class TeamService:
-    """Service for managing baseball teams"""
-    
-    def __init__(self):
-        self.db = firebase_service.db
-    
-    async def get_team(self, team_id: str) -> Team:
-        """Get a specific team by ID"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-        
-        try:
-            team_doc = self.db.collection('teams').document(team_id).get()
-            
-            if not team_doc.exists:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Team {team_id} not found"
-                )
-            
-            return Team(**team_doc.to_dict())
-            
-        except HTTPException:
-            raise
+            doc = self.db.collection('teams').document(team_id).get()
+            if not doc.exists:
+                return None
+            return TeamResponse(**doc.to_dict())
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to get team: {str(e)}"
             )
     
-    async def list_teams(self) -> List[Team]:
-        """Get all teams"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-        
+    async def get_all_teams(self) -> List[TeamResponse]:
+        """Get all teams from Firebase"""
         try:
-            teams_ref = self.db.collection('teams').stream()
-            return [Team(**doc.to_dict()) for doc in teams_ref]
-            
+            docs = self.db.collection('teams').stream()
+            return [TeamResponse(**doc.to_dict()) for doc in docs]
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to list teams: {str(e)}"
+                detail=f"Failed to get teams: {str(e)}"
             )
-
-# Singleton
-team_service = TeamService()
 ```
+
+### 5. Create Service (`services/teams_service.py`)
+```python
+from repositories.teams_repository import TeamsRepository
+from domain.teams_domain import TeamsDomain
+from models.teams import TeamRequest, TeamResponse
+from typing import List
+
+class TeamsService:
+    """Service for managing teams - pure orchestration"""
+    
+    def __init__(self, teams_repository: TeamsRepository, teams_domain: TeamsDomain):
+        self.teams_repository = teams_repository
+        self.teams_domain = teams_domain
+    
+    async def create_team(self, team_request: TeamRequest) -> TeamResponse:
+        """Create a new team"""
+        # Validate business rules
+        self.teams_domain.validate_team_name(team_request.name)
+        self.teams_domain.validate_league(team_request.league)
+        
+        # Convert to dict and create
+        team_data = team_request.dict()
+        return await self.teams_repository.create_team(team_data)
+    
+    async def get_team(self, team_id: str) -> TeamResponse:
+        """Get team by ID"""
+        team = await self.teams_repository.get_team(team_id)
+        if not team:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Team {team_id} not found"
+            )
+        return team
+    
+    async def get_all_teams(self) -> List[TeamResponse]:
+        """Get all teams"""
+        return await self.teams_repository.get_all_teams()
+```
+
+### 6. Add to Dependencies (`dependency/dependencies.py`)
+```python
+# Add these imports at the top
+from infrastructure.teams_repository import TeamsRepositoryFirebase
+from domain.teams_domain import TeamsDomain
+from services.teams_service import TeamsService
+
+# Add these factory functions
+def get_teams_repository() -> TeamsRepository:
+    return TeamsRepositoryFirebase(firebase_service.db)
+
+def get_teams_domain() -> TeamsDomain:
+    return TeamsDomain()
+
+def get_teams_service() -> TeamsService:
+    return TeamsService(get_teams_repository(), get_teams_domain())
+```
+
+### 7. Create Route (`routes/teams.py`)
+```python
+from fastapi import APIRouter, status, Depends
+from models.teams import TeamRequest, TeamResponse
+from services.teams_service import TeamsService
+from dependency.dependencies import get_teams_service
+from typing import List
+
+router = APIRouter(prefix="/api/teams", tags=["teams"])
+
+@router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
+async def create_team(
+    team_request: TeamRequest,
+    teams_service: TeamsService = Depends(get_teams_service)
+):
+    """Create a new team"""
+    return await teams_service.create_team(team_request)
+
+@router.get("/{team_id}", response_model=TeamResponse)
+async def get_team(
+    team_id: str,
+    teams_service: TeamsService = Depends(get_teams_service)
+):
+    """Get team by ID"""
+    return await teams_service.get_team(team_id)
+
+@router.get("/", response_model=List[TeamResponse])
+async def get_all_teams(
+    teams_service: TeamsService = Depends(get_teams_service)
+):
+    """Get all teams"""
+    return await teams_service.get_all_teams()
+```
+
+### 8. Register Route (`routes/__init__.py`)
+```python
+from routes.auth import router as auth_router
+from routes.players import router as players_router
+from routes.teams import router as teams_router  # Add this
+
+__all__ = ['auth_router', 'players_router', 'teams_router']
+```
+
+### 9. Include in Main App (`main.py`)
+```python
+from routes import auth_router, players_router, teams_router
+
+app.include_router(auth_router)
+app.include_router(players_router)
+app.include_router(teams_router)  # Add this
+```
+
+---
+
+---
+
+## 🎬 How Each Layer Works
+
+### Routes Layer
+Routes are thin - they just handle HTTP and delegate to services:
+
+```python
+# routes/teams.py
+@router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
+async def create_team(
+    team_request: TeamRequest,
+    teams_service: TeamsService = Depends(get_teams_service)  # Dependency injection
+):
+    """Create a new team"""
+    return await teams_service.create_team(team_request)  # Delegate to service
+```
+
+**Rules:**
+- Only handle HTTP concerns (status codes, response models)
+- Use dependency injection for services
+- Delegate all logic to services
+- No business logic here!
+
+### Services Layer
+Services orchestrate between domain and infrastructure:
+
+```python
+# services/teams_service.py
+class TeamsService:
+    def __init__(self, teams_repository: TeamsRepository, teams_domain: TeamsDomain):
+        self.teams_repository = teams_repository  # Injected
+        self.teams_domain = teams_domain          # Injected
+    
+    async def create_team(self, team_request: TeamRequest) -> TeamResponse:
+        # 1. Validate business rules (domain)
+        self.teams_domain.validate_team_name(team_request.name)
+        
+        # 2. Convert and save (infrastructure)
+        team_data = team_request.dict()
+        return await self.teams_repository.create_team(team_data)
+```
+
+**Rules:**
+- Pure orchestration - no business logic
+- No direct database access
+- Coordinate between domain and infrastructure
+- Always async methods
+
+### Domain Layer
+Domain contains pure business logic:
+
+```python
+# domain/teams_domain.py
+class TeamsDomain:
+    def validate_team_name(self, name: str) -> None:
+        """Pure business rule validation"""
+        if not name or len(name.strip()) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Team name must be at least 2 characters"
+            )
+```
+
+**Rules:**
+- Pure business logic only
+- No external dependencies (no Firebase, no APIs)
+- Can raise HTTPException for validation errors
+- Easy to test in isolation
+
+### Infrastructure Layer
+Infrastructure handles external dependencies:
+
+```python
+# infrastructure/teams_repository.py
+class TeamsRepositoryFirebase(TeamsRepository):
+    def __init__(self, db):
+        self.db = db  # Firebase injected
+    
+    async def create_team(self, team_data: dict) -> TeamResponse:
+        """Firebase-specific implementation"""
+        doc_ref = self.db.collection('teams').document()
+        team_data['id'] = doc_ref.id
+        doc_ref.set(team_data)
+        return TeamResponse(**team_data)
+```
+
+**Rules:**
+- Implements repository interfaces
+- Handles all external dependencies
+- Can be swapped out easily
+- Contains Firebase, API calls, file I/O
 
 ---
 
@@ -399,257 +601,138 @@ async def public_route():
 
 ### 1. ❌ Never Put Business Logic in Routes
 ```python
-# ❌ WRONG - Logic in route
-@router.get("/stats/{player_id}")
-async def get_stats(player_id: int):
-    db = firebase_service.db
-    doc = db.collection('stats').document(str(player_id)).get()
-    return doc.to_dict()
+# ❌ WRONG - Business logic in route
+@router.post("/teams")
+async def create_team(team_data: TeamRequest):
+    if len(team_data.name) < 2:  # Business rule in route!
+        raise HTTPException(status_code=400, detail="Name too short")
+    return await teams_service.create_team(team_data)
 
 # ✅ CORRECT - Delegate to service
-@router.get("/stats/{player_id}")
-async def get_stats(player_id: int):
-    return await stats_service.get_stats(player_id)
+@router.post("/teams")
+async def create_team(team_data: TeamRequest, teams_service: TeamsService = Depends(get_teams_service)):
+    return await teams_service.create_team(team_data)  # Service handles validation
 ```
 
-### 2. ❌ Never Forget Error Handling
+### 2. ❌ Never Put Business Logic in Services
 ```python
-# ❌ WRONG - No error handling
-async def get_data(self, id: str):
-    return self.db.collection('data').document(id).get()
+# ❌ WRONG - Business logic in service
+class TeamsService:
+    async def create_team(self, team_data: TeamRequest):
+        if len(team_data.name) < 2:  # Business rule in service!
+            raise HTTPException(status_code=400, detail="Name too short")
+        return await self.repository.create_team(team_data)
 
-# ✅ CORRECT - Proper error handling
-async def get_data(self, id: str):
-    if not self.db:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Firebase is not configured"
-        )
+# ✅ CORRECT - Business logic in domain
+class TeamsService:
+    async def create_team(self, team_data: TeamRequest):
+        self.teams_domain.validate_team_name(team_data.name)  # Domain handles validation
+        return await self.repository.create_team(team_data)
+```
+
+### 3. ❌ Never Access External Dependencies in Domain
+```python
+# ❌ WRONG - Firebase in domain
+class TeamsDomain:
+    def validate_team(self, team_data: dict):
+        db = firebase_service.db  # External dependency in domain!
+        existing = db.collection('teams').where('name', '==', team_data['name']).get()
+        if existing:
+            raise HTTPException(status_code=400, detail="Team exists")
+
+# ✅ CORRECT - Pure business logic in domain
+class TeamsDomain:
+    def validate_team_name(self, name: str):
+        if not name or len(name.strip()) < 2:  # Pure business rule
+            raise HTTPException(status_code=400, detail="Name too short")
+```
+
+### 4. ❌ Never Skip Dependency Injection
+```python
+# ❌ WRONG - Hard dependencies
+class TeamsService:
+    def __init__(self):
+        self.db = firebase_service.db  # Hard dependency, hard to test
+
+# ✅ CORRECT - Dependency injection
+class TeamsService:
+    def __init__(self, teams_repository: TeamsRepository, teams_domain: TeamsDomain):
+        self.teams_repository = teams_repository  # Injected, easy to test
+        self.teams_domain = teams_domain
+```
+
+### 5. ❌ Never Create Objects Inside Classes
+```python
+# ❌ WRONG - Creating dependencies inside
+class TeamsService:
+    async def create_team(self, team_data: TeamRequest):
+        domain = TeamsDomain()  # Creating dependency inside!
+        domain.validate_team_name(team_data.name)
+
+# ✅ CORRECT - Inject dependencies
+class TeamsService:
+    def __init__(self, teams_domain: TeamsDomain):
+        self.teams_domain = teams_domain  # Injected from outside
     
-    try:
-        doc = self.db.collection('data').document(id).get()
-        if not doc.exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Data {id} not found"
-            )
-        return doc.to_dict()
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed: {str(e)}"
-        )
+    async def create_team(self, team_data: TeamRequest):
+        self.teams_domain.validate_team_name(team_data.name)
 ```
 
-### 3. ❌ Never Use Blocking I/O
+### 6. ❌ Never Skip Repository Interfaces
 ```python
-# ❌ WRONG - Blocking operation
-def get_data():  # Not async!
-    return requests.get('http://api.com/data')
+# ❌ WRONG - Direct Firebase access in service
+class TeamsService:
+    def __init__(self, db):
+        self.db = db  # Direct Firebase dependency
+    
+    async def create_team(self, team_data: dict):
+        doc_ref = self.db.collection('teams').document()  # Firebase code in service!
 
-# ✅ CORRECT - Async operation
-async def get_data():
-    async with httpx.AsyncClient() as client:
-        return await client.get('http://api.com/data')
+# ✅ CORRECT - Use repository interface
+class TeamsService:
+    def __init__(self, teams_repository: TeamsRepository):
+        self.teams_repository = teams_repository  # Abstract interface
+    
+    async def create_team(self, team_data: dict):
+        return await self.teams_repository.create_team(team_data)  # Clean abstraction
 ```
 
-### 4. ❌ Never Skip Type Hints
+### 7. ❌ Never Mix Concerns
 ```python
-# ❌ WRONG - No types
-def process_data(data):
-    return data
+# ❌ WRONG - Mixed concerns
+class TeamsService:
+    async def create_team(self, team_data: TeamRequest):
+        # Validation (domain concern)
+        if len(team_data.name) < 2:
+            raise HTTPException(status_code=400, detail="Name too short")
+        
+        # Database access (infrastructure concern)
+        doc_ref = self.db.collection('teams').document()
+        doc_ref.set(team_data.dict())
+        
+        # Business logic (domain concern)
+        if team_data.league == "MLB":
+            team_data.premium = True
 
-# ✅ CORRECT - Full type hints
-async def process_data(data: dict) -> ProcessedData:
-    return ProcessedData(**data)
-```
-
-### 5. ❌ Never Return Raw Dictionaries
-```python
-# ❌ WRONG - Unvalidated dict
-@router.get("/user/{id}")
-async def get_user(id: str):
-    return {"id": id, "name": "John"}
-
-# ✅ CORRECT - Pydantic model
-@router.get("/user/{id}", response_model=UserResponse)
-async def get_user(id: str) -> UserResponse:
-    return UserResponse(id=id, name="John")
-```
-
-### 6. ❌ Never Create Multiple Service Instances
-```python
-# ❌ WRONG - New instance each time
-@router.get("/data")
-async def get_data():
-    service = DataService()  # NO!
-    return await service.get()
-
-# ✅ CORRECT - Use singleton
-# In service file:
-data_service = DataService()
-
-# In route:
-from services.data_service import data_service
-
-@router.get("/data")
-async def get_data():
-    return await data_service.get()
-```
-
-### 7. ❌ Never Hardcode Values
-```python
-# ❌ WRONG - Hardcoded
-FIREBASE_KEY = "path/to/key.json"
-
-# ✅ CORRECT - Use config
-from config.settings import settings
-FIREBASE_KEY = settings.FIREBASE_CREDENTIALS_PATH
+# ✅ CORRECT - Separated concerns
+class TeamsService:
+    async def create_team(self, team_data: TeamRequest):
+        self.teams_domain.validate_team_name(team_data.name)  # Domain
+        return await self.teams_repository.create_team(team_data)  # Infrastructure
 ```
 
 ---
 
 ## 📋 Code Templates
 
-### Route Template
+### Complete Feature Template
+
+Here's a complete template for adding any new feature following Clean Architecture:
+
+#### 1. Model (`models/feature.py`)
 ```python
-# routes/feature.py
-from fastapi import APIRouter, status, Depends, Query
-from models.feature import FeatureRequest, FeatureResponse
-from services.feature_service import feature_service
-from middleware.auth import get_current_user
-from typing import List
-
-router = APIRouter(prefix="/api/feature", tags=["feature"])
-
-@router.get("/", response_model=List[FeatureResponse])
-async def list_items():
-    """Get all items (public)"""
-    return await feature_service.list_all()
-
-@router.get("/{item_id}", response_model=FeatureResponse)
-async def get_item(item_id: str):
-    """Get specific item by ID"""
-    return await feature_service.get_by_id(item_id)
-
-@router.post("/", response_model=FeatureResponse, status_code=status.HTTP_201_CREATED)
-async def create_item(
-    data: FeatureRequest,
-    current_user: str = Depends(get_current_user)
-):
-    """Create new item (protected)"""
-    return await feature_service.create(current_user, data)
-
-@router.put("/{item_id}", response_model=FeatureResponse)
-async def update_item(
-    item_id: str,
-    data: FeatureRequest,
-    current_user: str = Depends(get_current_user)
-):
-    """Update item (protected)"""
-    return await feature_service.update(current_user, item_id, data)
-
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_item(
-    item_id: str,
-    current_user: str = Depends(get_current_user)
-):
-    """Delete item (protected)"""
-    await feature_service.delete(current_user, item_id)
-```
-
-### Service Template
-```python
-# services/feature_service.py
-from fastapi import HTTPException, status
-from config.firebase import firebase_service
-from models.feature import FeatureRequest, FeatureResponse
-from typing import List
-
-class FeatureService:
-    """Service for managing features"""
-    
-    def __init__(self):
-        self.db = firebase_service.db
-    
-    async def list_all(self) -> List[FeatureResponse]:
-        """Get all items"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-        
-        try:
-            docs = self.db.collection('features').stream()
-            return [FeatureResponse(**doc.to_dict()) for doc in docs]
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to list items: {str(e)}"
-            )
-    
-    async def get_by_id(self, item_id: str) -> FeatureResponse:
-        """Get specific item"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-        
-        try:
-            doc = self.db.collection('features').document(item_id).get()
-            
-            if not doc.exists:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Item {item_id} not found"
-                )
-            
-            return FeatureResponse(**doc.to_dict())
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to get item: {str(e)}"
-            )
-    
-    async def create(self, user_id: str, data: FeatureRequest) -> FeatureResponse:
-        """Create new item"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-        
-        try:
-            # Create document
-            doc_ref = self.db.collection('features').document()
-            item_data = data.dict()
-            item_data['id'] = doc_ref.id
-            item_data['user_id'] = user_id
-            
-            doc_ref.set(item_data)
-            
-            return FeatureResponse(**item_data)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create item: {str(e)}"
-            )
-
-# Singleton
-feature_service = FeatureService()
-```
-
-### Model Template
-```python
-# models/feature.py
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 class FeatureRequest(BaseModel):
     """Request model for creating/updating feature"""
@@ -663,10 +746,285 @@ class FeatureResponse(BaseModel):
     name: str
     description: Optional[str] = None
     value: int
-    user_id: str
+    created_at: str
     
     class Config:
         extra = "allow"
+```
+
+#### 2. Domain (`domain/feature_domain.py`)
+```python
+from fastapi import HTTPException, status
+
+class FeatureDomain:
+    """Pure business logic for features"""
+    
+    def __init__(self):
+        pass
+    
+    def validate_feature_name(self, name: str) -> None:
+        """Validate feature name business rules"""
+        if not name or len(name.strip()) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Feature name must be at least 2 characters"
+            )
+    
+    def validate_feature_value(self, value: int) -> None:
+        """Validate feature value business rules"""
+        if value < 0 or value > 1000:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Feature value must be between 0 and 1000"
+            )
+```
+
+#### 3. Repository Interface (`repositories/feature_repository.py`)
+```python
+from abc import ABC, abstractmethod
+from typing import List, Optional
+from models.feature import FeatureResponse
+
+class FeatureRepository(ABC):
+    """Abstract interface for feature data access"""
+    
+    @abstractmethod
+    async def create_feature(self, feature_data: dict) -> FeatureResponse:
+        pass
+    
+    @abstractmethod
+    async def get_feature(self, feature_id: str) -> Optional[FeatureResponse]:
+        pass
+    
+    @abstractmethod
+    async def get_all_features(self) -> List[FeatureResponse]:
+        pass
+    
+    @abstractmethod
+    async def update_feature(self, feature_id: str, feature_data: dict) -> FeatureResponse:
+        pass
+    
+    @abstractmethod
+    async def delete_feature(self, feature_id: str) -> bool:
+        pass
+```
+
+#### 4. Infrastructure (`infrastructure/feature_repository.py`)
+```python
+from repositories.feature_repository import FeatureRepository
+from models.feature import FeatureResponse
+from fastapi import HTTPException, status
+from typing import List, Optional
+
+class FeatureRepositoryFirebase(FeatureRepository):
+    """Firebase implementation of feature repository"""
+    
+    def __init__(self, db):
+        self.db = db
+    
+    async def create_feature(self, feature_data: dict) -> FeatureResponse:
+        """Create feature in Firebase"""
+        try:
+            doc_ref = self.db.collection('features').document()
+            feature_data['id'] = doc_ref.id
+            doc_ref.set(feature_data)
+            return FeatureResponse(**feature_data)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create feature: {str(e)}"
+            )
+    
+    async def get_feature(self, feature_id: str) -> Optional[FeatureResponse]:
+        """Get feature from Firebase"""
+        try:
+            doc = self.db.collection('features').document(feature_id).get()
+            if not doc.exists:
+                return None
+            return FeatureResponse(**doc.to_dict())
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to get feature: {str(e)}"
+            )
+    
+    async def get_all_features(self) -> List[FeatureResponse]:
+        """Get all features from Firebase"""
+        try:
+            docs = self.db.collection('features').stream()
+            return [FeatureResponse(**doc.to_dict()) for doc in docs]
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to get features: {str(e)}"
+            )
+    
+    async def update_feature(self, feature_id: str, feature_data: dict) -> FeatureResponse:
+        """Update feature in Firebase"""
+        try:
+            doc_ref = self.db.collection('features').document(feature_id)
+            doc_ref.update(feature_data)
+            updated_doc = doc_ref.get()
+            return FeatureResponse(**updated_doc.to_dict())
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update feature: {str(e)}"
+            )
+    
+    async def delete_feature(self, feature_id: str) -> bool:
+        """Delete feature from Firebase"""
+        try:
+            self.db.collection('features').document(feature_id).delete()
+            return True
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to delete feature: {str(e)}"
+            )
+```
+
+#### 5. Service (`services/feature_service.py`)
+```python
+from repositories.feature_repository import FeatureRepository
+from domain.feature_domain import FeatureDomain
+from models.feature import FeatureRequest, FeatureResponse
+from fastapi import HTTPException, status
+from typing import List
+
+class FeatureService:
+    """Service for managing features - pure orchestration"""
+    
+    def __init__(self, feature_repository: FeatureRepository, feature_domain: FeatureDomain):
+        self.feature_repository = feature_repository
+        self.feature_domain = feature_domain
+    
+    async def create_feature(self, feature_request: FeatureRequest) -> FeatureResponse:
+        """Create a new feature"""
+        # Validate business rules
+        self.feature_domain.validate_feature_name(feature_request.name)
+        self.feature_domain.validate_feature_value(feature_request.value)
+        
+        # Convert to dict and create
+        feature_data = feature_request.dict()
+        return await self.feature_repository.create_feature(feature_data)
+    
+    async def get_feature(self, feature_id: str) -> FeatureResponse:
+        """Get feature by ID"""
+        feature = await self.feature_repository.get_feature(feature_id)
+        if not feature:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Feature {feature_id} not found"
+            )
+        return feature
+    
+    async def get_all_features(self) -> List[FeatureResponse]:
+        """Get all features"""
+        return await self.feature_repository.get_all_features()
+    
+    async def update_feature(self, feature_id: str, feature_request: FeatureRequest) -> FeatureResponse:
+        """Update feature"""
+        # Validate business rules
+        self.feature_domain.validate_feature_name(feature_request.name)
+        self.feature_domain.validate_feature_value(feature_request.value)
+        
+        # Check if feature exists
+        existing = await self.feature_repository.get_feature(feature_id)
+        if not existing:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Feature {feature_id} not found"
+            )
+        
+        # Update
+        feature_data = feature_request.dict()
+        return await self.feature_repository.update_feature(feature_id, feature_data)
+    
+    async def delete_feature(self, feature_id: str) -> bool:
+        """Delete feature"""
+        # Check if feature exists
+        existing = await self.feature_repository.get_feature(feature_id)
+        if not existing:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Feature {feature_id} not found"
+            )
+        
+        return await self.feature_repository.delete_feature(feature_id)
+```
+
+#### 6. Dependencies (`dependency/dependencies.py`)
+```python
+# Add these imports at the top
+from infrastructure.feature_repository import FeatureRepositoryFirebase
+from domain.feature_domain import FeatureDomain
+from services.feature_service import FeatureService
+
+# Add these factory functions
+def get_feature_repository() -> FeatureRepository:
+    return FeatureRepositoryFirebase(firebase_service.db)
+
+def get_feature_domain() -> FeatureDomain:
+    return FeatureDomain()
+
+def get_feature_service() -> FeatureService:
+    return FeatureService(get_feature_repository(), get_feature_domain())
+```
+
+#### 7. Route (`routes/feature.py`)
+```python
+from fastapi import APIRouter, status, Depends
+from models.feature import FeatureRequest, FeatureResponse
+from services.feature_service import FeatureService
+from dependency.dependencies import get_feature_service
+from middleware.auth import get_current_user
+from typing import List
+
+router = APIRouter(prefix="/api/features", tags=["features"])
+
+@router.post("/", response_model=FeatureResponse, status_code=status.HTTP_201_CREATED)
+async def create_feature(
+    feature_request: FeatureRequest,
+    current_user: str = Depends(get_current_user),
+    feature_service: FeatureService = Depends(get_feature_service)
+):
+    """Create a new feature (protected)"""
+    return await feature_service.create_feature(feature_request)
+
+@router.get("/{feature_id}", response_model=FeatureResponse)
+async def get_feature(
+    feature_id: str,
+    feature_service: FeatureService = Depends(get_feature_service)
+):
+    """Get feature by ID (public)"""
+    return await feature_service.get_feature(feature_id)
+
+@router.get("/", response_model=List[FeatureResponse])
+async def get_all_features(
+    feature_service: FeatureService = Depends(get_feature_service)
+):
+    """Get all features (public)"""
+    return await feature_service.get_all_features()
+
+@router.put("/{feature_id}", response_model=FeatureResponse)
+async def update_feature(
+    feature_id: str,
+    feature_request: FeatureRequest,
+    current_user: str = Depends(get_current_user),
+    feature_service: FeatureService = Depends(get_feature_service)
+):
+    """Update feature (protected)"""
+    return await feature_service.update_feature(feature_id, feature_request)
+
+@router.delete("/{feature_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_feature(
+    feature_id: str,
+    current_user: str = Depends(get_current_user),
+    feature_service: FeatureService = Depends(get_feature_service)
+):
+    """Delete feature (protected)"""
+    await feature_service.delete_feature(feature_id)
 ```
 
 ---
@@ -675,22 +1033,34 @@ class FeatureResponse(BaseModel):
 
 Before submitting a PR, verify:
 
-### Structure
-- [ ] Route files in `routes/` directory
-- [ ] Service files in `services/` with `_service.py` suffix
-- [ ] Model files in `models/` directory
+### Clean Architecture Structure
+- [ ] Route files in `routes/` directory (HTTP only)
+- [ ] Service files in `services/` with `_service.py` suffix (orchestration only)
+- [ ] Domain files in `domain/` with `_domain.py` suffix (business logic only)
+- [ ] Repository interfaces in `repositories/` directory (abstract contracts)
+- [ ] Infrastructure implementations in `infrastructure/` directory (concrete implementations)
+- [ ] Model files in `models/` directory (Pydantic validation)
 - [ ] All directories have `__init__.py`
 - [ ] Router registered in `routes/__init__.py`
 - [ ] Router included in `main.py`
+- [ ] Dependencies added to `dependency/dependencies.py`
 
 ### Code Quality
 - [ ] All functions are async (`async def`)
 - [ ] Full type hints on all functions
-- [ ] Services use singleton pattern
+- [ ] Services use dependency injection (no singletons)
 - [ ] Pydantic models for all request/response
 - [ ] No business logic in routes
+- [ ] No business logic in services (only orchestration)
+- [ ] No external dependencies in domain
 - [ ] Proper error handling (HTTPException)
-- [ ] Re-raise HTTPException in services
+- [ ] Repository interfaces implemented correctly
+
+### Dependency Injection
+- [ ] Services receive dependencies through constructor
+- [ ] Dependencies injected via FastAPI `Depends()`
+- [ ] Factory functions in `dependency/dependencies.py`
+- [ ] No hard dependencies or global state
 
 ### Security
 - [ ] Protected routes use `Depends(get_current_user)`
@@ -701,6 +1071,7 @@ Before submitting a PR, verify:
 - [ ] No print statements (use logger if needed)
 - [ ] No commented code
 - [ ] Code passes linting
+- [ ] No unused imports
 
 ### Commits
 - [ ] Commit message follows convention:
@@ -771,12 +1142,20 @@ async def protected(api_key: str = Depends(verify_api_key)):
 
 ## 📝 Summary
 
-**Remember the structure:**
-1. **Routes** handle HTTP (endpoints only)
-2. **Services** contain business logic
-3. **Models** validate all data
-4. **Use singletons** for services
-5. **Always async** for I/O operations
+**Clean Architecture Principles:**
+1. **Routes** handle HTTP only (no business logic)
+2. **Services** orchestrate between domain and infrastructure (no business logic)
+3. **Domain** contains pure business logic (no external dependencies)
+4. **Infrastructure** handles external dependencies (Firebase, APIs)
+5. **Dependency Injection** wires everything together cleanly
+6. **Repository Pattern** abstracts data access
+7. **Always async** for I/O operations
 
-**Follow the patterns, not your intuition.** This structure keeps the API maintainable, testable, and scalable.
+**Key Benefits:**
+- **Testable** - Easy to mock dependencies
+- **Maintainable** - Clear separation of concerns
+- **Flexible** - Easy to swap implementations
+- **Scalable** - Clean boundaries between layers
+
+**Follow the patterns, not your intuition.** This Clean Architecture structure keeps the API maintainable, testable, and scalable for years to come.
 
