@@ -1,12 +1,18 @@
 from firebase_admin import auth, firestore
 from fastapi import HTTPException, status
 from config.firebase import firebase_service
+from config.settings import settings
 from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from utils.logger import get_logger
+import httpx
+
+logger = get_logger(__name__)
 
 class AuthService:
     def __init__(self):
         self.db = firebase_service.db
         self.auth = firebase_service.auth
+        self.firebase_api_key = settings.FIREBASE_WEB_API_KEY
     
     async def signup(self, signup_data: SignupRequest) -> SignupResponse:
         """Create a new user account"""
@@ -57,15 +63,48 @@ class AuthService:
                 detail="Firebase is not configured"
             )
         
+        if not self.firebase_api_key:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase Web API key is not configured"
+            )
+        
         try:
-            # Get user by email
-            user = auth.get_user_by_email(login_data.email)
+            # CRITICAL: Verify password using Firebase Authentication REST API
+            # Firebase Admin SDK doesn't provide password verification
+            async with httpx.AsyncClient(timeout=10.0) as client:  # Add timeout
+                firebase_auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={self.firebase_api_key}"
+                response = await client.post(
+                    firebase_auth_url,
+                    json={
+                        "email": login_data.email,
+                        "password": login_data.password,
+                        "returnSecureToken": True
+                    }
+                )
+                
+                if response.status_code != 200:
+                    # Firebase returns 400 for invalid credentials
+                    # Don't reveal whether email exists - same error for both cases
+                    logger.warning(f"Failed login attempt for email: {login_data.email}")
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid email or password"
+                    )
+                
+                auth_data = response.json()
+                uid = auth_data.get("localId")
+            
+            # Get user to verify account still exists in Admin SDK
+            user = auth.get_user(uid)
             
             # Generate a custom token for the user
             custom_token = auth.create_custom_token(user.uid)
             
             # Get user data from Firestore
             user_doc = self.db.collection('users').document(user.uid).get()
+            
+            logger.info(f"Successful login for user: {user.uid} ({user.email})")
             
             return LoginResponse(
                 message="Login successful",
@@ -74,6 +113,9 @@ class AuthService:
                 token=custom_token.decode('utf-8')
             )
         
+        except HTTPException:
+            # Re-raise HTTP exceptions (including auth failures)
+            raise
         except auth.UserNotFoundError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
