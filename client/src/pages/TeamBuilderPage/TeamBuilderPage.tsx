@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
 import styles from "./TeamBuilderPage.module.css";
@@ -36,6 +37,9 @@ export default function TeamBuilderPage() {
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [error, setError] = useState("");
   const searchControllerRef = useRef<AbortController | null>(null);
+  const dragPlayerRef = useRef<SavedPlayer | null>(null);
+  const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -110,20 +114,33 @@ export default function TeamBuilderPage() {
         name: result.name,
         image_url: result.image_url,
         years_active: result.years_active
-      }));
+      })) as SavedPlayer[];
     }
 
     return savedPlayers;
   }, [searchResults, searchTerm, savedPlayers]);
 
+  const assignPlayerToPosition = useCallback((player: SavedPlayer, position: DiamondPosition) => {
+    setLineup((prev) => {
+      const next: LineupState = { ...prev };
+
+      positionOrder.forEach((slot) => {
+        if (next[slot]?.id === player.id) {
+          next[slot] = null;
+        }
+      });
+
+      next[position] = player;
+      return next;
+    });
+
+    setActivePosition(position);
+  }, []);
+
   const handleAssign = (player: SavedPlayer) => {
     const slot = activePosition;
     if (!slot) return;
-
-    setLineup((prev) => ({
-      ...prev,
-      [slot]: player
-    }));
+    assignPlayerToPosition(player, slot);
   };
 
   const handleClearSlot = (position: DiamondPosition) => {
@@ -146,6 +163,33 @@ export default function TeamBuilderPage() {
   const allShownAssigned =
     availablePlayers.length > 0 &&
     availablePlayers.every((player) => assignedIds.has(player.id));
+
+  const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
+    dragPlayerRef.current = { ...player };
+    setDraggingId(player.id);
+    if (fromPosition) {
+      setActivePosition(fromPosition);
+    }
+  };
+
+  const clearDragState = () => {
+    dragPlayerRef.current = null;
+    setDropTarget(null);
+    setDraggingId(null);
+  };
+
+  const handlePositionDrop = (event: DragEvent<HTMLDivElement>, position: DiamondPosition) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const player = dragPlayerRef.current;
+    if (!player) {
+      clearDragState();
+      return;
+    }
+
+    assignPlayerToPosition(player, position);
+    clearDragState();
+  };
 
   return (
     <div className={styles.page}>
@@ -186,20 +230,45 @@ export default function TeamBuilderPage() {
             {positionOrder.map((position) => {
               const assigned = lineup[position];
               const isActive = activePosition === position;
+              const isDropTarget = dropTarget === position && dragPlayerRef.current;
 
               return (
                 <div
                   key={position}
                   className={`${styles.positionNode} ${isActive ? styles.active : ""} ${
                     assigned ? styles.filled : ""
-                  }`}
+                  } ${isDropTarget ? styles.droppable : ""}`}
                   style={positionCoordinates[position]}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    if (dragPlayerRef.current) {
+                      setDropTarget(position);
+                    }
+                  }}
+                  onDragLeave={(event) => {
+                    event.preventDefault();
+                    if (dropTarget === position) {
+                      setDropTarget(null);
+                    }
+                  }}
+                  onDrop={(event) => handlePositionDrop(event, position)}
                 >
                   <button
                     type="button"
                     className={styles.positionTrigger}
                     onClick={() => setActivePosition(position)}
                     aria-pressed={isActive}
+                    draggable={Boolean(assigned)}
+                    onDragStart={(event) => {
+                      if (assigned) {
+                        event.dataTransfer.setData("text/plain", String(assigned.id));
+                        event.dataTransfer.effectAllowed = "move";
+                        prepareDragPlayer(assigned, position);
+                      }
+                    }}
+                    onDragEnd={() => {
+                      clearDragState();
+                    }}
                   >
                     <span className={styles.positionLabel}>{position}</span>
                     {assigned && (
@@ -269,7 +338,17 @@ export default function TeamBuilderPage() {
               const alreadyAssigned = assignedIds.has(player.id);
 
               return (
-                <div key={player.id} className={styles.playerRow}>
+                <div
+                  key={player.id}
+                  className={`${styles.playerRow} ${draggingId === player.id ? styles.dragging : ""}`}
+                  draggable
+                  onDragStart={(event) => {
+                    event.dataTransfer.setData("text/plain", String(player.id));
+                    event.dataTransfer.effectAllowed = "move";
+                    prepareDragPlayer(player);
+                  }}
+                  onDragEnd={clearDragState}
+                >
                   <div className={styles.playerProfile}>
                     <img
                       src={player.image_url || DEFAULT_PLAYER_IMAGE}

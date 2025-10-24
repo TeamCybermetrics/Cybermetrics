@@ -162,6 +162,7 @@
   cursor: pointer;
   transition: transform 0.2s ease, border 0.2s ease, background 0.2s ease;
   padding: 10px;
+  user-select: none;
 }
 
 .positionTrigger:hover {
@@ -186,6 +187,12 @@
 
 .active .positionTrigger {
   border: 2px solid #6d7bff;
+}
+
+.droppable .positionTrigger {
+  background: rgba(109, 123, 255, 0.18);
+  border-color: #6d7bff;
+  transform: scale(1.05);
 }
 
 .positionLabel {
@@ -249,6 +256,18 @@
   background: rgba(8, 9, 17, 0.78);
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.playerRow:active {
+  cursor: grabbing;
+}
+
+.playerRow.dragging {
+  opacity: 0.5;
+  transform: translateX(6px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 
 .playerProfile {
