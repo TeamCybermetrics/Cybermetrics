@@ -337,8 +337,6 @@ export default function DashboardPage() {
   const latestQueryRef = useRef("");
 
   const performanceMetrics = useMemo<RadarMetric[]>(() => {
-    console.log("Radar saved players count:", savedPlayers.length);
-
     if (savedPlayers.length === 0) {
       return BASE_PERFORMANCE_METRICS;
     }
