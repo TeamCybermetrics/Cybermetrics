@@ -7,6 +7,17 @@ from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Validate configuration
+    """
+    Manage the application's lifespan by running startup configuration validation and printing startup/shutdown messages.
+    
+    On startup, validates application settings and prints any warnings or a success message, then logs environment and server address. Yields control to allow the application to run. On shutdown, prints a shutdown message.
+    
+    Parameters:
+        app (FastAPI): The FastAPI application instance whose lifespan this context manager controls.
+    
+    Returns:
+        asynccontextmanager: An async context manager that performs the described startup and shutdown actions.
+    """
     print("\n" + "="*50)
     print("🚀 Starting Cybermetrics API")
     print("="*50)
