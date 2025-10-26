@@ -7,7 +7,15 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
 async def signup(signup_data: SignupRequest, request: Request):
-    """Create a new user account with Firebase Authentication"""
+    """
+    Create a new user account using the provided registration data.
+    
+    Parameters:
+        signup_data (SignupRequest): User registration information such as email, password, and profile fields.
+    
+    Returns:
+        SignupResponse: Details of the newly created user.
+    """
     # Rate limit by IP to prevent signup spam
     client_ip = await get_client_ip(request)
     await rate_limiter.check_rate_limit(f"signup:{client_ip}")
@@ -17,9 +25,18 @@ async def signup(signup_data: SignupRequest, request: Request):
 @router.post("/login", response_model=LoginResponse)
 async def login(login_data: LoginRequest, request: Request):
     """
-    Authenticate user and generate custom token
-    Note: In production, you should use Firebase Client SDK for authentication
-    This endpoint demonstrates backend validation with security enhancements
+    Authenticate the user credentials while applying IP- and email-based rate limits.
+    
+    Checks rate limits for the client's IP and the provided email before attempting authentication. On successful authentication, resets the failed-attempt counters for that IP and email. If authentication fails with HTTP 401, records a failed attempt for both the IP and email and re-raises the original HTTPException; other exceptions from the authentication service are propagated.
+    
+    Parameters:
+        login_data (LoginRequest): Credentials for authentication; the `email` field is used for email-based rate limiting.
+    
+    Returns:
+        LoginResponse: Authentication result returned by the authentication service.
+    
+    Raises:
+        fastapi.HTTPException: Propagates HTTP exceptions from the authentication service (401 responses also increment rate-limit counters).
     """
     # Get client IP for rate limiting
     client_ip = await get_client_ip(request)
@@ -49,7 +66,15 @@ async def login(login_data: LoginRequest, request: Request):
 
 @router.get("/verify")
 async def verify_token(authorization: str = Header(None)):
-    """Verify a Firebase custom token from Authorization header"""
+    """
+    Validate and verify a Bearer token extracted from the Authorization header.
+    
+    Parameters:
+        authorization (str | None): The Authorization header value in the form "Bearer <token>".
+    
+    Returns:
+        dict: The authentication service's verification result (decoded token / verification payload).
+    """
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,4 +91,3 @@ async def verify_token(authorization: str = Header(None)):
     
     token = parts[1]
     return await auth_service.verify_token(token)
-

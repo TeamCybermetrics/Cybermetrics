@@ -19,12 +19,33 @@ def _redact_email(email: str) -> str:
 
 class AuthService:
     def __init__(self):
+        """
+        Initialize the AuthService instance by binding Firebase clients and configuration.
+        
+        Sets the following instance attributes:
+        - db: Firestore database client used for user documents.
+        - auth: Firebase Admin auth client used for user operations.
+        - firebase_api_key: Firebase Web API key used for REST authentication calls.
+        """
         self.db = firebase_service.db
         self.auth = firebase_service.auth
         self.firebase_api_key = settings.FIREBASE_WEB_API_KEY
     
     async def signup(self, signup_data: SignupRequest) -> SignupResponse:
-        """Create a new user account"""
+        """
+        Create a new Firebase user account and persist basic profile data to Firestore.
+        
+        Parameters:
+            signup_data (SignupRequest): Request data containing `email`, `password`, and `display_name` for the new user.
+        
+        Returns:
+            SignupResponse: Response containing a success message, the created user's UID, and email.
+        
+        Raises:
+            HTTPException: 503 if Firebase is not configured.
+            HTTPException: 400 if the provided email already exists.
+            HTTPException: 500 if user creation or Firestore persistence fails with an unexpected error.
+        """
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -65,7 +86,19 @@ class AuthService:
             )
     
     async def login(self, login_data: LoginRequest) -> LoginResponse:
-        """Authenticate user and generate custom token"""
+        """
+        Authenticate a user with email and password and return a Firebase custom authentication token.
+        
+        Performs password verification via the Firebase Authentication REST API, ensures the corresponding Firebase user exists, and returns a LoginResponse containing the generated custom token and basic user information.
+        
+        Returns:
+        	LoginResponse: Contains message, user_id, email, and a UTF-8 decoded custom token.
+        
+        Raises:
+        	HTTPException: With status 503 if Firebase or the Firebase Web API key is not configured.
+        	HTTPException: With status 401 if the email/password are invalid or the user does not exist.
+        	HTTPException: With status 500 for other unexpected errors encountered during login.
+        """
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -178,4 +211,3 @@ class AuthService:
             )
 
 auth_service = AuthService()
-
