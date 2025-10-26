@@ -5,8 +5,17 @@ from config.settings import settings
 from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 from utils.logger import get_logger
 import httpx
+import hashlib
 
 logger = get_logger(__name__)
+
+def _redact_email(email: str) -> str:
+    """Redact email for logging by hashing it to avoid PII exposure"""
+    if not email:
+        return "<empty>"
+    # Use SHA256 hash and take first 12 chars for brevity
+    email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
+    return f"<redacted:{email_hash}>"
 
 class AuthService:
     def __init__(self):
@@ -86,7 +95,7 @@ class AuthService:
                 if response.status_code != 200:
                     # Firebase returns 400 for invalid credentials
                     # Don't reveal whether email exists - same error for both cases
-                    logger.warning(f"Failed login attempt for email: {login_data.email}")
+                    logger.warning(f"Failed login attempt for email: {_redact_email(login_data.email)}")
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="Invalid email or password"
@@ -101,10 +110,7 @@ class AuthService:
             # Generate a custom token for the user
             custom_token = auth.create_custom_token(user.uid)
             
-            # Get user data from Firestore
-            user_doc = self.db.collection('users').document(user.uid).get()
-            
-            logger.info(f"Successful login for user: {user.uid} ({user.email})")
+            logger.info(f"Successful login for user: {user.uid} ({_redact_email(user.email)})")
             
             return LoginResponse(
                 message="Login successful",

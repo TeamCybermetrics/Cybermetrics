@@ -63,12 +63,12 @@ jobs:
         working-directory: ./server
         run: |
           cat << EOF > .env
-          FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
-          FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
-          ENVIRONMENT=testing
-          HOST=0.0.0.0
-          PORT=8000
-          EOF
+FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
+ENVIRONMENT=testing
+HOST=0.0.0.0
+PORT=8000
+EOF
 
       - name: Verify imports
         if: steps.changes.outputs.server == 'true'
@@ -80,6 +80,7 @@ jobs:
           python -c "import uvicorn; print('✓ Uvicorn')"
           python -c "from pybaseball import batting_stats; print('✓ Pybaseball')"
           python -c "from rapidfuzz import fuzz; print('✓ RapidFuzz')"
+          python -c "import httpx; print('✓ httpx')"
           echo "✅ All imports successful"
 
       - name: Test app startup
@@ -96,7 +97,9 @@ jobs:
       - name: Cleanup credentials
         if: always()
         working-directory: ./server
-        run: rm -f serviceAccountKey.json
+        run: |
+          rm -f serviceAccountKey.json
+          rm -f .env
 
       - name: Summary
         if: success()
