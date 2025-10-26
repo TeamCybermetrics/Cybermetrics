@@ -450,7 +450,6 @@
 }
 
 .radarShape {
-  fill: url(#radarFill);
   stroke: #4d7fff;
   stroke-width: 2;
   filter: drop-shadow(0 6px 16px rgba(77, 127, 255, 0.35));
@@ -462,6 +461,12 @@
   font-size: 10px;
   text-anchor: middle;
   dominant-baseline: middle;
+}
+
+.emptyMessage {
+  font-size: 14px;
+  opacity: 0.65;
+  text-align: center;
 }
 
 .searchOverlay {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import Alert from "@/components/Alert";
 import PlayerCard from "@/components/PlayerCard";
@@ -85,29 +85,29 @@ const DEFAULT_PLAYER_PROFILE: PlayerRadarProfile = BASE_PERFORMANCE_METRICS.redu
   {} as PlayerRadarProfile
 );
 
-const PLAYER_METRIC_LIBRARY: Record<string, PlayerRadarProfile> = {
-  "Shohei Ohtani": {
+const PLAYER_METRIC_LIBRARY: Record<number, PlayerRadarProfile> = {
+  660271: {
     avg: 0.304,
     obp: 0.406,
     slg: 0.654,
     iso: 0.350,
     wrcPlus: 180
   },
-  "Juan Soto": {
+  665742: {
     avg: 0.289,
     obp: 0.430,
     slg: 0.556,
     iso: 0.267,
     wrcPlus: 164
   },
-  "Ronald Acuna Jr.": {
+  660670: {
     avg: 0.337,
     obp: 0.414,
     slg: 0.596,
     iso: 0.259,
     wrcPlus: 170
   },
-  "Corey Seager": {
+  608369: {
     avg: 0.327,
     obp: 0.390,
     slg: 0.623,
@@ -132,7 +132,7 @@ function generateFallbackProfile(player: SavedPlayer, index: number): PlayerRada
 }
 
 function resolvePlayerProfile(player: SavedPlayer, index: number): PlayerRadarProfile {
-  const preset = PLAYER_METRIC_LIBRARY[player.name];
+  const preset = typeof player.id === "number" ? PLAYER_METRIC_LIBRARY[player.id] : undefined;
   if (preset) {
     return preset;
   }
@@ -140,6 +140,7 @@ function resolvePlayerProfile(player: SavedPlayer, index: number): PlayerRadarPr
 }
 
 function PerformanceRadar({ metrics }: { metrics: RadarMetric[] }) {
+  const gradientId = useId();
   const normalized = useMemo(() => {
     if (!metrics.length) {
       return [] as Array<RadarMetric & { normalized: number }>;
@@ -255,7 +256,7 @@ function PerformanceRadar({ metrics }: { metrics: RadarMetric[] }) {
         aria-label="Performance radar chart"
       >
         <defs>
-          <linearGradient id="radarFill" x1="50%" y1="0%" x2="50%" y2="100%">
+          <linearGradient id={gradientId} x1="50%" y1="0%" x2="50%" y2="100%">
             <stop offset="0%" stopColor="#4d7fff" stopOpacity="0.55" />
             <stop offset="100%" stopColor="#4d7fff" stopOpacity="0.2" />
           </linearGradient>
@@ -293,7 +294,11 @@ function PerformanceRadar({ metrics }: { metrics: RadarMetric[] }) {
           );
         })}
 
-        <polygon className={styles.radarShape} points={polygonPoints} fill="url(#radarFill)" />
+        <polygon
+          className={styles.radarShape}
+          points={polygonPoints}
+          fill={`url(#${gradientId})`}
+        />
 
         {normalized.map((metric, index) => {
           const angle = angleStep * index - Math.PI / 2;
