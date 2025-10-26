@@ -464,6 +464,12 @@
   dominant-baseline: middle;
 }
 
+.emptyMessage {
+  font-size: 14px;
+  opacity: 0.65;
+  text-align: center;
+}
+
 .searchOverlay {
   position: fixed;
   inset: 0;
