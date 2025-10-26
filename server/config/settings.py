@@ -17,7 +17,20 @@ class Settings:
     CORS_ORIGINS = ["http://localhost:3000"]
     
     def validate(self):
-        """Validate critical configuration"""
+        """
+        Validate configuration and collect startup warnings.
+        
+        Checks for missing or insecure settings and returns user-facing warning messages.
+        Specifically, it warns when FIREBASE_WEB_API_KEY is not set and adds a production-mode
+        warning advising HTTPS. If running in production and FIREBASE_WEB_API_KEY is absent,
+        validation fails.
+        
+        Returns:
+            list[str]: List of warning messages; empty if no warnings.
+        
+        Raises:
+            ValueError: If ENVIRONMENT is "production" and FIREBASE_WEB_API_KEY is not set.
+        """
         warnings = []
         
         if not self.FIREBASE_WEB_API_KEY:
@@ -31,4 +44,3 @@ class Settings:
         return warnings
 
 settings = Settings()
-
