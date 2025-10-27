@@ -3,12 +3,18 @@ from models.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
 from fastapi import HTTPException, status
 from typing import List
 from anyio import to_thread
+import logging
 
 
 class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
     def __init__(self, db):
         """Initialize the repository with a Firebase database instance"""
         self.db = db
+        self._logger = logging.getLogger(__name__)
+    
+    def _add_player_blocking(self, user_id: str, player_info: dict, player_id: str) -> None:
+        """Blocking version: Add a player to user's collection"""
+        self.db.collection('users').document(user_id).collection('saved_players').document(player_id).set(player_info)
     
     async def add_player(self, user_id: str, player_info: dict, player_id: str) -> AddPlayerResponse:
         """Add a player to the user's saved players collection"""
@@ -19,8 +25,7 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
             )
         
         try:
-            # Save player to user's subcollection in Firestore
-            self.db.collection('users').document(user_id).collection('saved_players').document(player_id).set(player_info)
+            await to_thread.run_sync(self._add_player_blocking, user_id, player_info, player_id)
             
             return AddPlayerResponse(
                 message="Player data added successfully",
@@ -29,10 +34,22 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         except HTTPException:
             raise
         except Exception as e:
+            self._logger.exception("Failed to add player for user: %s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to add player: {str(e)}"
-            )
+                detail="Failed to add player"
+            ) from e
+    
+    def _get_all_players_blocking(self, user_id: str) -> List[SavedPlayer]:
+        """Blocking version: Retrieve all saved players for a user"""
+        players_ref = self.db.collection('users').document(user_id).collection('saved_players').stream()
+        saved_players = []
+        
+        for player_doc in players_ref:
+            player_data = player_doc.to_dict()
+            saved_players.append(SavedPlayer(**player_data))
+        
+        return saved_players
     
     async def get_all_players(self, user_id: str) -> List[SavedPlayer]:
         """Retrieve all saved players for a user"""
@@ -43,19 +60,14 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
             )
 
         try:
-            players_ref = self.db.collection('users').document(user_id).collection('saved_players').stream()
-            saved_players = []
-            
-            for player_doc in players_ref:
-                player_data = player_doc.to_dict()
-                saved_players.append(SavedPlayer(**player_data))
-            
+            saved_players = await to_thread.run_sync(self._get_all_players_blocking, user_id)
             return saved_players
         except Exception as e:
+            self._logger.exception("Failed to retrieve players for user: %s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to retrieve players: {str(e)}"
-            )
+                detail="Failed to retrieve players"
+            ) from e
 
     
     async def get_player(self, user_id: str, player_id: str) -> SavedPlayer:
@@ -67,8 +79,9 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
             )
         
         try:
-            player_ref = self.db.collection('users').document(user_id).collection('saved_players').document(player_id)
-            player_doc = player_ref.get()
+            player_ref, player_doc = await to_thread.run_sync(
+                lambda: self.fetch_ref_and_doc(user_id, player_id)
+            )
             
             if not player_doc.exists:
                 raise HTTPException(
@@ -80,10 +93,11 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         except HTTPException:
             raise
         except Exception as e:
+            self._logger.exception("Failed to retrieve player: %s for user: %s", player_id, user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to retrieve player: {str(e)}"
-            )
+                detail="Failed to retrieve player"
+            ) from e
     
     async def delete_player(self, user_id: str, player_id: str) -> DeletePlayerResponse:
         """Delete a specific player by ID for a user"""
@@ -113,9 +127,10 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         except HTTPException:
             raise
         except Exception as e:
+            self._logger.exception("Failed to delete player: %s for user: %s", player_id, user_id)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to delete player: {e!s}",
+                detail="Failed to delete player"
             ) from e
     
     def fetch_ref_and_doc(self, user_id: str, player_id: str):
