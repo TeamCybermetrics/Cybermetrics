@@ -1,133 +1,54 @@
-from firebase_admin import auth, firestore
-from fastapi import HTTPException, status
-from config.firebase import firebase_service
+from domain.auth_domain import AuthDomain
+from repositories.auth_repository import AuthRepository
 from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 
+
 class AuthService:
-    def __init__(self):
-        self.db = firebase_service.db
-        self.auth = firebase_service.auth
+    def __init__(self, auth_repository: AuthRepository, auth_domain: AuthDomain):
+        self.auth_repository = auth_repository
+        self.auth_domain = auth_domain
     
     async def signup(self, signup_data: SignupRequest) -> SignupResponse:
-        """Create a new user account"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
+        """Use Case: Create a new user account"""
+        # Call domain for business logic validation
+        self.auth_domain.validate_signup_data(signup_data)
         
-        try:
-            # Create user in Firebase Authentication
-            user = auth.create_user(
-                email=signup_data.email,
-                password=signup_data.password,
-                display_name=signup_data.display_name
-            )
-            
-            # Store additional user data in Firestore
-            user_ref = self.db.collection('users').document(user.uid)
-            user_ref.set({
-                'email': signup_data.email,
-                'display_name': signup_data.display_name,
-                'created_at': firestore.SERVER_TIMESTAMP,
-            })
-            
-            return SignupResponse(
-                message="User created successfully",
-                user_id=user.uid,
-                email=user.email
-            )
+        # repository interface
+        result = await self.auth_repository.create_user(signup_data)
         
-        except auth.EmailAlreadyExistsError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already exists"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create user: {str(e)}"
-            )
+        return SignupResponse(
+            message=result["message"],
+            user_id=result["user_id"],
+            email=result["email"]
+        )
     
     async def login(self, login_data: LoginRequest) -> LoginResponse:
-        """Authenticate user and generate custom token"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
+        """Use Case: Authenticate user"""
+        # Call domain for business logic validation
+        self.auth_domain.validate_login_data(login_data)
         
-        try:
-            # Get user by email
-            user = auth.get_user_by_email(login_data.email)
-            
-            # Generate a custom token for the user
-            custom_token = auth.create_custom_token(user.uid)
-            
-            # Get user data from Firestore
-            user_doc = self.db.collection('users').document(user.uid).get()
-            
-            return LoginResponse(
-                message="Login successful",
-                user_id=user.uid,
-                email=user.email,
-                token=custom_token.decode('utf-8')
-            )
+        # repository interface
+        user = await self.auth_repository.get_user_by_email(login_data.email)
         
-        except auth.UserNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Login failed: {str(e)}"
-            )
+        # domain for business logic validation
+        self.auth_domain.validate_user_exists(user)
+        
+        # repository interface
+        token = await self.auth_repository.create_custom_token(user.user_id)
+        
+        return LoginResponse(
+            message="Login successful",
+            user_id=user.user_id,
+            email=user.email,
+            token=token
+        )
     
     async def verify_token(self, token: str) -> dict:
-        """Verify a custom token by decoding it and checking if user exists"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
+        """Use Case: Verify token"""
+        # domain layer validating token
+        self.auth_domain.validate_token_format(token)
         
-        try:
-            # For custom tokens, we need to decode and verify differently
-            # Custom tokens are meant to be exchanged for ID tokens on the client
-            # For backend verification, we'll decode the JWT and verify the user exists
-            import jwt
-            from jwt import PyJWKClient
-            
-            # Decode without verification first to get the uid
-            decoded = jwt.decode(token, options={"verify_signature": False})
-            uid = decoded.get('uid')
-            
-            if not uid:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token format"
-                )
-            
-            # Verify the user still exists in Firebase
-            user = auth.get_user(uid)
-            
-            return {
-                "message": "Token is valid",
-                "user_id": user.uid,
-                "email": user.email
-            }
-        except auth.UserNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid or expired token: {str(e)}"
-            )
-
-auth_service = AuthService()
-
+        # repository interface
+        result = await self.auth_repository.verify_custom_token(token)
+        
+        return result
