@@ -204,7 +204,8 @@ export default function TeamBuilderPage() {
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) {
       return;
     }
@@ -213,18 +214,22 @@ export default function TeamBuilderPage() {
     setImportError("");
     setImportSummary(null);
 
-    const result = await playerActions.importSavedPlayers(file);
+    try {
+      const result = await playerActions.importSavedPlayers(file);
 
-    if (result.success && result.data) {
-      const { imported, total_rows, skipped } = result.data;
-      setImportSummary({ imported, total: total_rows, skipped: skipped.length });
-      await loadSavedPlayers();
-    } else {
-      setImportError(result.error || "Failed to import players");
+      if (result.success && result.data) {
+        const { imported, total_rows, skipped } = result.data;
+        setImportSummary({ imported, total: total_rows, skipped: skipped.length });
+        await loadSavedPlayers();
+      } else {
+        setImportError(result.error || "Failed to import players");
+      }
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "CSV import failed");
+    } finally {
+      setIsImporting(false);
+      input.value = "";
     }
-
-    setIsImporting(false);
-    event.target.value = "";
   };
 
   return (

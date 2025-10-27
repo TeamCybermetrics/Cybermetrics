@@ -122,18 +122,6 @@ async def import_saved_players(
             detail="CSV is missing a header row"
         )
 
-    header_map: Dict[str, str] = {
-        header.lower().strip(): header for header in reader.fieldnames if header
-    }
-
-    required_headers = {"id", "name"}
-    missing_headers = [field for field in required_headers if field not in header_map]
-    if missing_headers:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"CSV missing required columns: {', '.join(missing_headers)}"
-        )
-
     canonical_keys = {
         "id": "id",
         "player id": "id",
@@ -146,8 +134,26 @@ async def import_saved_players(
         "years active": "years_active"
     }
 
+    header_map: Dict[str, str] = {
+        header.lower().strip(): header for header in reader.fieldnames if header
+    }
+
+    present_canonicals = {
+        canonical_keys[key]
+        for key in header_map.keys()
+        if key in canonical_keys
+    }
+    required_canonicals = {"id", "name"}
+    missing_canonicals = sorted(field for field in required_canonicals if field not in present_canonicals)
+    if missing_canonicals:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"CSV missing required columns: {', '.join(missing_canonicals)}"
+        )
+
     rows_to_import = []
     skipped: List[ImportPlayerError] = []
+    empty_rows = 0
 
     for row_index, row in enumerate(reader, start=2):
         if row is None:
@@ -156,6 +162,7 @@ async def import_saved_players(
         normalized_row = {key: (value.strip() if isinstance(value, str) else value) for key, value in row.items()}
 
         if not any(normalized_row.values()):
+            empty_rows += 1
             continue
 
         player_payload: Dict[str, object] = {}
@@ -190,7 +197,7 @@ async def import_saved_players(
     return ImportPlayersResponse(
         message=service_result.message,
         imported=service_result.imported,
-        total_rows=len(rows_to_import) + len(skipped),
+        total_rows=len(rows_to_import) + len(skipped) + empty_rows,
         skipped=combined_skipped
     )
 
