@@ -4,7 +4,7 @@ from models.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from config.firebase import firebase_service
 from typing import List, Dict, Optional
 from repositories.player_repository import PlayerRepository
-from anyio import to_thread
+from anyio import to_thread, Lock
 import logging
 
 class PlayerRepositoryFirebase(PlayerRepository):
@@ -13,6 +13,7 @@ class PlayerRepositoryFirebase(PlayerRepository):
         self._players_cache: List[Dict] = []
         self._cache_loaded = False
         self._logger = logging.getLogger(__name__)
+        self._load_lock = Lock()
     
     def _load_database_blocking(self) -> int:
         """Blocking version: Load all players from Firebase into memory"""
@@ -28,15 +29,21 @@ class PlayerRepositoryFirebase(PlayerRepository):
         if not self.db:
             return
         
-        try:
-            count = await to_thread.run_sync(self._load_database_blocking)
-            self._logger.info("Loaded %d players from Firebase", count)
-        except Exception as e:
-            self._logger.exception("Error loading players cache")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to load players cache"
-            ) from e
+        # lock to prevent concurrent loads
+        async with self._load_lock:
+            # double check after acquiring lock as antoher request may have been loaded
+            if self._cache_loaded:
+                return
+            
+            try:
+                count = await to_thread.run_sync(self._load_database_blocking)
+                self._logger.info("Loaded %d players from Firebase", count)
+            except Exception as e:
+                self._logger.exception("Error loading players cache")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to load players cache"
+                ) from e
     
     async def get_all_players(self) -> List[Dict]:
         """
