@@ -2,7 +2,6 @@ import logging
 from fastapi import HTTPException, status
 from repositories.saved_players_repository import SavedPlayersRepository
 from domain.saved_players_domain import SavedPlayersDomain
-from config.firebase import firebase_service
 from models.players import (
     AddPlayerResponse,
     DeletePlayerResponse,
@@ -11,9 +10,6 @@ from models.players import (
     ImportPlayerError
 )
 from typing import List, Tuple, Dict, Any
-from anyio import to_thread
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +19,6 @@ class SavedPlayersService:
     def __init__(self, saved_players_repository: SavedPlayersRepository, saved_players_domain: SavedPlayersDomain):
         self.saved_players_repository = saved_players_repository
         self.saved_players_domain = saved_players_domain
-        self.db = firebase_service.db if hasattr(firebase_service, "db") else None
 
     async def add_player(self, user_id: str, player_info: dict) -> AddPlayerResponse:
         """Add a player to user's saved players collection"""
@@ -48,12 +43,6 @@ class SavedPlayersService:
 
     async def import_players(self, user_id: str, players: List[Tuple[int, Dict[str, Any]]]) -> ImportPlayersResponse:
         """Bulk import players for a user from parsed CSV data"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
-
         total_rows = len(players)
         if total_rows == 0:
             return ImportPlayersResponse(
@@ -63,93 +52,45 @@ class SavedPlayersService:
                 skipped=[]
             )
 
-        batch = self.db.batch()
-        batch_ops = 0
-        imported = 0
         skipped: List[ImportPlayerError] = []
-        current_batch_rows: List[Tuple[int, str]] = []
+        validated_players: List[Tuple[int, str, Dict[str, Any]]] = []
 
-        try:
-            for row_index, player_data in players:
-                try:
-                    player_id = self.saved_players_domain.validate_player_info(player_data)
-                except HTTPException as exc:
-                    skipped.append(ImportPlayerError(row=row_index, reason=str(exc.detail)))
-                    continue
-                except Exception:
-                    skipped.append(ImportPlayerError(row=row_index, reason="Invalid player payload"))
-                    continue
+        for row_index, player_data in players:
+            try:
+                player_id = self.saved_players_domain.validate_player_info(player_data)
+            except HTTPException as exc:
+                skipped.append(ImportPlayerError(row=row_index, reason=str(exc.detail)))
+                continue
+            except Exception:
+                skipped.append(ImportPlayerError(row=row_index, reason="Invalid player payload"))
+                continue
 
-                try:
-                    doc_id = str(player_id)
-                    doc_ref = (
-                        self.db.collection('users')
-                        .document(user_id)
-                        .collection('saved_players')
-                        .document(doc_id)
-                    )
-                    batch.set(doc_ref, player_data)
-                    batch_ops += 1
-                    current_batch_rows.append((row_index, doc_id))
+            validated_players.append((row_index, str(player_id), player_data))
 
-                    if batch_ops >= 450:
-                        try:
-                            await to_thread.run_sync(batch.commit)
-                            imported += len(current_batch_rows)
-                        except Exception:
-                            logger.exception("Batch commit failed while importing saved players")
-                            for failed_row, failed_player_id in current_batch_rows:
-                                skipped.append(
-                                    ImportPlayerError(
-                                        row=failed_row,
-                                        player_id=failed_player_id,
-                                        reason="Batch commit failed"
-                                    )
-                                )
-                        finally:
-                            batch = self.db.batch()
-                            batch_ops = 0
-                            current_batch_rows.clear()
-                except Exception as e:
-                    logger.exception("Failed to queue player import write")
-                    skipped.append(
-                        ImportPlayerError(
-                            row=row_index,
-                            player_id=str(player_id),
-                            reason="Failed to queue write"
-                        )
-                    )
-
-            if batch_ops:
-                try:
-                    await to_thread.run_sync(batch.commit)
-                    imported += len(current_batch_rows)
-                except Exception:
-                    logger.exception("Batch commit failed while importing saved players")
-                    for failed_row, failed_player_id in current_batch_rows:
-                        skipped.append(
-                            ImportPlayerError(
-                                row=failed_row,
-                                player_id=failed_player_id,
-                                reason="Batch commit failed"
-                            )
-                        )
-                finally:
-                    batch = self.db.batch()
-                    batch_ops = 0
-                    current_batch_rows.clear()
-
+        if not validated_players:
             return ImportPlayersResponse(
                 message="CSV import completed",
-                imported=imported,
+                imported=0,
                 total_rows=total_rows,
                 skipped=skipped
             )
+
+        try:
+            imported, repository_skipped = await self.saved_players_repository.import_players(user_id, validated_players)
         except HTTPException:
             raise
-        except Exception as e:
+        except Exception as exc:
             logger.exception("Failed to import players")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to import players"
-            ) from e
+            ) from exc
+
+        combined_skipped = skipped + repository_skipped
+
+        return ImportPlayersResponse(
+            message="CSV import completed",
+            imported=imported,
+            total_rows=total_rows,
+            skipped=combined_skipped
+        )
