@@ -89,9 +89,9 @@ async def delete_saved_player(
 
 @router.post("/saved/import", response_model=ImportPlayersResponse, tags=["saved"])
 async def import_saved_players(
-    file: UploadFile = File(..., description="CSV file containing player data"),
     current_user: Annotated[str, Depends(get_current_user)],
-    saved_players_service: Annotated[SavedPlayersService, Depends(get_saved_players_service)]
+    saved_players_service: Annotated[SavedPlayersService, Depends(get_saved_players_service)],
+    file: UploadFile = File(..., description="CSV file containing player data")
 ):
     """Import saved players for the current user from a CSV upload"""
 
