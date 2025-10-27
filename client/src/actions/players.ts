@@ -70,4 +70,16 @@ export const playerActions = {
       };
     }
   },
+
+  importSavedPlayers: async (file: File) => {
+    try {
+      const response = await playersApi.importSavedCsv(file);
+      return { success: true, data: response };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "CSV import failed",
+      };
+    }
+  },
 };

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent } from "react";
+import type { DragEvent, ChangeEvent } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
 import styles from "./TeamBuilderPage.module.css";
@@ -40,17 +40,23 @@ export default function TeamBuilderPage() {
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importSummary, setImportSummary] = useState<{ imported: number; skipped: number; total: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const loadSavedPlayers = useCallback(async () => {
+    const result = await playerActions.getSavedPlayers();
+    if (result.success && result.data) {
+      setSavedPlayers(result.data);
+    } else if (!result.success) {
+      setError(result.error || "Failed to load saved players");
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchSaved = async () => {
-      const result = await playerActions.getSavedPlayers();
-      if (result.success && result.data) {
-        setSavedPlayers(result.data);
-      }
-    };
-
-    void fetchSaved();
-  }, []);
+    void loadSavedPlayers();
+  }, [loadSavedPlayers]);
 
   const performSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
@@ -191,6 +197,36 @@ export default function TeamBuilderPage() {
     clearDragState();
   };
 
+  const handleImportClick = () => {
+    if (!isImporting) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setIsImporting(true);
+    setImportError("");
+    setImportSummary(null);
+
+    const result = await playerActions.importSavedPlayers(file);
+
+    if (result.success && result.data) {
+      const { imported, total_rows, skipped } = result.data;
+      setImportSummary({ imported, total: total_rows, skipped: skipped.length });
+      await loadSavedPlayers();
+    } else {
+      setImportError(result.error || "Failed to import players");
+    }
+
+    setIsImporting(false);
+    event.target.value = "";
+  };
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -310,17 +346,50 @@ export default function TeamBuilderPage() {
               <p>
                 {searchTerm
                   ? "Search results are shown below."
-                  : "Using saved players. Add more from the dashboard to expand this list."}
+                  : "Using saved players. Add more from the dashboard or import your own CSV."}
               </p>
             </div>
-            <div className={styles.positionHint}>
-              {activePosition ? (
-                <span>Assigning to <strong>{activePosition}</strong></span>
-              ) : (
-                <span>Select a position to begin</span>
-              )}
+            <div className={styles.panelActions}>
+              <div className={styles.positionHint}>
+                {activePosition ? (
+                  <span>Assigning to <strong>{activePosition}</strong></span>
+                ) : (
+                  <span>Select a position to begin</span>
+                )}
+              </div>
+              <div className={styles.importControls}>
+                <button
+                  type="button"
+                  className={styles.importButton}
+                  onClick={handleImportClick}
+                  disabled={isImporting}
+                >
+                  {isImporting ? "Importing…" : "Import CSV"}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  className={styles.importInput}
+                  onChange={handleFileChange}
+                  aria-label="Upload CSV of players"
+                />
+              </div>
             </div>
           </header>
+
+          {(importSummary || importError) && (
+            <div className={styles.importFeedback}>
+              {importSummary && (
+                <span>
+                  Imported <strong>{importSummary.imported}</strong> of {importSummary.total} rows
+                  {importSummary.skipped > 0 && ` • ${importSummary.skipped} skipped`}
+                </span>
+              )}
+              {importError && <span className={styles.importError}>{importError}</span>}
+            </div>
+          )}
+
 
           <div className={styles.playerScroller}>
             {error && <p className={styles.errorMessage}>{error}</p>}

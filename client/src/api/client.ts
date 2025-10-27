@@ -65,6 +65,15 @@ export class ApiClient {
     return response.data;
   }
 
+  async postForm<T>(endpoint: string, formData: FormData): Promise<T> {
+    const response = await this.instance.post<T>(endpoint, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  }
+
   async put<T>(endpoint: string, body?: unknown): Promise<T> {
     const response = await this.instance.put<T>(endpoint, body);
     return response.data;

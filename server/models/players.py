@@ -18,6 +18,21 @@ class DeletePlayerResponse(BaseModel):
     """Response after deleting a player"""
     message: str
 
+
+class ImportPlayerError(BaseModel):
+    """Details about a skipped row during CSV import"""
+    row: int
+    reason: str
+    player_id: Optional[str] = None
+
+
+class ImportPlayersResponse(BaseModel):
+    """Response after importing players from CSV"""
+    message: str
+    imported: int
+    total_rows: int
+    skipped: List[ImportPlayerError] = Field(default_factory=list)
+
 class SavedPlayer(BaseModel):
     """Saved player data"""
     id: int
@@ -112,5 +127,4 @@ class RosterAvgResponse(BaseModel):
     """Response model for roster average stats"""
     stats: Dict[int, PlayerAvgStats] = Field(..., description="Dictionary mapping player_id to their average stats")
     total_players: int = Field(..., description="Total number of players with stats returned")
-
 

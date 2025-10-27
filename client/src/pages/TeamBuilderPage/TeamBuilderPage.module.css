@@ -107,6 +107,13 @@
   max-width: 320px;
 }
 
+.panelActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
 .positionHint {
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -115,6 +122,50 @@
   background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   padding: 8px 14px;
+}
+
+.importControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.importButton {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f6fb;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.importButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.importButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.importInput {
+  display: none;
+}
+
+.importFeedback {
+  margin: 8px 0 0;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.importError {
+  color: #ff7070;
 }
 
 .diamond {
