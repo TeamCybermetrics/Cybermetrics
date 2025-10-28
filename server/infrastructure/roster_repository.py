@@ -43,3 +43,39 @@ class RosterRepositoryFirebase(RosterRepository):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to calculate roster averages"
             ) from e
+
+    def _get_league_unweighted_blocking(self) -> Dict[str, float]:
+        """Blocking fetch for league unweighted averages from Firestore."""
+        doc = self.db.collection("league").document("averages").get()
+        if not doc.exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="League averages document not found",
+            )
+        data = doc.to_dict() or {}
+        unweighted = data.get("unweighted")
+        if not isinstance(unweighted, dict):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="League unweighted averages missing or malformed",
+            )
+        # Ensure values are floats
+        return {k: float(v) for k, v in unweighted.items() if isinstance(v, (int, float))}
+
+    async def get_league_unweighted_average(self) -> Dict[str, float]:
+        """Fetch league unweighted averages (async wrapper)."""
+        if not self.db:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase is not configured",
+            )
+        try:
+            return await to_thread.run_sync(self._get_league_unweighted_blocking)
+        except HTTPException:
+            raise
+        except Exception as e:
+            self._logger.exception("Failed to fetch league unweighted averages")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to fetch league averages",
+            ) from e
