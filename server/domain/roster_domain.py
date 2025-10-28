@@ -124,15 +124,15 @@ class RosterDomain:
 
         scores: Dict[str, float] = {}
         for key in keys_lower_better.union(keys_higher_better):
-            t = float(team_avg.get(key, 0.0) or 0.0)
-            l = float(league_avg.get(key, 0.0) or 0.0)
+            team = float(team_avg.get(key, 0.0) or 0.0)
+            league = float(league_avg.get(key, 0.0) or 0.0)
 
             if key in keys_lower_better:
-                raw = max(0.0, t - l)
+                raw = max(0.0, team - league)
             else:  # higher is better
-                raw = max(0.0, l - t)
+                raw = max(0.0, league - team)
 
-            denom = l if l != 0 else 1e-9
+            denom = league if league != 0 else 1e-9
             scores[key] = round(raw / denom, 3)
 
         return scores

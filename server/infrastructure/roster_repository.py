@@ -59,8 +59,22 @@ class RosterRepositoryFirebase(RosterRepository):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="League unweighted averages missing or malformed",
             )
-        # Ensure values are floats
-        return {k: float(v) for k, v in unweighted.items() if isinstance(v, (int, float))}
+        
+        required = {"strikeout_rate", "walk_rate", "isolated_power", "on_base_percentage", "base_running"}
+        result: Dict[str, float] = {}
+        missing_or_bad = []
+        for k in required:
+            v = unweighted.get(k)
+            try:
+                result[k] = float(v)
+            except(TypeError, ValueError):
+                missing_or_bad.append(k)
+        if missing_or_bad:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"League unweighted averages missing or non-numeric for: {', '.join(missing_or_bad)}",
+            )
+        return result
 
     async def get_league_unweighted_average(self) -> Dict[str, float]:
         """Fetch league unweighted averages (async wrapper)."""
