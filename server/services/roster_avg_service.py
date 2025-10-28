@@ -105,3 +105,58 @@ class RosterAvgService:
 
 # Singleton instance
 roster_avg_service = RosterAvgService()
+
+
+def compute_unweighted_roster_average(roster_response: RosterAvgResponse) -> PlayerAvgStats:
+    """Compute an unweighted average across the players in a RosterAvgResponse.
+
+    Each player in `roster_response.stats` is counted equally. Returns a
+    PlayerAvgStats Pydantic model with the averaged values (rounded to 4
+    decimal places).
+
+    Raises HTTPException(400) if there are no player stats to average.
+    """
+    stats_map = getattr(roster_response, "stats", {}) or {}
+
+    if not stats_map:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No player stats available to compute roster average"
+        )
+
+    # Sum each metric across players
+    total_strikeout = 0.0
+    total_walk = 0.0
+    total_iso = 0.0
+    total_obp = 0.0
+    total_bs = 0.0
+    count = 0
+
+    for pid, stats in stats_map.items():
+        # stats may be a Pydantic model or a dict
+        try:
+            total_strikeout += float(getattr(stats, "strikeout_rate", stats.get("strikeout_rate")))
+            total_walk += float(getattr(stats, "walk_rate", stats.get("walk_rate")))
+            total_iso += float(getattr(stats, "isolated_power", stats.get("isolated_power")))
+            total_obp += float(getattr(stats, "on_base_percentage", stats.get("on_base_percentage")))
+            total_bs += float(getattr(stats, "base_running", stats.get("base_running")))
+            count += 1
+        except Exception:
+            # Skip malformed entries but continue processing others
+            continue
+
+    if count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid player stats available to compute roster average"
+        )
+
+    avg = PlayerAvgStats(
+        strikeout_rate=round(total_strikeout / count, 4),
+        walk_rate=round(total_walk / count, 4),
+        isolated_power=round(total_iso / count, 4),
+        on_base_percentage=round(total_obp / count, 4),
+        base_running=round(total_bs / count, 4),
+    )
+
+    return avg
