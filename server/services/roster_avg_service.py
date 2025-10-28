@@ -4,6 +4,9 @@ from typing import List, Dict, Optional
 from server.repositories.roster_avg_repository import RosterRepository
 from server.domain.roster_domain import RosterDomain
 from server.repositories.player_repository import PlayerRepository
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RosterAvgService:
     """Service for calculating roster average statistics"""
@@ -137,6 +140,7 @@ class RosterAvgService:
                 # Skip players with missing/invalid data
                 continue
             except Exception:
+                logger.exception("Unexpected error computing value score for player %s", pid)
                 # For any unexpected error with a single player, skip and continue
                 continue
 
