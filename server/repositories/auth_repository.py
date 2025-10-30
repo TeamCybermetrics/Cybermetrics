@@ -32,3 +32,8 @@ class AuthRepository(ABC):
     async def store_user_data(self, user_id: str, user_data: Dict) -> bool:
         """Store additional user data"""
         pass
+    
+    @abstractmethod
+    async def verify_password(self, email: str, password: str) -> str:
+        """Verify user password and return user ID if valid"""
+        pass
