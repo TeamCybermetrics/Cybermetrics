@@ -1,11 +1,25 @@
 from firebase_admin import auth, firestore
 from fastapi import HTTPException, status
 from config.firebase import firebase_service
+from config.settings import settings
 from models.auth import LoginRequest, SignupRequest, User
 from repositories.auth_repository import AuthRepository
 from typing import Dict, Optional
 import jwt
+import httpx
+import hashlib
 from fastapi.concurrency import run_in_threadpool
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+def _redact_email(email: str) -> str:
+    """Redact email for logging by hashing it to avoid PII exposure"""
+    if not email:
+        return "<empty>"
+    # Use SHA256 hash and take first 12 chars for brevity
+    email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
+    return f"<redacted:{email_hash}>"
             
 
 class AuthRepositoryFirebase(AuthRepository):
@@ -145,8 +159,66 @@ class AuthRepositoryFirebase(AuthRepository):
             user_ref = self.db.collection('users').document(user_id)
             user_ref.set(user_data, merge=True)
             return True
-        except Exception:
+        except Exception as e:
             raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to store user data: {str(e)}"
-        )
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to store user data: {str(e)}"
+            )
+    
+    async def verify_password(self, email: str, password: str) -> str:
+        """
+        Verify password using Firebase Authentication REST API.
+        Returns the user ID if successful.
+        
+        Firebase Admin SDK doesn't provide password verification,
+        so we use the REST API for this critical security operation.
+        """
+        if not settings.FIREBASE_WEB_API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase Web API key is not configured"
+            )
+        
+        try:
+            # Verify password using Firebase Authentication REST API
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                firebase_auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={settings.FIREBASE_WEB_API_KEY}"
+                response = await client.post(
+                    firebase_auth_url,
+                    json={
+                        "email": email,
+                        "password": password,
+                        "returnSecureToken": True
+                    }
+                )
+                
+                if response.status_code != 200:
+                    # Firebase returns 400 for invalid credentials
+                    # Don't reveal whether email exists - same error for both cases
+                    logger.warning(f"Failed login attempt for email: {_redact_email(email)}")
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid email or password"
+                    )
+                
+                auth_data = response.json()
+                uid = auth_data.get("localId")
+                
+                if not uid:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid email or password"
+                    )
+                
+                logger.info(f"Successful password verification for user: {uid} ({_redact_email(email)})")
+                return uid
+        
+        except HTTPException:
+            # Re-raise HTTP exceptions (including auth failures)
+            raise
+        except Exception as e:
+            logger.error(f"Password verification error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Login failed: {str(e)}"
+            )
