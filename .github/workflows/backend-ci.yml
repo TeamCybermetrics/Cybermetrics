@@ -81,7 +81,34 @@ jobs:
           python -c "from pybaseball import batting_stats; print('✓ Pybaseball')"
           python -c "from rapidfuzz import fuzz; print('✓ RapidFuzz')"
           python -c "import httpx; print('✓ httpx')"
+          python -c "import pytest; print('✓ Pytest')"
           echo "✅ All imports successful"
+      
+      - name: Run unit tests
+        if: steps.changes.outputs.server == 'true'
+        working-directory: ./server
+        run: |
+          echo "🧪 Running unit tests..."
+          pytest domain/tests services/tests models/tests middleware/tests -v --tb=short --maxfail=5
+          echo "✅ Unit tests passed"
+      
+      - name: Run integration tests
+        if: steps.changes.outputs.server == 'true'
+        working-directory: ./server
+        run: |
+          echo "🔗 Running integration tests..."
+          pytest tests/integration -v --tb=short --maxfail=3
+          echo "✅ Integration tests passed"
+        continue-on-error: true
+      
+      - name: Run E2E tests
+        if: steps.changes.outputs.server == 'true'
+        working-directory: ./server
+        run: |
+          echo "🌐 Running E2E tests..."
+          pytest tests/e2e -m e2e -v --tb=short --maxfail=3
+          echo "✅ E2E tests passed"
+        continue-on-error: true
 
       - name: Test app startup
         if: steps.changes.outputs.server == 'true'
