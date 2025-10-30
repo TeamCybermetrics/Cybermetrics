@@ -14,7 +14,12 @@ async def signup(
     auth_service: Annotated[AuthService, Depends(get_auth_service)]
 ):
     """
-    Create a new user account using the provided registration data.
+    Create a new user account using the provided registration data while applying IP-based rate limits.
+    
+    Checks rate limits for the client's IP before attempting signup. On successful signup, resets 
+    the failed-attempt counter for that IP. If signup fails with a client error (4xx), records a 
+    failed attempt for the IP and re-raises the original HTTPException; server errors (5xx) and 
+    other exceptions are propagated without recording failures.
     
     Parameters:
         signup_data (SignupRequest): User registration information such as email, password, and profile fields.
@@ -23,12 +28,32 @@ async def signup(
     
     Returns:
         SignupResponse: Details of the newly created user.
+    
+    Raises:
+        fastapi.HTTPException: Propagates HTTP exceptions from the authentication service (4xx responses also increment rate-limit counters).
     """
-    # Rate limit by IP to prevent signup spam
+    # Get client IP for rate limiting
     client_ip = await get_client_ip(request)
+    
+    # Check rate limit BEFORE attempting signup (prevent DoS)
     await rate_limiter.check_rate_limit(f"signup:{client_ip}")
     
-    return await auth_service.signup(signup_data)
+    try:
+        # Attempt signup
+        result = await auth_service.signup(signup_data)
+        
+        # Signup succeeded - reset failed attempt counter
+        await rate_limiter.reset_attempts(f"signup:{client_ip}")
+        
+        return result
+        
+    except HTTPException as e:
+        # Signup failed with client error - record the failed attempt
+        if 400 <= e.status_code < 500:
+            await rate_limiter.record_failed_attempt(f"signup:{client_ip}")
+        
+        # Re-raise the exception
+        raise
 
 @router.post("/login", response_model=LoginResponse)
 async def login(

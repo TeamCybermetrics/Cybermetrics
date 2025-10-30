@@ -46,9 +46,10 @@ class RateLimiter:
         current_attempts = len(self.failed_attempts.get(identifier, []))
         
         if current_attempts >= self.max_attempts:
+            minutes = int(self.window.total_seconds() // 60)
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Too many failed login attempts. Please try again in {self.window.seconds // 60} minutes."
+                detail=f"Too many failed login attempts. Please try again in {minutes} minutes."
             )
     
     async def record_failed_attempt(self, identifier: str) -> None:
