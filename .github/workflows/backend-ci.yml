@@ -62,13 +62,13 @@ jobs:
         if: steps.changes.outputs.server == 'true'
         working-directory: ./server
         run: |
-          cat << EOF > .env
-FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
-FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
-ENVIRONMENT=testing
-HOST=0.0.0.0
-PORT=8000
-EOF
+          cat << 'EOF' > .env
+          FIREBASE_CREDENTIALS_PATH=./serviceAccountKey.json
+          FIREBASE_WEB_API_KEY=${{ secrets.FIREBASE_WEB_API_KEY }}
+          ENVIRONMENT=testing
+          HOST=0.0.0.0
+          PORT=8000
+          EOF
 
       - name: Verify imports
         if: steps.changes.outputs.server == 'true'
