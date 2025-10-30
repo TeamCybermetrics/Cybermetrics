@@ -1,35 +1,19 @@
-from firebase_admin import auth, firestore
-from fastapi import HTTPException, status
-from config.firebase import firebase_service
-from config.settings import settings
+from domain.auth_domain import AuthDomain
+from repositories.auth_repository import AuthRepository
 from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
-from utils.logger import get_logger
-import httpx
-import hashlib
 
-logger = get_logger(__name__)
-
-def _redact_email(email: str) -> str:
-    """Redact email for logging by hashing it to avoid PII exposure"""
-    if not email:
-        return "<empty>"
-    # Use SHA256 hash and take first 12 chars for brevity
-    email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
-    return f"<redacted:{email_hash}>"
 
 class AuthService:
-    def __init__(self):
+    def __init__(self, auth_repository: AuthRepository, auth_domain: AuthDomain):
         """
-        Initialize the AuthService instance by binding Firebase clients and configuration.
+        Initialize the AuthService with repository and domain layers.
         
-        Sets the following instance attributes:
-        - db: Firestore database client used for user documents.
-        - auth: Firebase Admin auth client used for user operations.
-        - firebase_api_key: Firebase Web API key used for REST authentication calls.
+        Parameters:
+            auth_repository: Repository for Firebase authentication operations
+            auth_domain: Domain layer for business logic validation
         """
-        self.db = firebase_service.db
-        self.auth = firebase_service.auth
-        self.firebase_api_key = settings.FIREBASE_WEB_API_KEY
+        self.auth_repository = auth_repository
+        self.auth_domain = auth_domain
     
     async def signup(self, signup_data: SignupRequest) -> SignupResponse:
         """
@@ -42,172 +26,80 @@ class AuthService:
             SignupResponse: Response containing a success message, the created user's UID, and email.
         
         Raises:
-            HTTPException: 503 if Firebase is not configured.
-            HTTPException: 400 if the provided email already exists.
-            HTTPException: 500 if user creation or Firestore persistence fails with an unexpected error.
+            HTTPException: 400 if validation fails or email already exists.
+            HTTPException: 500 if user creation fails with an unexpected error.
         """
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
+        # Call domain for business logic validation
+        self.auth_domain.validate_signup_data(signup_data)
         
-        try:
-            # Create user in Firebase Authentication
-            user = auth.create_user(
-                email=signup_data.email,
-                password=signup_data.password,
-                display_name=signup_data.display_name
-            )
-            
-            # Store additional user data in Firestore
-            user_ref = self.db.collection('users').document(user.uid)
-            user_ref.set({
-                'email': signup_data.email,
-                'display_name': signup_data.display_name,
-                'created_at': firestore.SERVER_TIMESTAMP,
-            })
-            
-            return SignupResponse(
-                message="User created successfully",
-                user_id=user.uid,
-                email=user.email
-            )
+        # Repository interface - create user
+        result = await self.auth_repository.create_user(signup_data)
         
-        except auth.EmailAlreadyExistsError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already exists"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to create user: {str(e)}"
-            )
+        return SignupResponse(
+            message=result["message"],
+            user_id=result["user_id"],
+            email=result["email"]
+        )
     
     async def login(self, login_data: LoginRequest) -> LoginResponse:
         """
         Authenticate a user with email and password and return a Firebase custom authentication token.
         
-        Performs password verification via the Firebase Authentication REST API, ensures the corresponding Firebase user exists, and returns a LoginResponse containing the generated custom token and basic user information.
+        Performs password verification via the Firebase Authentication REST API, ensures the corresponding 
+        Firebase user exists, and returns a LoginResponse containing the generated custom token and basic 
+        user information.
+        
+        Parameters:
+            login_data (LoginRequest): Credentials for authentication containing email and password.
         
         Returns:
-        	LoginResponse: Contains message, user_id, email, and a UTF-8 decoded custom token.
+            LoginResponse: Contains message, user_id, email, and a UTF-8 decoded custom token.
         
         Raises:
-        	HTTPException: With status 503 if Firebase or the Firebase Web API key is not configured.
-        	HTTPException: With status 401 if the email/password are invalid or the user does not exist.
-        	HTTPException: With status 500 for other unexpected errors encountered during login.
+            HTTPException: 503 if Firebase Web API key is not configured.
+            HTTPException: 401 if the email/password are invalid or the user does not exist.
+            HTTPException: 500 for other unexpected errors encountered during login.
         """
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
+        # Call domain for business logic validation
+        self.auth_domain.validate_login_data(login_data)
         
-        if not self.firebase_api_key:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase Web API key is not configured"
-            )
+        # CRITICAL: Verify password using Firebase Authentication REST API
+        # Firebase Admin SDK doesn't provide password verification
+        user_id = await self.auth_repository.verify_password(login_data.email, login_data.password)
         
-        try:
-            # CRITICAL: Verify password using Firebase Authentication REST API
-            # Firebase Admin SDK doesn't provide password verification
-            async with httpx.AsyncClient(timeout=10.0) as client:  # Add timeout
-                firebase_auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={self.firebase_api_key}"
-                response = await client.post(
-                    firebase_auth_url,
-                    json={
-                        "email": login_data.email,
-                        "password": login_data.password,
-                        "returnSecureToken": True
-                    }
-                )
-                
-                if response.status_code != 200:
-                    # Firebase returns 400 for invalid credentials
-                    # Don't reveal whether email exists - same error for both cases
-                    logger.warning(f"Failed login attempt for email: {_redact_email(login_data.email)}")
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid email or password"
-                    )
-                
-                auth_data = response.json()
-                uid = auth_data.get("localId")
-            
-            # Get user to verify account still exists in Admin SDK
-            user = auth.get_user(uid)
-            
-            # Generate a custom token for the user
-            custom_token = auth.create_custom_token(user.uid)
-            
-            logger.info(f"Successful login for user: {user.uid} ({_redact_email(user.email)})")
-            
-            return LoginResponse(
-                message="Login successful",
-                user_id=user.uid,
-                email=user.email,
-                token=custom_token.decode('utf-8')
-            )
+        # Get user details to verify account still exists
+        user = await self.auth_repository.get_user_by_id(user_id)
         
-        except HTTPException:
-            # Re-raise HTTP exceptions (including auth failures)
-            raise
-        except auth.UserNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Login failed: {str(e)}"
-            )
+        # Domain validation - ensure user exists
+        self.auth_domain.validate_user_exists(user)
+        
+        # Create custom token for the authenticated user
+        token = await self.auth_repository.create_custom_token(user.user_id)
+        
+        return LoginResponse(
+            message="Login successful",
+            user_id=user.user_id,
+            email=user.email,
+            token=token
+        )
     
     async def verify_token(self, token: str) -> dict:
-        """Verify a custom token by decoding it and checking if user exists"""
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured"
-            )
+        """
+        Validate and verify a Bearer token.
         
-        try:
-            # For custom tokens, we need to decode and verify differently
-            # Custom tokens are meant to be exchanged for ID tokens on the client
-            # For backend verification, we'll decode the JWT and verify the user exists
-            import jwt
-            from jwt import PyJWKClient
-            
-            # Decode without verification first to get the uid
-            decoded = jwt.decode(token, options={"verify_signature": False})
-            uid = decoded.get('uid')
-            
-            if not uid:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token format"
-                )
-            
-            # Verify the user still exists in Firebase
-            user = auth.get_user(uid)
-            
-            return {
-                "message": "Token is valid",
-                "user_id": user.uid,
-                "email": user.email
-            }
-        except auth.UserNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid or expired token: {str(e)}"
-            )
-
-auth_service = AuthService()
+        Parameters:
+            token (str): The authentication token to verify.
+        
+        Returns:
+            dict: The authentication service's verification result (decoded token / verification payload).
+        
+        Raises:
+            HTTPException: 401 if token is invalid, expired, or user not found.
+        """
+        # Domain layer validating token format
+        self.auth_domain.validate_token_format(token)
+        
+        # Repository interface - verify token
+        result = await self.auth_repository.verify_custom_token(token)
+        
+        return result
