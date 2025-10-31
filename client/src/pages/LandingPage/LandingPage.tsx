@@ -38,7 +38,7 @@ export default function LandingPage() {
       </h2>
       
       <h3 className={styles.subtitle1}>
-       quick description about Cybermetrics here
+       Quick description about Cybermetrics here
       </h3>
 
       {/* Top right Sign Up button */}
