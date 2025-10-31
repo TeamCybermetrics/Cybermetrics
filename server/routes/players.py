@@ -86,7 +86,7 @@ async def get_player_value_score(
     roster_avg_service: Annotated[RosterAvgService, Depends(get_roster_avg_service)],
 ):
     """Compute a player's value score using latest WAR and team weaknesses (public)."""
-    return await roster_avg_service.get_value_score(player_id, request.dict())
+    return await roster_avg_service.get_value_score(player_id, request.model_dump())
 
 @router.post("/value-scores", response_model=List[PlayerValueScore], tags=["stats"])
 async def get_team_value_scores(
