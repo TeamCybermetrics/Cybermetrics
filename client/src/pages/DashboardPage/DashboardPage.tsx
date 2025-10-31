@@ -73,6 +73,14 @@ const RADAR_LEVELS = [1, 0.75, 0.5, 0.25];
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
+/**
+ * Constrains a number to be within the inclusive range [min, max].
+ *
+ * @param value - The number to constrain.
+ * @param min - Lower bound of the range (inclusive). Defaults to 0.
+ * @param max - Upper bound of the range (inclusive). Defaults to 1.
+ * @returns The input value if between `min` and `max`, `min` if the input is less than `min`, or `max` if the input is greater than `max`.
+ */
 function clamp(value: number, min = 0, max = 1) {
   return Math.min(Math.max(value, min), max);
 }
@@ -116,6 +124,17 @@ const PLAYER_METRIC_LIBRARY: Record<number, PlayerRadarProfile> = {
   }
 };
 
+/**
+ * Create a deterministic, synthetic radar profile for a player when no preset profile exists.
+ *
+ * The generated profile maps each metric id to a numeric value between 0 and that metric's max,
+ * derived deterministically from the player's identity and the provided index so multiple players
+ * or positions produce different but stable profiles.
+ *
+ * @param player - The saved player used to derive the profile seed
+ * @param index - An index used to vary the seed so multiple generated profiles differ
+ * @returns A PlayerRadarProfile mapping metric ids to normalized metric values (each value is >= 0 and <= the metric's `max`)
+ */
 function generateFallbackProfile(player: SavedPlayer, index: number): PlayerRadarProfile {
   const baseSeed = typeof player.id === "number" ? player.id : player.name.length * 31;
   const seed = (baseSeed + index * 29) % 97;
@@ -131,6 +150,13 @@ function generateFallbackProfile(player: SavedPlayer, index: number): PlayerRada
   }, {} as PlayerRadarProfile);
 }
 
+/**
+ * Resolve a player's radar metric profile by returning a preset profile when available or generating a deterministic fallback.
+ *
+ * @param player - The saved player whose profile should be resolved
+ * @param index - Index used to seed the generated fallback profile when no preset exists
+ * @returns The player's radar metric profile mapping metric ids to numeric values
+ */
 function resolvePlayerProfile(player: SavedPlayer, index: number): PlayerRadarProfile {
   const preset = typeof player.id === "number" ? PLAYER_METRIC_LIBRARY[player.id] : undefined;
   if (preset) {
@@ -139,6 +165,14 @@ function resolvePlayerProfile(player: SavedPlayer, index: number): PlayerRadarPr
   return generateFallbackProfile(player, index);
 }
 
+/**
+ * Render an animated radar (spider) chart for the given performance metrics.
+ *
+ * Renders an SVG radar chart that normalizes each metric against its `max`, animates value transitions, and displays metric labels. When `metrics` is empty, renders a brief empty-state message.
+ *
+ * @param metrics - Array of radar metrics; each item should include an `id`, `label`, `value`, and optional `max` used for normalization.
+ * @returns The rendered radar chart element.
+ */
 function PerformanceRadar({ metrics }: { metrics: RadarMetric[] }) {
   const gradientId = useId();
   const normalized = useMemo(() => {
@@ -325,6 +359,15 @@ const formatCurrency = (value: number) =>
 
 const formatScore = (value: number) => `${value > 0 ? "+" : ""}${value}`;
 
+/**
+ * Render the Dashboard page that provides roster management, player scouting, and team analytics.
+ *
+ * The page includes the current lineup panel with add/remove actions, a searchable scout overlay,
+ * team snapshot metrics (budget, score, target weakness), an animated performance radar derived from
+ * saved players, health check and logout controls, and a player detail view.
+ *
+ * @returns The Dashboard page React element containing lineup management, scouting search, analytics, and player detail UI.
+ */
 export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
