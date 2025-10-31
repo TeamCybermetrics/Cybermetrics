@@ -1,10 +1,71 @@
 .main {
-  min-height: 100vh;
+  /* Adjust total height */
+  min-height: calc(1276px + 1200px + 963px + 1200px); /* ~4639px */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+
+  /* Four stacked color bands */
+  background: linear-gradient(
+    to bottom,
+    #0D1728 0 1276px,                /* band 1 */
+    #E5E5E5 1276px 2476px,           /* band 2 (1276 + 1200) */
+    #293241 2476px 3439px,           /* band 3 (2476 + 963) */
+    #E5E5E5 3439px 100%              /* band 4 and remainder */
+  );
+  background-repeat: no-repeat;
+
+  position: relative; /* anchor for absolute children */
+
+  /* centralize demo dims so you change them in one place */
+  --demo-top: 600px;
+  --demo-height: 923px;
+  --demo-border: 15px;
 }
+
+.brandLogo {
+  position: absolute;
+  top: 19px;
+  left: 130px;
+  width: 117px;
+  height: 136px;
+  flex-shrink: 0;
+}
+
+.brandName {
+  position: absolute;
+  top: 71px;
+  left: 270px;
+  color: #FFF; /* var(--Gray-White, #FFF) */
+  text-align: center;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 38px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 32px; /* 84.211% */
+}
+
+  .heading1 {
+    width: 872px;
+    color: #293241;
+    text-align: center;
+    font-family: "Anybody", Medium 300;
+    font-size: 48px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 130%; /* 62.4px */
+  }
+
+  .subtitle {
+    color: var(--Color-300, #7F848D);
+    opacity: 0.7;
+    text-align: center;
+    font-family: "Anybody", Medium 300;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
 
 .container {
   text-align: center;
@@ -49,3 +110,257 @@
   opacity: 0.8;
 }
 
+
+.logo {
+  width: 117px;
+  height: 136px;
+  flex-shrink: 0;
+  margin: 0 auto 24px; /* center it and add space below */
+}
+
+.title {
+  color: #FFF;
+  text-align: center;
+  font-family: "Anybody", sans-serif;
+  font-size: 38px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 32px; /* 84.211% */
+  margin: 0 0 16px 0;
+}
+
+/* One Dashboard to manage your team */
+.heroTitle{
+  position: absolute;
+  top: 200px;
+  left: 400px;
+  right: 400px;           /* equals 450px margins on both sides */
+  color: #FFF;
+  text-align: center;
+  font-family: "Anybody", Medium 500;
+  font-size: 50px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 138%;      /* ~99.36px */
+  margin: 0;
+  z-index: 2;             /* above background/overlaps */
+}
+
+.subtitle1 {
+  position: absolute;
+  top: 180px;
+  left: 500px;
+  right: 500px; 
+  color: #FFF;
+  opacity: 0.7;
+  text-align: center;
+  font-family: "Anybody", Medium 500;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  }
+
+  .signUpButtonContainer {
+  position: absolute;     /* so we can place it freely */
+  top: 60px;              /* distance from top edge */
+  right: 60px;            /* distance from right edge */
+  display: flex;          /* put buttons in a row */
+  gap: 12px;              /* space between them */
+  z-index: 10;            /* ensure it's above background */
+}
+
+/* Main button style */
+.signUpButton {
+  background-color: #ffffff;
+  color: #293241;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.signUpButton:hover {
+  background-color: #e0e0e0;
+}
+
+/* Secondary button (outlined) */
+.signUpButtonSecondary {
+  background-color: transparent;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.signUpButtonSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.SignUpButton {
+  position: absolute;
+  top: 61px;
+  right: 50px; 
+  display: inline-flex;
+  padding: 14px 24px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 15px;
+  background: #FFF;
+  color: #293241;       
+  }
+
+  .inputYourTeam {
+    position: absolute;
+    top: 370px;
+    left: 50%;                    /* move left edge to center */
+    transform: translateX(-50%);  /* shift back by half its width */
+    width: 648px;
+    height: 82px;
+    flex-shrink: 0;
+    border-radius: 1000px;
+    border: 1px solid #FFF;
+    background: transparent;     /* transparent background */
+    padding: 0 24px; 
+
+    /* input text style */
+    color: #FFF;
+    font-family: "Anybody", sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+
+  /* placeholder text style */
+  .inputYourTeam::placeholder {
+    color: #FFF;
+    opacity: 0.7;                /* slightly dimmed */
+    font-family: "Anybody", sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+
+  /* remove default highlight/focus glow */
+  .inputYourTeam:focus {
+    outline: none;
+    border-color: #FFF;          /* keep white border on focus */
+  }
+
+  /* TestDemo button */
+  .TestOurDemoButton {
+    position: absolute;
+    top: 370px;                    /* same top as input */
+    left: 50%;
+    height: 82px;
+    transform: translateX(-50%);
+    margin-left: 324px;            /* half of input width (648/2) to align to right edge */
+    transform: translateX(-100%);  /* shift left by button's own width */
+    
+    display: inline-flex;
+    padding: 14px 32px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border-radius: 1000px;
+    background: #FFF;           /* blue background */
+    color: #293241;
+    border: none;
+    
+    font-family: "Anybody", Medium 300;
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    z-index: 2;                    /* appear above input */
+  }
+
+  /*demo screen*/
+  .demoScreen {
+    position: absolute;
+    top: var(--demo-top);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1320px;
+    height: var(--demo-height);
+    flex-shrink: 0;
+    border-radius: 50px;
+    border: var(--demo-border) solid #4C5562;
+  }
+
+.howSection {
+  position: absolute;
+  top: calc(var(--demo-top) + var(--demo-height) + (2 * var(--demo-border)) + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1321.5px, 90%); /* was 960px; 4*312 + 3*24.5 = 1321.5 */
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.featuresRow {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 24.5px;       /* exact spacing between cards */
+  margin-top: 84px;  /* space below subtitle */
+}
+
+.featureCard {
+  width: 312px;
+  height: 200px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: #1E2746;
+
+  display: flex;           /* center content vertically */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+}
+
+.connectorSvg {
+  width: 150%;     /* scale to howSection width */
+  height: auto;
+  margin-top: -250px;
+  display: block;
+}
+
+  .howSection .heading1 {
+    max-width: 872px;      /* was width: 872px; */
+    margin: 0 auto 10px;   /* center the block */
+  }
+
+  .howSection .subtitle {
+    max-width: 872px;
+    margin: 10px auto 0;   /* center and add space from heading */
+  }
+
+  .whiteTextBold {
+    color: var(--Color-White, #FFF);
+    font-family: "Anybody", Medium 300;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 32px; /* 177.778% */
+  }
+
+  .whiteTextRegular {
+    width: 264px;
+    color: var(--Color-100, #D4D6D9);
+    font-family: "Anybody", Medium 300;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px; /* 150% */
+  }
