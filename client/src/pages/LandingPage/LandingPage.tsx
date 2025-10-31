@@ -83,7 +83,7 @@ export default function LandingPage() {
 
         <div className={styles.featuresRow}>
           <div className={styles.featureCard}>
-            <div className={styles.whiteTextBold}>Discover & analyze your team strengths</div>
+            <div className={styles.whiteTextBold}>1. Discover & analyze your team strengths</div>
             <div className={styles.whiteTextRegular}>
               Find strengths within your team out of 5 key statstics: AVG, OBP, SLG, K%, wRC+
             </div>
