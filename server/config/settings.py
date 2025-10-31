@@ -17,6 +17,9 @@ class Settings:
     # CORS
     CORS_ORIGINS = ["http://localhost:3000"]
     
+    # Rate Limiting & Proxy
+    TRUST_PROXY = os.getenv("TRUST_PROXY", "false").lower() == "true"  # Only enable if behind trusted reverse proxy
+    
     def validate(self):
         """
         Validate configuration and collect startup warnings.
