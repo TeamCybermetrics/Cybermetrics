@@ -78,7 +78,7 @@ export default function LandingPage() {
       <div className={styles.howSection}>
         <h1 className={styles.heading1}>How does it work?</h1>
         <p className={styles.subtitle}>
-          an interactive roster-building platform that reimagines how baseball teams evaluate players and construct lineups.
+          An interactive roster-building platform that reimagines how baseball teams evaluate players and construct lineups.
         </p>
 
         <div className={styles.featuresRow}>
