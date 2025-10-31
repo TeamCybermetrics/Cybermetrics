@@ -71,7 +71,7 @@ export default function LandingPage() {
         Test our demo
       </Link>
 
-      {/*Demo Screen */}
+      {/* Demo Screen */}
       <div className={styles.demoScreen}></div>
 
       {/* How does it work section */}
