@@ -246,9 +246,9 @@
     top: 370px;                    /* same top as input */
     left: 50%;
     height: 82px;
-    transform: translateX(-50%);
-    margin-left: 324px;            /* half of input width (648/2) to align to right edge */
-    transform: translateX(-100%);  /* shift left by button's own width */
+    /* Combine both transforms for correct positioning */
+    transform: translateX(calc(-50% + 324px - 100%));
+    /* margin-left: 324px; is now handled in the transform */
     
     display: inline-flex;
     padding: 14px 32px;
