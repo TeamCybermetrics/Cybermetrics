@@ -74,7 +74,7 @@ export default function LandingPage() {
       {/*Demo Screen */}
       <div className={styles.demoScreen}></div>
 
-      {/* How does it work section*/}
+      {/* How does it work section */}
       <div className={styles.howSection}>
         <h1 className={styles.heading1}>How does it work?</h1>
         <p className={styles.subtitle}>
