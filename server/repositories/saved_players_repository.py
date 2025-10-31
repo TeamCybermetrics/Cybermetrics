@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
-from models.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
+from typing import List, Tuple, Dict, Any
+from models.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse, ImportPlayerError
 
 class SavedPlayersRepository(ABC):
     @abstractmethod
@@ -23,6 +23,14 @@ class SavedPlayersRepository(ABC):
         """Delete a player from user's saved players collection"""
         pass
 
+    @abstractmethod
+    async def import_players(
+        self,
+        user_id: str,
+        players: List[Tuple[int, str, Dict[str, Any]]]
+    ) -> Tuple[int, List[ImportPlayerError]]:
+        """Bulk import players for a user given validated payloads"""
+        pass
 
 
 

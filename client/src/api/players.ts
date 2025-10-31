@@ -84,6 +84,19 @@ export interface DeletePlayerResponse {
   message: string;
 }
 
+export interface ImportPlayerError {
+  row: number;
+  reason: string;
+  player_id?: string;
+}
+
+export interface ImportPlayersResponse {
+  message: string;
+  imported: number;
+  total_rows: number;
+  skipped: ImportPlayerError[];
+}
+
 export const playersApi = {
   search: async (query: string, signal?: AbortSignal): Promise<PlayerSearchResult[]> => {
     return apiClient.get<PlayerSearchResult[]>(`/api/players/search?q=${encodeURIComponent(query)}`, {
@@ -106,4 +119,10 @@ export const playersApi = {
   deleteSaved: async (playerId: number): Promise<DeletePlayerResponse> => {
     return apiClient.delete<DeletePlayerResponse>(`/api/players/saved/${playerId}`);
   },
+
+  importSavedCsv: async (file: File): Promise<ImportPlayersResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.postForm<ImportPlayersResponse>("/api/players/saved/import", formData);
+  }
 };

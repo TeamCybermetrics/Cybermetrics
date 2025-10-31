@@ -23,12 +23,22 @@ export class ApiClient {
         // Check if we're in the browser
         if (typeof window !== "undefined") {
           const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-          
+
           if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
           }
+
+          if (config.data instanceof FormData && config.headers) {
+            if (typeof (config.headers as any).set === "function") {
+              (config.headers as any).set("Content-Type", undefined);
+              (config.headers as any).set("content-type", undefined);
+            } else {
+              delete (config.headers as Record<string, unknown>)["Content-Type"];
+              delete (config.headers as Record<string, unknown>)["content-type"];
+            }
+          }
         }
-        
+
         return config;
       },
       (error) => {
@@ -62,6 +72,17 @@ export class ApiClient {
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {
     const response = await this.instance.post<T>(endpoint, body);
+    return response.data;
+  }
+
+  async postForm<T>(endpoint: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
+    // Allow the browser to set the multipart boundary automatically.
+    const response = await this.instance.post<T>(endpoint, formData, {
+      ...(config ?? {}),
+      headers: {
+        ...(config?.headers ?? {}),
+      },
+    });
     return response.data;
   }
 

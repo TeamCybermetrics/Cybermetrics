@@ -1,7 +1,7 @@
 from repositories.saved_players_repository import SavedPlayersRepository
-from models.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
+from models.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse, ImportPlayerError
 from fastapi import HTTPException, status
-from typing import List
+from typing import List, Tuple, Dict, Any
 from anyio import to_thread
 import logging
 
@@ -138,3 +138,80 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         ref = self.db.collection('users').document(user_id).collection('saved_players').document(player_id)
         return ref, ref.get()
 
+    async def import_players(
+        self,
+        user_id: str,
+        players: List[Tuple[int, str, Dict[str, Any]]]
+    ) -> Tuple[int, List[ImportPlayerError]]:
+        """Bulk import validated player payloads for a user"""
+        if not self.db:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase is not configured"
+            )
+
+        batch = self.db.batch()
+        batch_ops = 0
+        imported = 0
+        skipped: List[ImportPlayerError] = []
+        current_batch_rows: List[Tuple[int, str]] = []
+
+        async def commit_current_batch(active_batch, rows):
+            nonlocal imported
+            if not rows:
+                return
+            try:
+                await to_thread.run_sync(active_batch.commit)
+                imported += len(rows)
+            except Exception:
+                self._logger.exception("Batch commit failed while importing saved players")
+                for failed_row, failed_player_id in rows:
+                    skipped.append(
+                        ImportPlayerError(
+                            row=failed_row,
+                            player_id=failed_player_id,
+                            reason="Batch commit failed"
+                        )
+                    )
+
+        try:
+            for row_index, doc_id, player_data in players:
+                try:
+                    doc_ref = (
+                        self.db.collection('users')
+                        .document(user_id)
+                        .collection('saved_players')
+                        .document(doc_id)
+                    )
+                    batch.set(doc_ref, player_data)
+                    batch_ops += 1
+                    current_batch_rows.append((row_index, doc_id))
+
+                    if batch_ops >= 450:
+                        await commit_current_batch(batch, current_batch_rows)
+                        batch = self.db.batch()
+                        batch_ops = 0
+                        current_batch_rows.clear()
+                except Exception:
+                    self._logger.exception("Failed to queue player import write for user: %s", user_id)
+                    skipped.append(
+                        ImportPlayerError(
+                            row=row_index,
+                            player_id=doc_id,
+                            reason="Failed to queue write"
+                        )
+                    )
+
+            if batch_ops:
+                await commit_current_batch(batch, current_batch_rows)
+                current_batch_rows.clear()
+
+            return imported, skipped
+        except HTTPException:
+            raise
+        except Exception as exc:
+            self._logger.exception("Failed to import players for user: %s", user_id)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to import players"
+            ) from exc
