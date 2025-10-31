@@ -34,7 +34,7 @@ export default function LandingPage() {
       <h2 className={styles.heroTitle}>
         One Dashboard to Manage
         <br />
-        Your Baseball team
+        Your baseball team
       </h2>
       
       <h3 className={styles.subtitle1}>
