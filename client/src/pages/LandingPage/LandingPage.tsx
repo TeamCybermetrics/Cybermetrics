@@ -95,7 +95,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className={styles.featureCard}>
-            <div className={styles.whiteTextBold}>3. Improve with our recommendation System</div>
+            <div className={styles.whiteTextBold}>3. Improve with our recommendation system</div>
             <div className={styles.whiteTextRegular}>
               Discover, browse, & test alternative players within your $ range to fill gaps with your team
             </div>
