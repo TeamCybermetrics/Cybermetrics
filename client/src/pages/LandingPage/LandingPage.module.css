@@ -201,20 +201,6 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
-.SignUpButton {
-  position: absolute;
-  top: 61px;
-  right: 50px; 
-  display: inline-flex;
-  padding: 14px 24px;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  border-radius: 15px;
-  background: #FFF;
-  color: #293241;       
-  }
-
   .inputYourTeam {
     position: absolute;
     top: 370px;
