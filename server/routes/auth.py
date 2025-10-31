@@ -2,52 +2,50 @@ from fastapi import APIRouter, status, Header, HTTPException, Request, Depends
 from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 from dependency.dependencies import get_auth_service
 from services.auth_service import AuthService
-from middleware.rate_limit import rate_limiter, get_client_ip
+from middleware.rate_limit import rate_limiter, rate_limit_signup, rate_limit_login
 from typing import Annotated
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 @router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
 async def signup(
-    signup_data: SignupRequest, 
-    request: Request,
-    auth_service: Annotated[AuthService, Depends(get_auth_service)]
+    signup_data: SignupRequest,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    client_ip: Annotated[str, Depends(rate_limit_signup)]
 ):
     """
     Create a new user account using the provided registration data.
     
+    Rate limiting is applied by IP address via dependency injection to prevent signup spam.
+    
     Parameters:
         signup_data (SignupRequest): User registration information such as email, password, and profile fields.
-        request (Request): FastAPI request object for rate limiting.
         auth_service (AuthService): Injected authentication service.
+        client_ip (str): Client IP address from rate limiting dependency.
     
     Returns:
         SignupResponse: Details of the newly created user.
     """
-    # Rate limit by IP to prevent signup spam
-    client_ip = await get_client_ip(request)
-    await rate_limiter.check_rate_limit(f"signup:{client_ip}")
-    
     return await auth_service.signup(signup_data)
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
-    login_data: LoginRequest, 
-    request: Request,
-    auth_service: Annotated[AuthService, Depends(get_auth_service)]
+    login_data: LoginRequest,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    client_ip: Annotated[str, Depends(rate_limit_login)]
 ):
     """
     Authenticate the user credentials while applying IP- and email-based rate limits.
     
-    Checks rate limits for the client's IP and the provided email before attempting authentication. 
-    On successful authentication, resets the failed-attempt counters for that IP and email. If 
-    authentication fails with HTTP 401, records a failed attempt for both the IP and email and 
-    re-raises the original HTTPException; other exceptions from the authentication service are propagated.
+    IP-based rate limiting is applied via dependency injection. Email-based rate limiting is checked 
+    in the route handler. On successful authentication, resets the failed-attempt counters for that 
+    IP and email. If authentication fails with HTTP 401, records a failed attempt for both the IP 
+    and email and re-raises the original HTTPException.
     
     Parameters:
         login_data (LoginRequest): Credentials for authentication; the `email` field is used for email-based rate limiting.
-        request (Request): FastAPI request object for rate limiting.
         auth_service (AuthService): Injected authentication service.
+        client_ip (str): Client IP address from rate limiting dependency.
     
     Returns:
         LoginResponse: Authentication result returned by the authentication service.
@@ -55,11 +53,7 @@ async def login(
     Raises:
         fastapi.HTTPException: Propagates HTTP exceptions from the authentication service (401 responses also increment rate-limit counters).
     """
-    # Get client IP for rate limiting
-    client_ip = await get_client_ip(request)
-    
-    # Check rate limits BEFORE attempting login (prevent DoS)
-    await rate_limiter.check_rate_limit(f"login:ip:{client_ip}")
+    # Check email-based rate limit (IP already checked by dependency)
     await rate_limiter.check_rate_limit(f"login:email:{login_data.email}")
     
     try:

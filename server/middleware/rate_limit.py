@@ -123,3 +123,25 @@ async def get_client_ip(request: Request) -> str:
     
     # Fallback to direct client IP
     return request.client.host if request.client else "unknown"
+
+
+# Rate limiting dependencies
+async def rate_limit_signup(request: Request) -> str:
+    """
+    Dependency to check rate limits for signup endpoint by IP.
+    Returns the client IP for use in the route handler.
+    """
+    client_ip = await get_client_ip(request)
+    await rate_limiter.check_rate_limit(f"signup:{client_ip}")
+    return client_ip
+
+
+async def rate_limit_login(request: Request) -> str:
+    """
+    Dependency to check rate limits for login endpoint by IP.
+    Returns the client IP for use in the route handler.
+    Note: Email-based rate limiting is handled in the route due to need for request body.
+    """
+    client_ip = await get_client_ip(request)
+    await rate_limiter.check_rate_limit(f"login:ip:{client_ip}")
+    return client_ip
