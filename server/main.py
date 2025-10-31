@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
 from routes import auth_router, health_router, players_router
+from middleware.rate_limit_middleware import RateLimitMiddleware
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
@@ -40,6 +41,9 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app
 app = FastAPI(title="Cybermetrics API", lifespan=lifespan)
+
+# Add rate limiting middleware (before CORS)
+app.add_middleware(RateLimitMiddleware)
 
 # Configure CORS
 app.add_middleware(
