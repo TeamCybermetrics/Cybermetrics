@@ -136,9 +136,11 @@ class RosterAvgService:
                         value_score=vs.get("value_score", 0.0),
                     )
                 )
-            except HTTPException:
-                # Skip players with missing/invalid data
-                continue
+            except HTTPException as e:
+                if e.status_code < 500:
+                    continue
+                else:
+                    raise
             except Exception:
                 logger.exception("Unexpected error computing value score for player %s", pid)
                 # For any unexpected error with a single player, skip and continue
