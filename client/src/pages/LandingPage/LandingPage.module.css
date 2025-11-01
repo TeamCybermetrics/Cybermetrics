@@ -102,17 +102,6 @@
   opacity: 0.8;
 }
 
-.title {
-  color: #FFF;
-  text-align: center;
-  font-family: "Anybody", Medium 300;
-  font-size: 38px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 32px; /* 84.211% */
-  margin: 0 0 16px 0;
-}
-
 /* HERO section in flow */
 .hero {
   display: flex;
