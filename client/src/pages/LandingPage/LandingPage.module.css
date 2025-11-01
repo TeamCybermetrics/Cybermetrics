@@ -6,9 +6,9 @@
   background: linear-gradient(
     to bottom,
     #0D1728 0% 50%,
-    #E5E5E5 50% 85%,
-    #293241 85% 100%,
-    #E5E5E5 100% 100%  /* Placeholder for future extra featuress */
+    #E5E5E5 50% 90%,
+    #293241 90% 100%,
+    #E5E5E5 100% 100%  /* Placeholder for future extra features */
   );
   background-repeat: no-repeat;
 }
@@ -287,6 +287,7 @@
   width: calc(4 * 312px + 3 * 24.5px);
   max-width: 100%;
   margin: 84px auto 0;
+  padding-bottom: 160px; /* reserve space so it won't overflow bottom */
 }
 
 .featuresRow {
@@ -314,11 +315,13 @@
 }
 
 .connectorSvg {
-  position: static; 
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 0;
   width: 130%;
   height: auto;
-  margin: -520px -200px 0;
   display: block;
   pointer-events: none;
 }
