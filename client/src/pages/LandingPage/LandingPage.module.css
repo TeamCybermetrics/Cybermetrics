@@ -1,26 +1,26 @@
 .main {
-  /* Adjust total height */
-  min-height: calc(1276px + 1200px + 963px + 1200px); /* ~4639px */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* remove giant fixed height */
+  /* min-height: calc(1276px + 1200px + 963px + 1200px); */
+  display: block;                 /* let sections flow */
+  padding: 96px 0 120px;          /* top padding to clear brand, bottom space */
 
-  /* Four stacked color bands */
+  /* keep your background gradient + position: relative for brand */
   background: linear-gradient(
     to bottom,
-    #0D1728 0 1276px,                /* band 1 */
-    #E5E5E5 1276px 2476px,           /* band 2 (1276 + 1200) */
-    #293241 2476px 3439px,           /* band 3 (2476 + 963) */
-    #E5E5E5 3439px 100%              /* band 4 and remainder */
+    #0D1728 0 1276px,
+    #E5E5E5 1276px 2476px,
+    #293241 2476px 3439px,
+    #E5E5E5 3439px 100%
   );
   background-repeat: no-repeat;
+  position: relative;
+}
 
-  position: relative; /* anchor for absolute children */
-
-  /* centralize demo dims so you change them in one place */
-  --demo-top: 600px;
-  --demo-height: 923px;
-  --demo-border: 15px;
+/* Center page content and add side padding */
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 16px;
 }
 
 .brandLogo {
@@ -45,27 +45,28 @@
   line-height: 32px; /* 84.211% */
 }
 
-  .heading1 {
-    width: 872px;
-    color: #293241;
-    text-align: center;
-    font-family: "Anybody", Medium 300;
-    font-size: 48px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: 130%; /* 62.4px */
-  }
+.heading1 {
+  max-width: 872px;
+  margin: 0 auto 10px;
+  color: #293241;
+  text-align: center;
+  font-family: "Anybody", Medium 300;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 130%;
+}
 
-  .subtitle {
-    color: var(--Color-300, #7F848D);
-    opacity: 0.7;
-    text-align: center;
-    font-family: "Anybody", Medium 300;
-    font-size: 15px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-  }
+.subtitle {
+  max-width: 872px;
+  margin: 10px auto 0;
+  color: var(--Color-300, #7F848D);
+  opacity: 0.7;
+  text-align: center;
+  font-family: "Anybody", Medium 300;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: normal;
+}
 
 .container {
   text-align: center;
@@ -129,37 +130,54 @@
   margin: 0 0 16px 0;
 }
 
-/* One Dashboard to manage your team */
-.heroTitle{
-  position: absolute;
-  top: 200px;
-  left: 400px;
-  right: 400px;           /* equals 450px margins on both sides */
+/* HERO section in flow */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin-top: 40px; /* adjust as needed under brand */
+}
+
+/* Remove absolute positioning from hero title/subtitle */
+.heroTitle {
+  position: static; /* was absolute */
+  top: auto; left: auto; right: auto;
+  transform: none;
+  margin: 0;
   color: #FFF;
   text-align: center;
   font-family: "Anybody", Medium 500;
   font-size: 50px;
-  font-style: normal;
   font-weight: 700;
-  line-height: 138%;      /* ~99.36px */
-  margin: 0;
-  z-index: 2;             /* above background/overlaps */
+  line-height: 138%;
+  z-index: 1;
 }
 
 .subtitle1 {
-  position: absolute;
-  top: 380px;
-  left: 500px;
-  right: 500px; 
+  position: static; /* was absolute */
+  top: auto; left: auto; right: auto;
+  transform: none;
+  margin: 4px 0 0 0;
   color: #FFF;
   opacity: 0.7;
   text-align: center;
   font-family: "Anybody", Medium 500;
   font-size: 15px;
-  font-style: normal;
   font-weight: 400;
   line-height: normal;
-  }
+}
+
+/* Input + button row beside each other, wrapping on small screens */
+.ctaRow {
+  margin-top: 24px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap; /* wrap on smaller screens */
+}
 
   .signUpButtonContainer {
   position: absolute;     /* so we can place it freely */
@@ -201,38 +219,28 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
-  .inputYourTeam {
-    position: absolute;
-    top: 370px;
-    left: 50%;                    /* move left edge to center */
-    transform: translateX(-50%);  /* shift back by half its width */
-    width: 648px;
-    height: 82px;
-    flex-shrink: 0;
-    border-radius: 1000px;
-    border: 1px solid #FFF;
-    background: transparent;     /* transparent background */
-    padding: 0 24px; 
+/* Input now in normal flow */
+.inputYourTeam {
+  position: static; /* was absolute */
+  top: auto; left: auto; transform: none;
+  width: 648px;
+  max-width: min(90vw, 648px);
+  height: 82px;
+  border-radius: 1000px;
+  border: 1px solid #FFF;
+  background: transparent;
+  padding: 0 24px;
+  color: #FFF;
+  font-family: "Anybody", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+}
 
-    /* input text style */
-    color: #FFF;
-    font-family: "Anybody", sans-serif;
-    font-size: 18px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-  }
-
-  /* placeholder text style */
-  .inputYourTeam::placeholder {
-    color: #FFF;
-    opacity: 0.7;                /* slightly dimmed */
-    font-family: "Anybody", sans-serif;
-    font-size: 18px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-  }
+.inputYourTeam::placeholder {
+  color: #FFF;
+  opacity: 0.7;
+}
 
   /* remove default highlight/focus glow */
   .inputYourTeam:focus {
@@ -240,74 +248,92 @@
     border-color: #FFF;          /* keep white border on focus */
   }
 
-  /* TestDemo button */
-  .TestOurDemoButton {
-    position: absolute;
-    top: 370px;                    /* same top as input */
-    left: 50%;
-    height: 82px;
-    /* Combine both transforms for correct positioning */
-    transform: translateX(calc(-50% + 324px - 100%));
-    /* margin-left: 324px; is now handled in the transform */
-    
-    display: inline-flex;
-    padding: 14px 32px;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    border-radius: 1000px;
-    background: #FFF;           /* blue background */
-    color: #293241;
-    border: none;
-    
-    font-family: "Anybody", Medium 300;
-    font-size: 18px;
-    font-weight: 500;
-    cursor: pointer;
-    z-index: 2;                    /* appear above input */
-  }
+/* Button now in normal flow, placed to the right of input */
+.TestOurDemoButton {
+  position: static; /* was absolute */
+  top: auto; left: auto; transform: none; margin-left: 0;
+  height: 82px;
+  display: inline-flex;
+  padding: 14px 32px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 1000px;
+  background: #FFF;
+  color: #293241;
+  border: none;
+  font-family: "Anybody", Medium 300;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1;
+}
 
-  /*demo screen*/
-  .demoScreen {
-    position: absolute;
-    top: var(--demo-top);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 1320px;
-    height: var(--demo-height);
-    flex-shrink: 0;
-    border-radius: 50px;
-    border: var(--demo-border) solid #4C5562;
-  }
+/* DEMO section centered, in flow */
+.demoSection {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
 
+.demoScreen {
+  position: static;                 /* in normal flow */
+  width: 100%;
+  max-width: 1320px;                /* 1320 on large screens */
+  aspect-ratio: 1320 / 923;
+  height: auto;                     
+  border-radius: 50px;
+  border: 15px solid #4C5562;
+}
+
+
+/* HOW IT WORKS in flow, centered */
 .howSection {
-  position: absolute;
-  top: calc(var(--demo-top) + var(--demo-height) + (2 * var(--demo-border)) + 30px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1321.5px, 90%); /* was 960px; 4*312 + 3*24.5 = 1321.5 */
+  position: relative;
+  top: auto; left: auto; transform: none;
+  margin-top: 32px;               /* ~20px below demo + breathing */
+  width: 100%;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+/* center fixed-width blocks */
+.howSection .heading1 {
+  max-width: 872px;
+  margin: 0 auto 10px;
+}
+
+.howSection .subtitle {
+  max-width: 872px;
+  margin: 10px auto 0;
+}
+
+.featuresWrap {
+  position: relative;
+  width: calc(4 * 312px + 3 * 24.5px);
+  max-width: 100%;
+  margin: 84px auto 0;
+}
+
 .featuresRow {
-  display: flex;
+  display: grid;
+  z-index: 1;
+  grid-template-columns: repeat(4, 312px);
   justify-content: center;
-  align-items: stretch;
-  gap: 24.5px;       /* exact spacing between cards */
-  margin-top: 84px;  /* space below subtitle */
+  gap: 24.5px;
+  margin-top: 0;
 }
 
 .featureCard {
   width: 312px;
   height: 200px;
-  flex-shrink: 0;
+  z-index: 1;
   border-radius: 18px;
   background: #1E2746;
-
-  display: flex;           /* center content vertically */
+  color: #FFF;
+  display: flex; 
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -316,10 +342,39 @@
 }
 
 .connectorSvg {
-  width: 150%;     /* scale to howSection width */
+  position: static; 
+  z-index: 0;
+  width: 130%;
   height: auto;
-  margin-top: -250px;
+  margin: -520px -200px 0;
   display: block;
+  pointer-events: none;
+}
+
+/* 2-up on tablets */
+@media (max-width: 1200px) {
+  .featuresWrap {
+    width: calc(2 * 312px + 1 * 24.5px);
+  }
+  .featuresRow {
+    grid-template-columns: repeat(2, 312px);
+  }
+}
+
+/* Stack on mobile; optionally hide connector */
+@media (max-width: 768px) {
+  .featuresWrap { width: 100%; }
+  .featuresRow { grid-template-columns: 1fr; justify-items: center; }
+  .connectorSvg { display: none; }
+}
+
+@media (max-width: 768px) {
+  .hero { margin-top: 24px; }
+  .inputYourTeam { height: 64px; }
+  .TestOurDemoButton { height: 64px; padding: 0 20px; }
+  .featuresRow { grid-template-columns: 1fr; justify-items: center; }
+  .featureCard { width: min(312px, 100%); }
+  .connectorSvg { display: none; } /* optional on small screens */
 }
 
   .howSection .heading1 {
