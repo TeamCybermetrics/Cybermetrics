@@ -1,19 +1,16 @@
 .main {
-  /* remove giant fixed height */
-  /* min-height: calc(1276px + 1200px + 963px + 1200px); */
-  display: block;                 /* let sections flow */
-  padding: 96px 0 120px;          /* top padding to clear brand, bottom space */
-
-  /* keep your background gradient + position: relative for brand */
+  display: block;
+  padding: 96px 0 120px;
+  position: relative;
+  min-height: 100vh; /* ensures gradient always shows */
   background: linear-gradient(
     to bottom,
-    #0D1728 0 1276px,
-    #E5E5E5 1276px 2476px,
-    #293241 2476px 3439px,
-    #E5E5E5 3439px 100%
+    #0D1728 0% 50%,
+    #E5E5E5 50% 85%,
+    #293241 85% 100%,
+    #E5E5E5 100% 100%  /* Placeholder for future extra featuress */
   );
   background-repeat: no-repeat;
-  position: relative;
 }
 
 /* Center page content and add side padding */
@@ -38,7 +35,7 @@
   left: 270px;
   color: #FFF; /* var(--Gray-White, #FFF) */
   text-align: center;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Anybody", Medium 300;
   font-size: 38px;
   font-style: normal;
   font-weight: 500;
@@ -73,12 +70,6 @@
   padding: 20px;
 }
 
-.title {
-  font-size: 48px;
-  margin: 0 0 16px 0;
-  color: #000;
-}
-
 .description {
   font-size: 18px;
   margin: 0 0 32px 0;
@@ -111,18 +102,10 @@
   opacity: 0.8;
 }
 
-
-.logo {
-  width: 117px;
-  height: 136px;
-  flex-shrink: 0;
-  margin: 0 auto 24px; /* center it and add space below */
-}
-
 .title {
   color: #FFF;
   text-align: center;
-  font-family: "Anybody", sans-serif;
+  font-family: "Anybody", Medium 300;
   font-size: 38px;
   font-style: normal;
   font-weight: 500;
@@ -360,32 +343,6 @@
     grid-template-columns: repeat(2, 312px);
   }
 }
-
-/* Stack on mobile; optionally hide connector */
-@media (max-width: 768px) {
-  .featuresWrap { width: 100%; }
-  .featuresRow { grid-template-columns: 1fr; justify-items: center; }
-  .connectorSvg { display: none; }
-}
-
-@media (max-width: 768px) {
-  .hero { margin-top: 24px; }
-  .inputYourTeam { height: 64px; }
-  .TestOurDemoButton { height: 64px; padding: 0 20px; }
-  .featuresRow { grid-template-columns: 1fr; justify-items: center; }
-  .featureCard { width: min(312px, 100%); }
-  .connectorSvg { display: none; } /* optional on small screens */
-}
-
-  .howSection .heading1 {
-    max-width: 872px;      /* was width: 872px; */
-    margin: 0 auto 10px;   /* center the block */
-  }
-
-  .howSection .subtitle {
-    max-width: 872px;
-    margin: 10px auto 0;   /* center and add space from heading */
-  }
 
   .whiteTextBold {
     color: var(--Color-White, #FFF);
