@@ -134,7 +134,6 @@ export default function TeamBuilderPage() {
         years_active: result.years_active
       })) as SavedPlayer[];
     }
-    
     return savedPlayers;
   }, [searchResults, searchTerm, savedPlayers]);
 
