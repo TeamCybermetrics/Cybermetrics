@@ -63,7 +63,8 @@ def get_roster_avg_service():
     """Create roster average service instance"""
     roster_avg_repo = get_roster_repository()
     roster_avg_domain = get_roster_domain()
-    return RosterAvgService(roster_avg_repo, roster_avg_domain)
+    player_repo = get_player_repository()
+    return RosterAvgService(roster_avg_repo, roster_avg_domain, player_repo)
 
 # save players related
 def get_saved_players_repository():
