@@ -198,7 +198,7 @@ export default function TeamBuilderPage() {
     clearDragState();
   };
 
-const saveTeam = () => {
+  const saveTeam = () => {
     const newTeam: SavedTeam = {
       id: Date.now().toString(),
       name: teamName,
