@@ -11,9 +11,11 @@ class TestRosterAvgService:
         """Setup test fixtures"""
         self.mock_roster_repository = Mock()
         self.mock_roster_domain = Mock()
+        self.mock_player_repository = Mock()
         self.roster_avg_service = RosterAvgService(
             roster_repository=self.mock_roster_repository,
-            roster_domain=self.mock_roster_domain
+            roster_domain=self.mock_roster_domain,
+            player_repository=self.mock_player_repository
         )
     
     # Test get_roster_averages

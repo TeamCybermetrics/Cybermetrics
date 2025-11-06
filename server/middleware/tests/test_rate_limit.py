@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status, Request
 from middleware.rate_limit import RateLimiter, get_client_ip
@@ -194,12 +194,14 @@ class TestGetClientIP:
     """Unit tests for get_client_ip function"""
     
     @pytest.mark.asyncio
+    @patch('middleware.rate_limit.settings.TRUST_PROXY', True)
     async def test_get_client_ip_from_x_forwarded_for(self):
         """Test getting client IP from X-Forwarded-For header"""
         mock_request = Mock(spec=Request)
         mock_request.headers.get = Mock(side_effect=lambda key: {
             "X-Forwarded-For": "203.0.113.1, 198.51.100.1"
         }.get(key))
+        mock_request.client = None
         
         ip = await get_client_ip(mock_request)
         
@@ -207,12 +209,14 @@ class TestGetClientIP:
         assert ip == "203.0.113.1"
     
     @pytest.mark.asyncio
+    @patch('middleware.rate_limit.settings.TRUST_PROXY', True)
     async def test_get_client_ip_from_x_real_ip(self):
         """Test getting client IP from X-Real-IP header"""
         mock_request = Mock(spec=Request)
         mock_request.headers.get = Mock(side_effect=lambda key: {
             "X-Real-IP": "203.0.113.1"
         }.get(key))
+        mock_request.client = None
         
         ip = await get_client_ip(mock_request)
         
@@ -231,6 +235,7 @@ class TestGetClientIP:
         assert ip == "203.0.113.1"
     
     @pytest.mark.asyncio
+    @patch('middleware.rate_limit.settings.TRUST_PROXY', True)
     async def test_get_client_ip_priority(self):
         """Test X-Forwarded-For has priority over X-Real-IP"""
         mock_request = Mock(spec=Request)
@@ -238,6 +243,7 @@ class TestGetClientIP:
             "X-Forwarded-For": "203.0.113.1",
             "X-Real-IP": "198.51.100.1"
         }.get(key))
+        mock_request.client = None
         
         ip = await get_client_ip(mock_request)
         
@@ -256,12 +262,14 @@ class TestGetClientIP:
         assert ip == "unknown"
     
     @pytest.mark.asyncio
+    @patch('middleware.rate_limit.settings.TRUST_PROXY', True)
     async def test_get_client_ip_strips_whitespace(self):
         """Test getting client IP strips whitespace"""
         mock_request = Mock(spec=Request)
         mock_request.headers.get = Mock(side_effect=lambda key: {
             "X-Forwarded-For": "  203.0.113.1  , 198.51.100.1"
         }.get(key))
+        mock_request.client = None
         
         ip = await get_client_ip(mock_request)
         
