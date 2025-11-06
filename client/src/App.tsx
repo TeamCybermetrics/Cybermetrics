@@ -22,7 +22,6 @@ function App() {
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.TEAM_BUILDER} element={<TeamBuilderPage />} />
           <Route path={ROUTES.TEAM_ANALYSIS} element={<TeamAnalysisPage />} />
-          <Route path={ROUTES.RECOMMENDATIONS} element={<RecommendationsPage />} />
           <Route path={ROUTES.MLB_TEAMS} element={<MLBTeamsPage />} />
         </Route>
 

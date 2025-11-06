@@ -317,6 +317,12 @@
   gap: 12px;
 }
 
+.teamNameWrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
 .teamName {
   font-size: 22px;
   font-weight: 600;
@@ -326,10 +332,34 @@
   gap: 8px;
 }
 
+.teamNameInput {
+  font-size: 22px;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid rgba(109, 123, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: inherit;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+}
+
+.teamNameInput:focus {
+  border-color: #6d7bff;
+  background: rgba(109, 123, 255, 0.05);
+}
+
 .editIcon {
   font-size: 16px;
   opacity: 0.6;
   cursor: pointer;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.editIcon:hover {
+  opacity: 1;
+  color: #6d7bff;
 }
 
 .teamScore,
@@ -793,4 +823,243 @@
     grid-column: 1;
     grid-row: auto;
   }
+}
+
+.filtersPanel {
+  margin-top: 12px;
+  padding: 24px;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filterSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filterLabel {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.salaryInputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.salaryInput {
+  flex: 1;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.salaryInput:focus {
+  border-color: #6d7bff;
+}
+
+.salaryDivider {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.salarySlider {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  position: relative;
+}
+
+.salarySlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #6d7bff;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.salarySlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #6d7bff;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.salaryLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.positionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selectAllBtn {
+  padding: 6px 12px;
+  background: rgba(109, 123, 255, 0.15);
+  border: 1px solid rgba(109, 123, 255, 0.3);
+  border-radius: 6px;
+  color: #6d7bff;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.selectAllBtn:hover {
+  background: rgba(109, 123, 255, 0.25);
+}
+
+.positionGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.positionCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.positionCheckbox:hover {
+  border-color: rgba(109, 123, 255, 0.4);
+  background: rgba(109, 123, 255, 0.08);
+}
+
+.positionCheckbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #6d7bff;
+}
+
+.positionCheckbox input[type="checkbox"]:checked + span {
+  color: #6d7bff;
+  font-weight: 600;
+}
+
+/* Load team panel */
+.loadTeamPanel {
+  margin-top: 12px;
+  padding: 20px;
+  background: transparent;
+  border: none;
+}
+
+.emptyTeams {
+  text-align: center;
+  padding: 20px;
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.teamsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teamItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(109, 123, 255, 0.08);
+  border: 1px solid rgba(109, 123, 255, 0.2);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.teamItem:hover {
+  background: rgba(109, 123, 255, 0.15);
+  border-color: rgba(109, 123, 255, 0.3);
+}
+
+.teamItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teamItemInfo strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6d7bff;
+}
+
+.teamDate {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.teamItemActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.loadBtn {
+  padding: 6px 16px;
+  background: #6d7bff;
+  color: #0f111d;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loadBtn:hover {
+  background: #8a96ff;
+  transform: translateY(-1px);
+}
+
+.deleteBtn {
+  padding: 6px 10px;
+  background: rgba(255, 59, 48, 0.15);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #ff3b30;
+}
+
+.deleteBtn:hover {
+  background: rgba(255, 59, 48, 0.25);
+  border-color: rgba(255, 59, 48, 0.4);
 }

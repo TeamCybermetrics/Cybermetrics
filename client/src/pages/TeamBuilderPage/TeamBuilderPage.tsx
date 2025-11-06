@@ -6,6 +6,13 @@ import styles from "./TeamBuilderPage.module.css";
 
 type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "P" | "C" | "DH";
 
+type SavedTeam = {
+  id: string;
+  name: string;
+  lineup: LineupState;
+  savedAt: string;
+};
+
 const DEFAULT_PLAYER_IMAGE =
   "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
 
@@ -40,7 +47,25 @@ export default function TeamBuilderPage() {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [teamName, setTeamName] = useState("TeamName1");
   const [isEditingTeamName, setIsEditingTeamName] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [loadTeamOpen, setLoadTeamOpen] = useState(false);
+  const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
+  const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000000]);
+  const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set(positionOrder));
 
+  // Load saved teams from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("savedTeams");
+    if (stored) {
+      try {
+        setSavedTeams(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to load saved teams:", e);
+      }
+    }
+  }, []);
+
+    // Load saved players on mount
   useEffect(() => {
     const fetchSaved = async () => {
       const result = await playerActions.getSavedPlayers();
@@ -109,7 +134,7 @@ export default function TeamBuilderPage() {
         years_active: result.years_active
       })) as SavedPlayer[];
     }
-
+    
     return savedPlayers;
   }, [searchResults, searchTerm, savedPlayers]);
 
@@ -174,7 +199,53 @@ export default function TeamBuilderPage() {
     clearDragState();
   };
 
-  // ...existing imports and code...
+const saveTeam = () => {
+    const newTeam: SavedTeam = {
+      id: Date.now().toString(),
+      name: teamName,
+      lineup: lineup,
+      savedAt: new Date().toISOString()
+    };
+
+    const updatedTeams = [...savedTeams, newTeam];
+    setSavedTeams(updatedTeams);
+    localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
+    alert(`Team "${teamName}" saved successfully!`);
+  };
+
+  const loadTeam = (team: SavedTeam) => {
+    setTeamName(team.name);
+    setLineup(team.lineup);
+    setLoadTeamOpen(false);
+    alert(`Team "${team.name}" loaded!`);
+  };
+
+  const deleteTeam = (teamId: string) => {
+    const updatedTeams = savedTeams.filter((t) => t.id !== teamId);
+    setSavedTeams(updatedTeams);
+    localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
+  };
+
+  const togglePosition = (position: string) => {
+    setSelectedPositions((prev) => {
+      const next = new Set(prev);
+      if (next.has(position)) {
+        next.delete(position);
+      } else {
+        next.add(position);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllPositions = () => {
+    if (selectedPositions.size === positionOrder.length) {
+      setSelectedPositions(new Set());
+    } else {
+      setSelectedPositions(new Set(positionOrder));
+    }
+  };
+
 
   return (
     <div className={styles.page}>
@@ -210,11 +281,142 @@ export default function TeamBuilderPage() {
             </div>
 
             <div className={styles.searchActions}>
-              <button className={styles.loadTeamBtn}>Load a team ▼</button>
-              <button className={styles.filtersBtn}>Filters ▼</button>
+              <button 
+                className={styles.loadTeamBtn}
+                onClick={() => setLoadTeamOpen(!loadTeamOpen)}
+              >
+                Load a team {loadTeamOpen ? "▲" : "▼"}
+              </button>
+              <button 
+                className={styles.filtersBtn}
+                onClick={() => setFiltersOpen(!filtersOpen)}
+              >
+                Filters {filtersOpen ? "▲" : "▼"}
+              </button>
             </div>
-          </section>
 
+            {/* Load team panel */}
+            {loadTeamOpen && (
+              <div className={styles.loadTeamPanel}>
+                {savedTeams.length === 0 ? (
+                  <div className={styles.emptyTeams}>
+                    <span>No saved teams yet. Save your current lineup to get started!</span>
+                  </div>
+                ) : (
+                  <div className={styles.teamsList}>
+                    {savedTeams.map((team) => (
+                      <div key={team.id} className={styles.teamItem}>
+                        <div className={styles.teamItemInfo}>
+                          <strong>{team.name}</strong>
+                          <span className={styles.teamDate}>
+                            {new Date(team.savedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className={styles.teamItemActions}>
+                          <button
+                            className={styles.loadBtn}
+                            onClick={() => loadTeam(team)}
+                          >
+                            Load
+                          </button>
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={() => deleteTeam(team.id)}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Filters panel */}
+            {filtersOpen && (
+              <div className={styles.filtersPanel}>
+                <div className={styles.filterSection}>
+                  <label className={styles.filterLabel}>Salary Range</label>
+                  <div className={styles.salaryInputs}>
+                    <input
+                      type="number"
+                      className={styles.salaryInput}
+                      placeholder="Min"
+                      value={salaryRange[0]}
+                      onChange={(e) => setSalaryRange([Number(e.target.value), salaryRange[1]])}
+                      min={0}
+                      max={salaryRange[1]}
+                    />
+                    <span className={styles.salaryDivider}>to</span>
+                    <input
+                      type="number"
+                      className={styles.salaryInput}
+                      placeholder="Max"
+                      value={salaryRange[1]}
+                      onChange={(e) => setSalaryRange([salaryRange[0], Number(e.target.value)])}
+                      min={salaryRange[0]}
+                      max={100000000}
+                    />
+                  </div>
+                          
+                  {/* Dual range sliders */}
+                  <div style={{ position: 'relative', height: '6px', marginTop: '8px' }}>
+                    <input
+                      type="range"
+                      className={styles.salarySlider}
+                      min={0}
+                      max={100000000}
+                      step={1000000}
+                      value={salaryRange[0]}
+                      onChange={(e) => setSalaryRange([Math.min(Number(e.target.value), salaryRange[1] - 1000000), salaryRange[1]])}
+                      style={{ position: 'absolute', width: '100%', pointerEvents: 'auto' }}
+                    />
+                    <input
+                      type="range"
+                      className={styles.salarySlider}
+                      min={0}
+                      max={100000000}
+                      step={1000000}
+                      value={salaryRange[1]}
+                      onChange={(e) => setSalaryRange([salaryRange[0], Math.max(Number(e.target.value), salaryRange[0] + 1000000)])}
+                      style={{ position: 'absolute', width: '100%', pointerEvents: 'auto' }}
+                    />
+                  </div>
+                  
+                  <div className={styles.salaryLabels}>
+                    <span>${(salaryRange[0] / 1000000).toFixed(0)}M</span>
+                    <span>${(salaryRange[1] / 1000000).toFixed(0)}M</span>
+                  </div>
+                </div>
+
+                <div className={styles.filterSection}>
+                  <div className={styles.positionHeader}>
+                    <label className={styles.filterLabel}>Current Position</label>
+                    <button 
+                      className={styles.selectAllBtn}
+                      onClick={toggleAllPositions}
+                    >
+                      {selectedPositions.size === positionOrder.length ? "Deselect All" : "Select All"}
+                    </button>
+                  </div>
+                  <div className={styles.positionGrid}>
+                    {positionOrder.map((pos) => (
+                      <label key={pos} className={styles.positionCheckbox}>
+                        <input
+                          type="checkbox"
+                          checked={selectedPositions.has(pos)}
+                          onChange={() => togglePosition(pos)}
+                        />
+                        <span>{pos}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+          
           {/* Display box: player results */}
           <div className={styles.displayBox}>
             <div className={styles.playerScroller}>
@@ -393,7 +595,11 @@ export default function TeamBuilderPage() {
             })}
           </div>
 
-          <button className={styles.addButton} style={{ alignSelf: "flex-end", marginTop: 12 }}>
+          <button 
+            className={styles.addButton} 
+            style={{ alignSelf: "flex-end", marginTop: 12 }}
+            onClick={saveTeam}
+          >
             Save Lineup
           </button>
         </section>
