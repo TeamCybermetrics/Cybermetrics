@@ -67,23 +67,6 @@
   opacity: 0.6;
 }
 
-.builderShell {
-  display: grid;
-  grid-template-columns: minmax(0, 42%) minmax(0, 58%);
-  grid-template-rows: auto 1fr; /* top: team card, bottom: diamond */
-  gap: 24px;
-  align-items: start;
-  min-height: 0;
-}
-
-.leftColumn {
-  grid-column: 1;
-  grid-row: 1 / 3; /* span both rows */
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
 /* Search + Load a team section */
 .searchSection {
   background: rgba(16, 17, 30, 0.95);
@@ -104,26 +87,6 @@
 .searchActions {
   display: flex;
   gap: 12px;
-}
-
-.loadTeamBtn,
-.filtersBtn {
-  padding: 10px 18px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(8, 9, 17, 0.78);
-  color: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
-  white-space: nowrap;
-}
-
-.loadTeamBtn:hover,
-.filtersBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px);
 }
 
 /* Actions card below diamond */
@@ -226,71 +189,6 @@
   padding: 40px 20px;
   text-align: center;
   opacity: 0.5;
-}
-
-.playerRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(8, 9, 17, 0.78);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: grab;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.playerRow:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
-}
-
-.playerRow.dragging {
-  opacity: 0.5;
-  cursor: grabbing;
-}
-
-.playerProfile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.playerProfile img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.playerName {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.playerMeta {
-  font-size: 12px;
-  opacity: 0.6;
-  margin-top: 4px;
-}
-
-.addButton {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(8, 9, 17, 0.78);
-  color: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-
-.addButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* TOP-RIGHT: Team card */
@@ -685,22 +583,6 @@
   padding: 12px 14px;
 }
 
-.emptyState {
-  text-align: center;
-  padding: 60px 20px;
-  background: rgba(10, 11, 19, 0.82);
-  border-radius: 20px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.emptyState span {
-  font-size: 13px;
-  opacity: 0.65;
-}
-
 .assignmentMessage {
   margin-top: 12px;
   font-size: 12px;
@@ -710,21 +592,6 @@
   border-radius: 14px;
   background: rgba(109, 123, 255, 0.12);
   color: #c9ceff;
-}
-
-@media (max-width: 1200px) {
-  .builderShell {
-    grid-template-columns: 1fr;
-  }
-
-  .diamondPanel,
-  .availablePanel {
-    padding: 24px;
-  }
-
-  .page {
-    padding: 28px;
-  }
 }
 
 @media (max-width: 720px) {
