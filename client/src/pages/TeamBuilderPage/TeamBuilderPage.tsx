@@ -33,6 +33,11 @@ const positionCoordinates: Record<DiamondPosition, { top: string; left: string }
 
 type LineupState = Record<DiamondPosition, SavedPlayer | null>;
 
+/**
+ * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
+ *
+ * @returns The React element rendering the Team Builder page.
+ */
 export default function TeamBuilderPage() {
   const [lineup, setLineup] = useState<LineupState>(() =>
     positionOrder.reduce((acc, position) => ({ ...acc, [position]: null }), {} as LineupState)

@@ -9,6 +9,15 @@ import MLBTeamsPage from "@/pages/MLBTeamsPage";
 import AppLayout from "@/pages/layouts/AppLayout";
 import { ROUTES } from "@/config";
 
+/**
+ * Root application component that configures client-side routing and shared layout.
+ *
+ * Sets up top-level routes for landing, login, and signup pages, a nested route group
+ * wrapped by the shared AppLayout for authenticated pages (dashboard, team builder,
+ * team analysis, MLB teams), and a catch-all redirect to the landing route.
+ *
+ * @returns A JSX element containing the application's router and route configuration.
+ */
 function App() {
   return (
     <BrowserRouter>
