@@ -186,7 +186,7 @@ export default function TeamBuilderPage() {
     setDraggingId(null);
   };
 
-  const handlePositionDrop = (event: DragEvent<HTMLDivElement>, position: DiamondPosition) => {
+  const handlePositionDrop = (event: DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
     event.preventDefault();
     event.stopPropagation();
     const player = dragPlayerRef.current;
