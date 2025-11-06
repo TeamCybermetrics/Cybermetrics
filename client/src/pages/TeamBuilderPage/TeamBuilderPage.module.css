@@ -806,25 +806,6 @@
   transform: translateY(-1px);
 }
 
-@media (max-width: 1200px) {
-  .builderShell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-
-  .leftColumn {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
-  .teamCard,
-  .diamondPanel,
-  .actionsCard {
-    grid-column: 1;
-    grid-row: auto;
-  }
-}
-
 .filtersPanel {
   margin-top: 12px;
   padding: 24px;
