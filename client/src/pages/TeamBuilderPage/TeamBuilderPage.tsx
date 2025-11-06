@@ -32,14 +32,13 @@ export default function TeamBuilderPage() {
   );
   const [activePosition, setActivePosition] = useState<DiamondPosition | null>("CF");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
-  const [error, setError] = useState("");
   const searchControllerRef = useRef<AbortController | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [loadTeamOpen, setLoadTeamOpen] = useState(false);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -58,8 +57,6 @@ export default function TeamBuilderPage() {
       searchControllerRef.current?.abort();
       searchControllerRef.current = null;
       setSearchResults([]);
-      setIsSearching(false);
-      setError("");
       return;
     }
 
@@ -67,15 +64,11 @@ export default function TeamBuilderPage() {
     const controller = new AbortController();
     searchControllerRef.current = controller;
 
-    setIsSearching(true);
-    setError("");
     const result = await playerActions.searchPlayers(trimmed, controller.signal);
 
     if (searchControllerRef.current !== controller) {
       return;
     }
-
-    setIsSearching(false);
 
     if (result.success && result.data) {
       setSearchResults(result.data);
@@ -89,7 +82,6 @@ export default function TeamBuilderPage() {
     }
 
     setSearchResults([]);
-    setError(result.error || "Search failed");
     searchControllerRef.current = null;
   }, []);
 
@@ -137,12 +129,6 @@ export default function TeamBuilderPage() {
     setActivePosition(position);
   }, []);
 
-  const handleAssign = (player: SavedPlayer) => {
-    const slot = activePosition;
-    if (!slot) return;
-    assignPlayerToPosition(player, slot);
-  };
-
   const handleClearSlot = (position: DiamondPosition) => {
     setLineup((prev) => ({
       ...prev,
@@ -159,10 +145,6 @@ export default function TeamBuilderPage() {
       ),
     [lineup]
   );
-
-  const allShownAssigned =
-    availablePlayers.length > 0 &&
-    availablePlayers.every((player) => assignedIds.has(player.id));
 
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
@@ -194,105 +176,192 @@ export default function TeamBuilderPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Interactive lineup designer</p>
-          <h1 className={styles.title}>Team Builder</h1>
-        </div>
-
-        <div className={styles.searchBar}>
-          <span className={styles.searchIcon} aria-hidden="true">⌕</span>
-          <input
-            type="text"
-            placeholder="Search players by name..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-          <span className={styles.searchStatus}>
-            {isSearching ? "Searching…" : `${availablePlayers.length} players`}
-          </span>
-        </div>
+        <div className={styles.kicker}>Team Builder</div>
       </header>
 
-      <section className={styles.builderShell}>
-        <div className={styles.diamondPanel}>
-          <header className={styles.panelHeader}>
-            <h2>Current Lineup</h2>
-            <p>Select a position to assign players.</p>
-          </header>
+      <div className={styles.builderShell}>
+        {/* LEFT COLUMN */}
+        <div className={styles.leftColumn}>
+          {/* Search section */}
+          <section className={styles.searchSection}>
+            <div className={styles.searchBar}>
+              <span className={styles.searchIcon}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search players by name, team, or position…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const first =
+                      availablePlayers.find((p) => !assignedIds.has(p.id)) ||
+                      availablePlayers[0];
+                    if (first && activePosition) assignPlayerToPosition(first, activePosition);
+                  }
+                }}
+              />
+            </div>
+
+            <div className={styles.searchStatus}>
+              {searchTerm.trim() ? `${availablePlayers.length} results` : `${savedPlayers.length} saved players`}
+            </div>
+          </section>
+
+          {/* Actions card - moved from right column */}
+          <section className={styles.actionsCard}>
+            <div className={styles.actionButtons}>
+              <button className={styles.loadTeamBtn}>Load a team ▼</button>
+              <button className={styles.targetMetricsBtn}>Target Metrics ▼</button>
+            </div>
+            <button className={styles.recommendBtn}>Get Recommendations!</button>
+          </section>
+
+          {/* Display box: player results */}
+          <div className={styles.displayBox}>
+            <div className={styles.playerScroller}>
+              {availablePlayers.length === 0 && (
+                <div className={styles.emptyState}>
+                  <strong>No players found</strong>
+                  <span>Try a different search or save some players.</span>
+                </div>
+              )}
+
+              {availablePlayers.map((player) => {
+                const alreadyAssigned = assignedIds.has(player.id);
+                return (
+                  <div
+                    key={player.id}
+                    className={`${styles.playerRow} ${draggingId === player.id ? styles.dragging : ""}`}
+                    draggable={!alreadyAssigned}
+                    onDragStart={() => !alreadyAssigned && prepareDragPlayer(player)}
+                    onDragEnd={clearDragState}
+                  >
+                    <div className={styles.playerProfile}>
+                      <img
+                        src={player.image_url || DEFAULT_PLAYER_IMAGE}
+                        alt={player.name}
+                      />
+                      <div>
+                        <p className={styles.playerName}>{player.name}</p>
+                        <div className={styles.playerMeta}>
+                          {player.years_active || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      className={styles.addButton}
+                      disabled={alreadyAssigned || !activePosition}
+                      onClick={() => {
+                        if (activePosition) assignPlayerToPosition(player, activePosition);
+                      }}
+                      title={
+                        alreadyAssigned
+                          ? "Already assigned"
+                          : !activePosition
+                          ? "Select a position first"
+                          : "Add to active position"
+                      }
+                    >
+                      {alreadyAssigned ? "Assigned" : "Add"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* TOP-RIGHT: Team card */}
+        <section className={styles.teamCard}>
+          <div className={styles.teamInfo}>
+            <h2 className={styles.teamName}>
+              TeamName1 <span className={styles.editIcon}>✏️</span>
+            </h2>
+            <div className={styles.teamScore}>
+              <label>Team Score</label>
+              <span>123456</span>
+            </div>
+            <div className={styles.teamBudget}>
+              <label>Team Budget</label>
+              <span>$255,380,936</span>
+            </div>
+            <div className={styles.otherStat}>
+              <label>someOtherStat</label>
+              <span>255,380,936</span>
+            </div>
+          </div>
+          <div className={styles.radarChart}>Radar Chart</div>
+        </section>
+
+        {/* BOTTOM-RIGHT: Diamond (spans 2 rows now) */}
+        <section className={styles.diamondPanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <h2>Your lineup</h2>
+              <p>Select a position, then add or drag a player.</p>
+            </div>
+            <span className={styles.positionHint}>
+              {activePosition ? `Active: ${activePosition}` : "Pick a position"}
+            </span>
+          </div>
 
           <div className={styles.diamond}>
-            <svg className={styles.diamondLines} viewBox="0 0 400 400">
-              <path d="M200 40 L360 200 L200 360 L40 200 Z" />
-              <path d="M200 110 L290 200 L200 290 L110 200 Z" />
-              <circle cx="200" cy="200" r="10" />
+            <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
+              <rect x="5" y="5" width="90" height="90" rx="8" ry="8" />
+              <line x1="50" y1="10" x2="10" y2="50" />
+              <line x1="50" y1="10" x2="90" y2="50" />
+              <line x1="10" y1="50" x2="50" y2="90" />
+              <line x1="50" y1="90" x2="90" y2="50" />
+              <circle cx="50" cy="12" r="2" />
+              <circle cx="50" cy="50" r="2" />
             </svg>
 
-            {positionOrder.map((position) => {
-              const assigned = lineup[position];
-              const isActive = activePosition === position;
-              const isDropTarget = dropTarget === position && dragPlayerRef.current;
-
+            {positionOrder.map((pos) => {
+              const assigned = lineup[pos];
+              const isActive = activePosition === pos;
+              const canDrop = dragPlayerRef.current && !assigned;
               return (
                 <div
-                  key={position}
-                  className={`${styles.positionNode} ${isActive ? styles.active : ""} ${
-                    assigned ? styles.filled : ""
-                  } ${isDropTarget ? styles.droppable : ""}`}
-                  style={positionCoordinates[position]}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    if (dragPlayerRef.current) {
-                      setDropTarget(position);
-                    }
-                  }}
-                  onDragLeave={(event) => {
-                    event.preventDefault();
-                    if (dropTarget === position) {
-                      setDropTarget(null);
-                    }
-                  }}
-                  onDrop={(event) => handlePositionDrop(event, position)}
+                  key={pos}
+                  className={`${styles.positionNode} ${assigned ? styles.filled : ""} ${
+                    isActive ? styles.active : ""
+                  } ${canDrop && dropTarget === pos ? styles.droppable : ""}`}
+                  style={positionCoordinates[pos]}
                 >
                   <button
                     type="button"
                     className={styles.positionTrigger}
-                    onClick={() => setActivePosition(position)}
-                    aria-pressed={isActive}
-                    draggable={Boolean(assigned)}
-                    onDragStart={(event) => {
-                      if (assigned) {
-                        event.dataTransfer.setData("text/plain", String(assigned.id));
-                        event.dataTransfer.effectAllowed = "move";
-                        prepareDragPlayer(assigned, position);
-                      }
+                    onClick={() => setActivePosition(pos)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDropTarget(pos);
                     }}
-                    onDragEnd={() => {
-                      clearDragState();
-                    }}
+                    onDragLeave={() => setDropTarget(null)}
+                    onDrop={(e) => handlePositionDrop(e, pos)}
+                    draggable={!!assigned}
+                    onDragStart={() => assigned && prepareDragPlayer(assigned, pos)}
+                    onDragEnd={clearDragState}
+                    aria-label={`Position ${pos}`}
                   >
-                    <span className={styles.positionLabel}>{position}</span>
-                    {assigned && (
-                      <span className={styles.positionPlayer}>
-                        <img
-                          src={assigned.image_url || DEFAULT_PLAYER_IMAGE}
-                          alt={assigned.name}
-                          onError={(e) => {
-                            e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                          }}
-                        />
-                        <span className={styles.positionName}>{assigned.name}</span>
-                      </span>
+                    {assigned ? (
+                      <div className={styles.positionPlayer}>
+                        <img src={assigned.image_url || DEFAULT_PLAYER_IMAGE} alt={assigned.name} />
+                        <div className={styles.positionName}>{assigned.name}</div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className={styles.positionLabel}>{pos}</div>
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>Drop or click</div>
+                      </>
                     )}
                   </button>
+
                   {assigned && (
                     <button
-                      type="button"
                       className={styles.clearSlot}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleClearSlot(position);
-                      }}
-                      aria-label={`Clear ${position} position`}
+                      onClick={() => handleClearSlot(pos)}
+                      title="Clear"
                     >
                       ×
                     </button>
@@ -301,92 +370,12 @@ export default function TeamBuilderPage() {
               );
             })}
           </div>
-        </div>
 
-        <aside className={styles.availablePanel}>
-          <header className={styles.panelHeader}>
-            <div>
-              <h2>Available Players</h2>
-              <p>
-                {searchTerm
-                  ? "Search results are shown below."
-                  : "Using saved players. Add more from the dashboard to expand this list."}
-              </p>
-            </div>
-            <div className={styles.positionHint}>
-              {activePosition ? (
-                <span>Assigning to <strong>{activePosition}</strong></span>
-              ) : (
-                <span>Select a position to begin</span>
-              )}
-            </div>
-          </header>
-
-          <div className={styles.playerScroller}>
-            {error && <p className={styles.errorMessage}>{error}</p>}
-
-            {availablePlayers.length === 0 && !error && (
-              <div className={styles.emptyState}>
-                <p>No players to show yet.</p>
-                <span>
-                  Save players from the dashboard or search above to scout new talent.
-                </span>
-              </div>
-            )}
-
-            {availablePlayers.map((player) => {
-              const alreadyAssigned = assignedIds.has(player.id);
-
-              return (
-                <div
-                  key={player.id}
-                  className={`${styles.playerRow} ${draggingId === player.id ? styles.dragging : ""}`}
-                  draggable
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData("text/plain", String(player.id));
-                    event.dataTransfer.effectAllowed = "move";
-                    prepareDragPlayer(player);
-                  }}
-                  onDragEnd={clearDragState}
-                >
-                  <div className={styles.playerProfile}>
-                    <img
-                      src={player.image_url || DEFAULT_PLAYER_IMAGE}
-                      alt={player.name}
-                      onError={(e) => {
-                        e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                      }}
-                    />
-                    <div>
-                      <p className={styles.playerName}>{player.name}</p>
-                      <span className={styles.playerMeta}>{player.years_active || "No years listed"}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.addButton}
-                    onClick={() => handleAssign(player)}
-                    disabled={!activePosition || alreadyAssigned}
-                  >
-                    {!activePosition
-                      ? "Select Position"
-                      : alreadyAssigned
-                      ? "Assigned"
-                      : `Add to ${activePosition}`}
-                  </button>
-                </div>
-              );
-            })}
-
-            {allShownAssigned && !error && (
-              <div className={styles.assignmentMessage}>
-                All listed players are already assigned. Add more prospects from the dashboard to
-                keep building your lineup.
-              </div>
-            )}
-          </div>
-        </aside>
-      </section>
+          <button className={styles.addButton} style={{ alignSelf: "flex-end", marginTop: 12 }}>
+            Save Lineup
+          </button>
+        </section>
+      </div>
     </div>
   );
 }

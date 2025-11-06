@@ -69,10 +69,247 @@
 
 .builderShell {
   display: grid;
-  grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+  grid-template-columns: minmax(0, 42%) minmax(0, 58%);
+  grid-template-rows: auto 1fr; /* top: team card, bottom: diamond */
   gap: 24px;
   align-items: start;
   min-height: 0;
+}
+
+.leftColumn {
+  grid-column: 1;
+  grid-row: 1 / 3; /* span both rows */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Search + Load a team section */
+.searchSection {
+  background: rgba(16, 17, 30, 0.95);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.searchSection .searchBar {
+  max-width: none;
+  background: rgba(8, 9, 17, 0.88);
+}
+
+.displayBox {
+  background: rgba(16, 17, 30, 0.95);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  padding: 0; /* remove padding so scroller fits */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  overflow: hidden; /* clip scrollbar */
+}
+
+.playerScroller {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.playerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(8, 9, 17, 0.78);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.playerRow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+.playerRow.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.playerProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playerProfile img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.playerName {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.playerMeta {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.addButton {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 9, 17, 0.78);
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.addButton:hover(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.addButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* TOP-RIGHT: Team card */
+.teamCard {
+  grid-column: 2;
+  grid-row: 1;
+  background: rgba(16, 17, 30, 0.95);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  padding: 28px 30px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teamInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.teamName {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editIcon {
+  font-size: 16px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.teamScore,
+.teamBudget,
+.otherStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.teamScore label,
+.teamBudget label,
+.otherStat label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.teamScore span,
+.teamBudget span,
+.otherStat span {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.radarChart {
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+  background: radial-gradient(circle, rgba(109, 123, 255, 0.1), transparent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+/* BOTTOM-RIGHT: Diamond */
+.diamondPanel {
+  grid-column: 2;
+  grid-row: 2;
+  background: rgba(16, 17, 30, 0.95);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.availablePanel {
+  display: none;
+}
+
+
+@media (max-width: 1200px) {
+  .builderShell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .leftColumn {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .teamCard,
+  .diamondPanel {
+    grid-column: 1;
+    grid-row: auto;
+  }
 }
 
 .diamondPanel,
@@ -391,5 +628,77 @@
   .diamondPanel,
   .availablePanel {
     border-radius: 22px;
+  }
+}
+
+/* MIDDLE-RIGHT: Actions card */
+.actionsCard {
+  background: rgba(16, 17, 30, 0.95);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.loadTeamBtn,
+.targetMetricsBtn {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 9, 17, 0.78);
+  color: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+
+.loadTeamBtn:hover,
+.targetMetricsBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.recommendBtn {
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #6d7bff;
+  color: #0f111d;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.recommendBtn:hover {
+  box-shadow: 0 12px 22px rgba(109, 123, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1200px) {
+  .builderShell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .leftColumn {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .teamCard,
+  .diamondPanel {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
