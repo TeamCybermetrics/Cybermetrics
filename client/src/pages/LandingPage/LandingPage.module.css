@@ -1,20 +1,73 @@
 .main {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
+  display: block;
+  padding: 96px 0 120px;
+  position: relative;
+  min-height: 100vh; /* ensures gradient always shows */
+  background: linear-gradient(
+    to bottom,
+    #0D1728 0% 50%,
+    #E5E5E5 50% 90%,
+    #293241 90% 100%,
+    #E5E5E5 100% 100%  /* Placeholder for future extra features */
+  );
+  background-repeat: no-repeat;
+}
+
+/* Center page content and add side padding */
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.brandLogo {
+  position: absolute;
+  top: 19px;
+  left: 130px;
+  width: 117px;
+  height: 136px;
+  flex-shrink: 0;
+}
+
+.brandName {
+  position: absolute;
+  top: 71px;
+  left: 270px;
+  color: #FFF; /* var(--Gray-White, #FFF) */
+  text-align: center;
+  font-family: "Anybody", Medium 300;
+  font-size: 38px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 32px; /* 84.211% */
+}
+
+.heading1 {
+  max-width: 872px;
+  margin: 0 auto 10px;
+  color: #293241;
+  text-align: center;
+  font-family: "Anybody", Medium 300;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 130%;
+}
+
+.subtitle {
+  max-width: 872px;
+  margin: 10px auto 0;
+  color: var(--Color-300, #7F848D);
+  opacity: 0.7;
+  text-align: center;
+  font-family: "Anybody", Medium 300;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .container {
   text-align: center;
   padding: 20px;
-}
-
-.title {
-  font-size: 48px;
-  margin: 0 0 16px 0;
-  color: #000;
 }
 
 .description {
@@ -49,3 +102,255 @@
   opacity: 0.8;
 }
 
+/* HERO section in flow */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin-top: 40px; /* adjust as needed under brand */
+}
+
+/* Remove absolute positioning from hero title/subtitle */
+.heroTitle {
+  position: static; /* was absolute */
+  top: auto; left: auto; right: auto;
+  transform: none;
+  margin: 0;
+  color: #FFF;
+  text-align: center;
+  font-family: "Anybody", Medium 500;
+  font-size: 50px;
+  font-weight: 700;
+  line-height: 138%;
+  z-index: 1;
+}
+
+.subtitle1 {
+  position: static; /* was absolute */
+  top: auto; left: auto; right: auto;
+  transform: none;
+  margin: 4px 0 0 0;
+  color: #FFF;
+  opacity: 0.7;
+  text-align: center;
+  font-family: "Anybody", Medium 500;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+/* Input + button row beside each other, wrapping on small screens */
+.ctaRow {
+  margin-top: 24px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap; /* wrap on smaller screens */
+}
+
+  .signUpButtonContainer {
+  position: absolute;     /* so we can place it freely */
+  top: 60px;              /* distance from top edge */
+  right: 60px;            /* distance from right edge */
+  display: flex;          /* put buttons in a row */
+  gap: 12px;              /* space between them */
+  z-index: 10;            /* ensure it's above background */
+}
+
+/* Main button style */
+.signUpButton {
+  background-color: #ffffff;
+  color: #293241;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.signUpButton:hover {
+  background-color: #e0e0e0;
+}
+
+/* Secondary button (outlined) */
+.signUpButtonSecondary {
+  background-color: transparent;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.signUpButtonSecondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Input now in normal flow */
+.inputYourTeam {
+  position: static; /* was absolute */
+  top: auto; left: auto; transform: none;
+  width: 648px;
+  max-width: min(90vw, 648px);
+  height: 82px;
+  border-radius: 1000px;
+  border: 1px solid #FFF;
+  background: transparent;
+  padding: 0 24px;
+  color: #FFF;
+  font-family: "Anybody", sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.inputYourTeam::placeholder {
+  color: #FFF;
+  opacity: 0.7;
+}
+
+  /* remove default highlight/focus glow */
+  .inputYourTeam:focus {
+    outline: none;
+    border-color: #FFF;          /* keep white border on focus */
+  }
+
+/* Button now in normal flow, placed to the right of input */
+.TestOurDemoButton {
+  position: static; /* was absolute */
+  top: auto; left: auto; transform: none; margin-left: 0;
+  height: 82px;
+  display: inline-flex;
+  padding: 14px 32px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 1000px;
+  background: #FFF;
+  color: #293241;
+  border: none;
+  font-family: "Anybody", Medium 300;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* DEMO section centered, in flow */
+.demoSection {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.demoScreen {
+  position: static;                 /* in normal flow */
+  width: 100%;
+  max-width: 1320px;                /* 1320 on large screens */
+  aspect-ratio: 1320 / 923;
+  height: auto;                     
+  border-radius: 50px;
+  border: 15px solid #4C5562;
+}
+
+
+/* HOW IT WORKS in flow, centered */
+.howSection {
+  position: relative;
+  top: auto; left: auto; transform: none;
+  margin-top: 32px;               /* ~20px below demo + breathing */
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* center fixed-width blocks */
+.howSection .heading1 {
+  max-width: 872px;
+  margin: 0 auto 10px;
+}
+
+.howSection .subtitle {
+  max-width: 872px;
+  margin: 10px auto 0;
+}
+
+.featuresWrap {
+  position: relative;
+  width: calc(4 * 312px + 3 * 24.5px);
+  max-width: 100%;
+  margin: 84px auto 0;
+  padding-bottom: 160px; /* reserve space so it won't overflow bottom */
+}
+
+.featuresRow {
+  display: grid;
+  z-index: 1;
+  grid-template-columns: repeat(4, 312px);
+  justify-content: center;
+  gap: 24.5px;
+  margin-top: 0;
+}
+
+.featureCard {
+  width: 312px;
+  height: 200px;
+  z-index: 1;
+  border-radius: 18px;
+  background: #1E2746;
+  color: #FFF;
+  display: flex; 
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  text-align: center;
+}
+
+.connectorSvg {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  width: 130%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+}
+
+/* 2-up on tablets */
+@media (max-width: 1200px) {
+  .featuresWrap {
+    width: calc(2 * 312px + 1 * 24.5px);
+  }
+  .featuresRow {
+    grid-template-columns: repeat(2, 312px);
+  }
+}
+
+  .whiteTextBold {
+    color: var(--Color-White, #FFF);
+    font-family: "Anybody", Medium 300;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 32px; /* 177.778% */
+  }
+
+  .whiteTextRegular {
+    width: 264px;
+    color: var(--Color-100, #D4D6D9);
+    font-family: "Anybody", Medium 300;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px; /* 150% */
+  }

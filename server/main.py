@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
 from routes import auth_router, health_router, players_router
+from middleware.rate_limit import RateLimitMiddleware, rate_limiter
 from contextlib import asynccontextmanager
+import asyncio
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,17 +31,29 @@ async def lifespan(app: FastAPI):
     else:
         print("✅ All configuration validated successfully")
     
-    print(f"📍 Environment: {settings.ENVIRONMENT}")
-    print(f"🌐 Server: {settings.HOST}:{settings.PORT}")
+    print("="*50)
+    print(f"🌍 Environment: {settings.ENVIRONMENT}")
+    print(f"🚀 Server running at http://{settings.HOST}:{settings.PORT}")
+    print(f"🔒 Proxy trust mode: {'ENABLED' if settings.TRUST_PROXY else 'DISABLED'}")
     print("="*50 + "\n")
+    
+    # Start rate limiter cleanup task
+    print("🧹 Starting rate limiter cleanup task...")
+    rate_limiter.start_cleanup_task()
     
     yield
     
     # Shutdown
-    print("\n👋 Shutting down Cybermetrics API\n")
+    print("\n👋 Shutting down Cybermetrics API...")
+    print("🧹 Stopping rate limiter cleanup task...")
+    await rate_limiter.stop_cleanup_task()
+    print("✅ Cleanup complete\n")
 
 # Initialize FastAPI app
 app = FastAPI(title="Cybermetrics API", lifespan=lifespan)
+
+# Add rate limiting middleware (before CORS)
+app.add_middleware(RateLimitMiddleware)
 
 # Configure CORS
 app.add_middleware(

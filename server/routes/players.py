@@ -6,7 +6,11 @@ from models.players import (
     SavedPlayer, 
     PlayerDetail,
     RosterAvgRequest,
-    RosterAvgResponse
+    RosterAvgResponse,
+    TeamWeaknessResponse,
+    ValueScoreRequest,
+    ValueScoreResponse,
+    PlayerValueScore,
 )
 from middleware.auth import get_current_user
 from typing import List, Annotated
@@ -66,6 +70,31 @@ async def get_roster_averages(
     Public endpoint - no authentication required.
     """
     return await roster_avg_service.get_roster_averages(request.player_ids)
+
+@router.post("/roster-averages/weakness", response_model=TeamWeaknessResponse, tags=["stats"])
+async def get_roster_weakness_scores(
+    request: RosterAvgRequest,
+    roster_avg_service: Annotated[RosterAvgService, Depends(get_roster_avg_service)],
+):
+    """Return normalized team weakness scores vs league unweighted averages (public)."""
+    return await roster_avg_service.get_team_weakness_scores(request.player_ids)
+
+@router.post("/{player_id}/value-score", response_model=ValueScoreResponse, tags=["stats"])
+async def get_player_value_score(
+    player_id: int,
+    request: ValueScoreRequest,
+    roster_avg_service: Annotated[RosterAvgService, Depends(get_roster_avg_service)],
+):
+    """Compute a player's value score using latest WAR and team weaknesses (public)."""
+    return await roster_avg_service.get_value_score(player_id, request.model_dump())
+
+@router.post("/value-scores", response_model=List[PlayerValueScore], tags=["stats"])
+async def get_team_value_scores(
+    request: RosterAvgRequest,
+    roster_avg_service: Annotated[RosterAvgService, Depends(get_roster_avg_service)],
+):
+    """Given a list of player IDs, compute team weakness and return each player's id, name, adjustment_score, and value_score."""
+    return await roster_avg_service.get_team_value_scores(request.player_ids)
 
 @router.get("/{player_id}/detail", response_model=PlayerDetail, tags=["search"])
 async def get_player_detail(
