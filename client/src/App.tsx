@@ -5,7 +5,6 @@ import SignupPage from "@/pages/SignupPage";
 import DashboardPage from "@/pages/DashboardPage";
 import TeamBuilderPage from "@/pages/TeamBuilderPage";
 import TeamAnalysisPage from "@/pages/TeamAnalysisPage";
-import RecommendationsPage from "@/pages/RecommendationsPage";
 import MLBTeamsPage from "@/pages/MLBTeamsPage";
 import AppLayout from "@/pages/layouts/AppLayout";
 import { ROUTES } from "@/config";
