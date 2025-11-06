@@ -38,7 +38,8 @@ export default function TeamBuilderPage() {
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [loadTeamOpen, setLoadTeamOpen] = useState(false);
+  const [teamName, setTeamName] = useState("TeamName1");
+  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
 
   useEffect(() => {
     const fetchSaved = async () => {
@@ -173,6 +174,8 @@ export default function TeamBuilderPage() {
     clearDragState();
   };
 
+  // ...existing imports and code...
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -182,7 +185,7 @@ export default function TeamBuilderPage() {
       <div className={styles.builderShell}>
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn}>
-          {/* Search section */}
+          {/* Search section with Load a team and Filters */}
           <section className={styles.searchSection}>
             <div className={styles.searchBar}>
               <span className={styles.searchIcon}>🔍</span>
@@ -205,15 +208,11 @@ export default function TeamBuilderPage() {
             <div className={styles.searchStatus}>
               {searchTerm.trim() ? `${availablePlayers.length} results` : `${savedPlayers.length} saved players`}
             </div>
-          </section>
 
-          {/* Actions card - moved from right column */}
-          <section className={styles.actionsCard}>
-            <div className={styles.actionButtons}>
+            <div className={styles.searchActions}>
               <button className={styles.loadTeamBtn}>Load a team ▼</button>
-              <button className={styles.targetMetricsBtn}>Target Metrics ▼</button>
+              <button className={styles.filtersBtn}>Filters ▼</button>
             </div>
-            <button className={styles.recommendBtn}>Get Recommendations!</button>
           </section>
 
           {/* Display box: player results */}
@@ -275,9 +274,32 @@ export default function TeamBuilderPage() {
         {/* TOP-RIGHT: Team card */}
         <section className={styles.teamCard}>
           <div className={styles.teamInfo}>
-            <h2 className={styles.teamName}>
-              TeamName1 <span className={styles.editIcon}>✏️</span>
-            </h2>
+            <div className={styles.teamNameWrapper}>
+              {isEditingTeamName ? (
+                <input
+                  type="text"
+                  className={styles.teamNameInput}
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  onBlur={() => setIsEditingTeamName(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setIsEditingTeamName(false);
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <h2 className={styles.teamName}>
+                  {teamName}
+                  <span
+                    className={styles.editIcon}
+                    onClick={() => setIsEditingTeamName(true)}
+                  >
+                    ✏️
+                  </span>
+                </h2>
+              )}
+            </div>
+
             <div className={styles.teamScore}>
               <label>Team Score</label>
               <span>123456</span>
@@ -294,7 +316,7 @@ export default function TeamBuilderPage() {
           <div className={styles.radarChart}>Radar Chart</div>
         </section>
 
-        {/* BOTTOM-RIGHT: Diamond (spans 2 rows now) */}
+        {/* MIDDLE-RIGHT: Diamond */}
         <section className={styles.diamondPanel}>
           <div className={styles.panelHeader}>
             <div>
@@ -374,6 +396,12 @@ export default function TeamBuilderPage() {
           <button className={styles.addButton} style={{ alignSelf: "flex-end", marginTop: 12 }}>
             Save Lineup
           </button>
+        </section>
+
+        {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
+        <section className={styles.actionsCard}>
+          <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button>
+          <button className={styles.recommendBtn}>Get Recommendations!</button>
         </section>
       </div>
     </div>
