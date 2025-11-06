@@ -6,6 +6,13 @@ import styles from "./TeamBuilderPage.module.css";
 
 type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "P" | "C" | "DH";
 
+type SavedTeam = {
+  id: string;
+  name: string;
+  lineup: LineupState;
+  savedAt: string;
+};
+
 const DEFAULT_PLAYER_IMAGE =
   "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
 
@@ -26,21 +33,44 @@ const positionCoordinates: Record<DiamondPosition, { top: string; left: string }
 
 type LineupState = Record<DiamondPosition, SavedPlayer | null>;
 
+/**
+ * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
+ *
+ * @returns The React element rendering the Team Builder page.
+ */
 export default function TeamBuilderPage() {
   const [lineup, setLineup] = useState<LineupState>(() =>
     positionOrder.reduce((acc, position) => ({ ...acc, [position]: null }), {} as LineupState)
   );
   const [activePosition, setActivePosition] = useState<DiamondPosition | null>("CF");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
-  const [error, setError] = useState("");
   const searchControllerRef = useRef<AbortController | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [teamName, setTeamName] = useState("TeamName1");
+  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [loadTeamOpen, setLoadTeamOpen] = useState(false);
+  const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
+  const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000000]);
+  const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set(positionOrder));
 
+  // Load saved teams from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("savedTeams");
+    if (stored) {
+      try {
+        setSavedTeams(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to load saved teams:", e);
+      }
+    }
+  }, []);
+
+  // Load saved players on mount
   useEffect(() => {
     const fetchSaved = async () => {
       const result = await playerActions.getSavedPlayers();
@@ -58,8 +88,6 @@ export default function TeamBuilderPage() {
       searchControllerRef.current?.abort();
       searchControllerRef.current = null;
       setSearchResults([]);
-      setIsSearching(false);
-      setError("");
       return;
     }
 
@@ -67,15 +95,11 @@ export default function TeamBuilderPage() {
     const controller = new AbortController();
     searchControllerRef.current = controller;
 
-    setIsSearching(true);
-    setError("");
     const result = await playerActions.searchPlayers(trimmed, controller.signal);
 
     if (searchControllerRef.current !== controller) {
       return;
     }
-
-    setIsSearching(false);
 
     if (result.success && result.data) {
       setSearchResults(result.data);
@@ -89,7 +113,6 @@ export default function TeamBuilderPage() {
     }
 
     setSearchResults([]);
-    setError(result.error || "Search failed");
     searchControllerRef.current = null;
   }, []);
 
@@ -116,7 +139,6 @@ export default function TeamBuilderPage() {
         years_active: result.years_active
       })) as SavedPlayer[];
     }
-
     return savedPlayers;
   }, [searchResults, searchTerm, savedPlayers]);
 
@@ -137,12 +159,6 @@ export default function TeamBuilderPage() {
     setActivePosition(position);
   }, []);
 
-  const handleAssign = (player: SavedPlayer) => {
-    const slot = activePosition;
-    if (!slot) return;
-    assignPlayerToPosition(player, slot);
-  };
-
   const handleClearSlot = (position: DiamondPosition) => {
     setLineup((prev) => ({
       ...prev,
@@ -160,10 +176,6 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
-  const allShownAssigned =
-    availablePlayers.length > 0 &&
-    availablePlayers.every((player) => assignedIds.has(player.id));
-
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
     setDraggingId(player.id);
@@ -178,7 +190,7 @@ export default function TeamBuilderPage() {
     setDraggingId(null);
   };
 
-  const handlePositionDrop = (event: DragEvent<HTMLDivElement>, position: DiamondPosition) => {
+  const handlePositionDrop = (event: DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
     event.preventDefault();
     event.stopPropagation();
     const player = dragPlayerRef.current;
@@ -191,108 +203,393 @@ export default function TeamBuilderPage() {
     clearDragState();
   };
 
+  const saveTeam = () => {
+    const newTeam: SavedTeam = {
+      id: Date.now().toString(),
+      name: teamName,
+      lineup: lineup,
+      savedAt: new Date().toISOString()
+    };
+
+    const updatedTeams = [...savedTeams, newTeam];
+    setSavedTeams(updatedTeams);
+    localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
+    alert(`Team "${teamName}" saved successfully!`);
+  };
+
+  const loadTeam = (team: SavedTeam) => {
+    setTeamName(team.name);
+    setLineup(team.lineup);
+    setLoadTeamOpen(false);
+    alert(`Team "${team.name}" loaded!`);
+  };
+
+  const deleteTeam = (teamId: string) => {
+    const updatedTeams = savedTeams.filter((t) => t.id !== teamId);
+    setSavedTeams(updatedTeams);
+    localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
+  };
+
+  const togglePosition = (position: string) => {
+    setSelectedPositions((prev) => {
+      const next = new Set(prev);
+      if (next.has(position)) {
+        next.delete(position);
+      } else {
+        next.add(position);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllPositions = () => {
+    if (selectedPositions.size === positionOrder.length) {
+      setSelectedPositions(new Set());
+    } else {
+      setSelectedPositions(new Set(positionOrder));
+    }
+  };
+
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Interactive lineup designer</p>
-          <h1 className={styles.title}>Team Builder</h1>
-        </div>
-
-        <div className={styles.searchBar}>
-          <span className={styles.searchIcon} aria-hidden="true">⌕</span>
-          <input
-            type="text"
-            placeholder="Search players by name..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-          <span className={styles.searchStatus}>
-            {isSearching ? "Searching…" : `${availablePlayers.length} players`}
-          </span>
-        </div>
+        <div className={styles.kicker}>Team Builder</div>
       </header>
 
-      <section className={styles.builderShell}>
-        <div className={styles.diamondPanel}>
-          <header className={styles.panelHeader}>
-            <h2>Current Lineup</h2>
-            <p>Select a position to assign players.</p>
-          </header>
+      <div className={styles.builderShell}>
+        {/* LEFT COLUMN */}
+        <div className={styles.leftColumn}>
+          {/* Search section with Load a team and Filters */}
+          <section className={styles.searchSection}>
+            <div className={styles.searchBar}>
+              <span className={styles.searchIcon}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search players by name, team, or position…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const first =
+                      availablePlayers.find((p) => !assignedIds.has(p.id)) ||
+                      availablePlayers[0];
+                    if (first && activePosition) assignPlayerToPosition(first, activePosition);
+                  }
+                }}
+              />
+            </div>
+
+            <div className={styles.searchStatus}>
+              {searchTerm.trim() ? `${availablePlayers.length} results` : `${savedPlayers.length} saved players`}
+            </div>
+
+            <div className={styles.searchActions}>
+              <button 
+                className={styles.loadTeamBtn}
+                onClick={() => setLoadTeamOpen(!loadTeamOpen)}
+              >
+                Load a team {loadTeamOpen ? "▲" : "▼"}
+              </button>
+              <button 
+                className={styles.filtersBtn}
+                onClick={() => setFiltersOpen(!filtersOpen)}
+              >
+                Filters {filtersOpen ? "▲" : "▼"}
+              </button>
+            </div>
+
+            {/* Load team panel */}
+            {loadTeamOpen && (
+              <div className={styles.loadTeamPanel}>
+                {savedTeams.length === 0 ? (
+                  <div className={styles.emptyTeams}>
+                    <span>No saved teams yet. Save your current lineup to get started!</span>
+                  </div>
+                ) : (
+                  <div className={styles.teamsList}>
+                    {savedTeams.map((team) => (
+                      <div key={team.id} className={styles.teamItem}>
+                        <div className={styles.teamItemInfo}>
+                          <strong>{team.name}</strong>
+                          <span className={styles.teamDate}>
+                            {new Date(team.savedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className={styles.teamItemActions}>
+                          <button
+                            className={styles.loadBtn}
+                            onClick={() => loadTeam(team)}
+                          >
+                            Load
+                          </button>
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={() => deleteTeam(team.id)}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Filters panel */}
+            {filtersOpen && (
+              <div className={styles.filtersPanel}>
+                <div className={styles.filterSection}>
+                  <label className={styles.filterLabel}>Salary Range</label>
+                  <div className={styles.salaryInputs}>
+                    <input
+                      type="number"
+                      className={styles.salaryInput}
+                      placeholder="Min"
+                      value={salaryRange[0]}
+                      onChange={(e) => setSalaryRange([Number(e.target.value), salaryRange[1]])}
+                      min={0}
+                      max={salaryRange[1]}
+                    />
+                    <span className={styles.salaryDivider}>to</span>
+                    <input
+                      type="number"
+                      className={styles.salaryInput}
+                      placeholder="Max"
+                      value={salaryRange[1]}
+                      onChange={(e) => setSalaryRange([salaryRange[0], Number(e.target.value)])}
+                      min={salaryRange[0]}
+                      max={100000000}
+                    />
+                  </div>
+                          
+                  {/* Dual range sliders */}
+                  <div style={{ position: 'relative', height: '6px', marginTop: '8px' }}>
+                    <input
+                      type="range"
+                      className={styles.salarySlider}
+                      min={0}
+                      max={100000000}
+                      step={1000000}
+                      value={salaryRange[0]}
+                      onChange={(e) => setSalaryRange([Math.min(Number(e.target.value), salaryRange[1] - 1000000), salaryRange[1]])}
+                      style={{ position: 'absolute', width: '100%', pointerEvents: 'auto' }}
+                    />
+                    <input
+                      type="range"
+                      className={styles.salarySlider}
+                      min={0}
+                      max={100000000}
+                      step={1000000}
+                      value={salaryRange[1]}
+                      onChange={(e) => setSalaryRange([salaryRange[0], Math.max(Number(e.target.value), salaryRange[0] + 1000000)])}
+                      style={{ position: 'absolute', width: '100%', pointerEvents: 'auto' }}
+                    />
+                  </div>
+                  
+                  <div className={styles.salaryLabels}>
+                    <span>${(salaryRange[0] / 1000000).toFixed(0)}M</span>
+                    <span>${(salaryRange[1] / 1000000).toFixed(0)}M</span>
+                  </div>
+                </div>
+
+                <div className={styles.filterSection}>
+                  <div className={styles.positionHeader}>
+                    <label className={styles.filterLabel}>Current Position</label>
+                    <button 
+                      className={styles.selectAllBtn}
+                      onClick={toggleAllPositions}
+                    >
+                      {selectedPositions.size === positionOrder.length ? "Deselect All" : "Select All"}
+                    </button>
+                  </div>
+                  <div className={styles.positionGrid}>
+                    {positionOrder.map((pos) => (
+                      <label key={pos} className={styles.positionCheckbox}>
+                        <input
+                          type="checkbox"
+                          checked={selectedPositions.has(pos)}
+                          onChange={() => togglePosition(pos)}
+                        />
+                        <span>{pos}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+          
+          {/* Display box: player results */}
+          <div className={styles.displayBox}>
+            <div className={styles.playerScroller}>
+              {availablePlayers.length === 0 && (
+                <div className={styles.emptyState}>
+                  <strong>No players found</strong>
+                  <span>Try a different search or save some players.</span>
+                </div>
+              )}
+
+              {availablePlayers.map((player) => {
+                const alreadyAssigned = assignedIds.has(player.id);
+                return (
+                  <div
+                    key={player.id}
+                    className={`${styles.playerRow} ${draggingId === player.id ? styles.dragging : ""}`}
+                    draggable={!alreadyAssigned}
+                    onDragStart={() => !alreadyAssigned && prepareDragPlayer(player)}
+                    onDragEnd={clearDragState}
+                  >
+                    <div className={styles.playerProfile}>
+                      <img
+                        src={player.image_url || DEFAULT_PLAYER_IMAGE}
+                        alt={player.name}
+                      />
+                      <div>
+                        <p className={styles.playerName}>{player.name}</p>
+                        <div className={styles.playerMeta}>
+                          {player.years_active || "N/A"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      className={styles.addButton}
+                      disabled={alreadyAssigned || !activePosition}
+                      onClick={() => {
+                        if (activePosition) assignPlayerToPosition(player, activePosition);
+                      }}
+                      title={
+                        alreadyAssigned
+                          ? "Already assigned"
+                          : !activePosition
+                          ? "Select a position first"
+                          : "Add to active position"
+                      }
+                    >
+                      {alreadyAssigned ? "Assigned" : "Add"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* TOP-RIGHT: Team card */}
+        <section className={styles.teamCard}>
+          <div className={styles.teamInfo}>
+            <div className={styles.teamNameWrapper}>
+              {isEditingTeamName ? (
+                <input
+                  type="text"
+                  className={styles.teamNameInput}
+                  value={teamName}
+                  onChange={(e) => setTeamName(e.target.value)}
+                  onBlur={() => setIsEditingTeamName(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") setIsEditingTeamName(false);
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <h2 className={styles.teamName}>
+                  {teamName}
+                  <span
+                    className={styles.editIcon}
+                    onClick={() => setIsEditingTeamName(true)}
+                  >
+                    ✏️
+                  </span>
+                </h2>
+              )}
+            </div>
+
+            <div className={styles.teamScore}>
+              <label>Team Score</label>
+              <span>123456</span>
+            </div>
+            <div className={styles.teamBudget}>
+              <label>Team Budget</label>
+              <span>$255,380,936</span>
+            </div>
+            <div className={styles.otherStat}>
+              <label>someOtherStat</label>
+              <span>255,380,936</span>
+            </div>
+          </div>
+          <div className={styles.radarChart}>Radar Chart</div>
+        </section>
+
+        {/* MIDDLE-RIGHT: Diamond */}
+        <section className={styles.diamondPanel}>
+          <div className={styles.panelHeader}>
+            <div>
+              <h2>Your lineup</h2>
+              <p>Select a position, then add or drag a player.</p>
+            </div>
+            <span className={styles.positionHint}>
+              {activePosition ? `Active: ${activePosition}` : "Pick a position"}
+            </span>
+          </div>
 
           <div className={styles.diamond}>
-            <svg className={styles.diamondLines} viewBox="0 0 400 400">
-              <path d="M200 40 L360 200 L200 360 L40 200 Z" />
-              <path d="M200 110 L290 200 L200 290 L110 200 Z" />
-              <circle cx="200" cy="200" r="10" />
+            <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
+              <rect x="5" y="5" width="90" height="90" rx="8" ry="8" />
+              <line x1="50" y1="10" x2="10" y2="50" />
+              <line x1="50" y1="10" x2="90" y2="50" />
+              <line x1="10" y1="50" x2="50" y2="90" />
+              <line x1="50" y1="90" x2="90" y2="50" />
+              <circle cx="50" cy="12" r="2" />
+              <circle cx="50" cy="50" r="2" />
             </svg>
 
-            {positionOrder.map((position) => {
-              const assigned = lineup[position];
-              const isActive = activePosition === position;
-              const isDropTarget = dropTarget === position && dragPlayerRef.current;
-
+            {positionOrder.map((pos) => {
+              const assigned = lineup[pos];
+              const isActive = activePosition === pos;
+              const canDrop = dragPlayerRef.current && !assigned;
               return (
                 <div
-                  key={position}
-                  className={`${styles.positionNode} ${isActive ? styles.active : ""} ${
-                    assigned ? styles.filled : ""
-                  } ${isDropTarget ? styles.droppable : ""}`}
-                  style={positionCoordinates[position]}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    if (dragPlayerRef.current) {
-                      setDropTarget(position);
-                    }
-                  }}
-                  onDragLeave={(event) => {
-                    event.preventDefault();
-                    if (dropTarget === position) {
-                      setDropTarget(null);
-                    }
-                  }}
-                  onDrop={(event) => handlePositionDrop(event, position)}
+                  key={pos}
+                  className={`${styles.positionNode} ${assigned ? styles.filled : ""} ${
+                    isActive ? styles.active : ""
+                  } ${canDrop && dropTarget === pos ? styles.droppable : ""}`}
+                  style={positionCoordinates[pos]}
                 >
                   <button
                     type="button"
                     className={styles.positionTrigger}
-                    onClick={() => setActivePosition(position)}
-                    aria-pressed={isActive}
-                    draggable={Boolean(assigned)}
-                    onDragStart={(event) => {
-                      if (assigned) {
-                        event.dataTransfer.setData("text/plain", String(assigned.id));
-                        event.dataTransfer.effectAllowed = "move";
-                        prepareDragPlayer(assigned, position);
-                      }
+                    onClick={() => setActivePosition(pos)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDropTarget(pos);
                     }}
-                    onDragEnd={() => {
-                      clearDragState();
-                    }}
+                    onDragLeave={() => setDropTarget(null)}
+                    onDrop={(e) => handlePositionDrop(e, pos)}
+                    draggable={!!assigned}
+                    onDragStart={() => assigned && prepareDragPlayer(assigned, pos)}
+                    onDragEnd={clearDragState}
+                    aria-label={`Position ${pos}`}
                   >
-                    <span className={styles.positionLabel}>{position}</span>
-                    {assigned && (
-                      <span className={styles.positionPlayer}>
-                        <img
-                          src={assigned.image_url || DEFAULT_PLAYER_IMAGE}
-                          alt={assigned.name}
-                          onError={(e) => {
-                            e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                          }}
-                        />
-                        <span className={styles.positionName}>{assigned.name}</span>
-                      </span>
+                    {assigned ? (
+                      <div className={styles.positionPlayer}>
+                        <img src={assigned.image_url || DEFAULT_PLAYER_IMAGE} alt={assigned.name} />
+                        <div className={styles.positionName}>{assigned.name}</div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className={styles.positionLabel}>{pos}</div>
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>Drop or click</div>
+                      </>
                     )}
                   </button>
+
                   {assigned && (
                     <button
-                      type="button"
                       className={styles.clearSlot}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleClearSlot(position);
-                      }}
-                      aria-label={`Clear ${position} position`}
+                      onClick={() => handleClearSlot(pos)}
+                      title="Clear"
                     >
                       ×
                     </button>
@@ -301,92 +598,22 @@ export default function TeamBuilderPage() {
               );
             })}
           </div>
-        </div>
 
-        <aside className={styles.availablePanel}>
-          <header className={styles.panelHeader}>
-            <div>
-              <h2>Available Players</h2>
-              <p>
-                {searchTerm
-                  ? "Search results are shown below."
-                  : "Using saved players. Add more from the dashboard to expand this list."}
-              </p>
-            </div>
-            <div className={styles.positionHint}>
-              {activePosition ? (
-                <span>Assigning to <strong>{activePosition}</strong></span>
-              ) : (
-                <span>Select a position to begin</span>
-              )}
-            </div>
-          </header>
+          <button 
+            className={styles.addButton} 
+            style={{ alignSelf: "flex-end", marginTop: 12 }}
+            onClick={saveTeam}
+          >
+            Save Lineup
+          </button>
+        </section>
 
-          <div className={styles.playerScroller}>
-            {error && <p className={styles.errorMessage}>{error}</p>}
-
-            {availablePlayers.length === 0 && !error && (
-              <div className={styles.emptyState}>
-                <p>No players to show yet.</p>
-                <span>
-                  Save players from the dashboard or search above to scout new talent.
-                </span>
-              </div>
-            )}
-
-            {availablePlayers.map((player) => {
-              const alreadyAssigned = assignedIds.has(player.id);
-
-              return (
-                <div
-                  key={player.id}
-                  className={`${styles.playerRow} ${draggingId === player.id ? styles.dragging : ""}`}
-                  draggable
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData("text/plain", String(player.id));
-                    event.dataTransfer.effectAllowed = "move";
-                    prepareDragPlayer(player);
-                  }}
-                  onDragEnd={clearDragState}
-                >
-                  <div className={styles.playerProfile}>
-                    <img
-                      src={player.image_url || DEFAULT_PLAYER_IMAGE}
-                      alt={player.name}
-                      onError={(e) => {
-                        e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                      }}
-                    />
-                    <div>
-                      <p className={styles.playerName}>{player.name}</p>
-                      <span className={styles.playerMeta}>{player.years_active || "No years listed"}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.addButton}
-                    onClick={() => handleAssign(player)}
-                    disabled={!activePosition || alreadyAssigned}
-                  >
-                    {!activePosition
-                      ? "Select Position"
-                      : alreadyAssigned
-                      ? "Assigned"
-                      : `Add to ${activePosition}`}
-                  </button>
-                </div>
-              );
-            })}
-
-            {allShownAssigned && !error && (
-              <div className={styles.assignmentMessage}>
-                All listed players are already assigned. Add more prospects from the dashboard to
-                keep building your lineup.
-              </div>
-            )}
-          </div>
-        </aside>
-      </section>
+        {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
+        <section className={styles.actionsCard}>
+          <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button>
+          <button className={styles.recommendBtn}>Get Recommendations!</button>
+        </section>
+      </div>
     </div>
   );
 }
