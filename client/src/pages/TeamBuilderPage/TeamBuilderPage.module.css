@@ -287,9 +287,6 @@
   transition: background 0.2s ease;
 }
 
-.addButton:hover(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-}
 
 .addButton:disabled {
   opacity: 0.4;
