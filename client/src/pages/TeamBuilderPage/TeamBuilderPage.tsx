@@ -65,7 +65,7 @@ export default function TeamBuilderPage() {
     }
   }, []);
 
-    // Load saved players on mount
+  // Load saved players on mount
   useEffect(() => {
     const fetchSaved = async () => {
       const result = await playerActions.getSavedPlayers();
