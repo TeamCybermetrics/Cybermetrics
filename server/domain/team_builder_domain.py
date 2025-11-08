@@ -136,20 +136,6 @@ class SavedLineupModel(SaveLineupRequest):
     saved_at: datetime
     updated_at: datetime
 
-    def snapshot(self) -> Dict:
-        """Convert the model into a serializable dict for storage."""
-        return {
-            "name": self.name,
-            "lineup": self.lineup.model_dump(mode="json").get("lineup"),
-            "filters": self.filters.model_dump(mode="json"),
-            "team_score": self.team_score,
-            "team_budget": self.team_budget,
-            "notes": self.notes,
-            "is_current": self.is_current,
-            "saved_at": self.saved_at,
-            "updated_at": self.updated_at,
-        }
-
 
 def enforce_lineup_quota(current_count: int, limit: int = MAX_LINEUPS_PER_USER) -> None:
     """Raise an error if the user has exceeded the saved lineup quota."""
