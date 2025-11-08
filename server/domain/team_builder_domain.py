@@ -140,7 +140,7 @@ class SavedLineupModel(SaveLineupRequest):
         """Convert the model into a serializable dict for storage."""
         return {
             "name": self.name,
-            "lineup": self.lineup.model_dump(mode="json"),
+            "lineup": self.lineup.model_dump(mode="json").get("lineup"),
             "filters": self.filters.model_dump(mode="json"),
             "team_score": self.team_score,
             "team_budget": self.team_budget,
