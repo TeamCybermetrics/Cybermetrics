@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, List
-from models.players import PlayerAvgStats
+from entities.players import PlayerAvgStats
 
 class RosterRepository(ABC):
     @abstractmethod

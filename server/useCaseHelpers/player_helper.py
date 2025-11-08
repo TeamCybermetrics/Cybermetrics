@@ -1,6 +1,6 @@
 from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
-from models.players import PlayerSearchResult, PlayerDetail, SeasonStats
+from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from config.firebase import firebase_service
 from typing import List, Dict
 

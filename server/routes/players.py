@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, status, Depends
-from models.players import (
+from entities.players import (
     PlayerSearchResult, 
     AddPlayerResponse, 
     DeletePlayerResponse, 

@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from models.auth import LoginRequest, SignupRequest, User
+from entities.auth import LoginRequest, SignupRequest, User
 
 class AuthDomain:
     def __init__(self):

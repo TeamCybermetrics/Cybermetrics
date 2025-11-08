@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from models.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
+from entities.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
 
 class SavedPlayersRepository(ABC):
     @abstractmethod

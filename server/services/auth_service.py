@@ -1,6 +1,6 @@
-from domain.auth_domain import AuthDomain
+from useCaseHelpers.auth_helper import AuthDomain
 from repositories.auth_repository import AuthRepository
-from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from entities.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 
 
 class AuthService:

@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from models.players import PlayerAvgStats, RosterAvgResponse
+from entities.players import PlayerAvgStats, RosterAvgResponse
 from typing import Dict, List, Optional
 
 

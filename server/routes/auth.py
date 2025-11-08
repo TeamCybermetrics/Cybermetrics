@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Header, HTTPException, Depends
-from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from entities.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 from dependency.dependencies import get_auth_service
 from services.auth_service import AuthService
 from typing import Annotated
