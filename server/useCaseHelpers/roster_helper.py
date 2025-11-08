@@ -1,6 +1,6 @@
-from fastapi import HTTPException, status
 from entities.players import PlayerAvgStats, RosterAvgResponse
 from typing import Dict, List, Optional
+from .errors import InputValidationError
 
 
 class RosterDomain:
@@ -10,10 +10,7 @@ class RosterDomain:
     def validate_player_ids(self, player_ids: List[int]) -> None:
         """Validate player IDs input"""
         if not player_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Player IDs list cannot be empty",
-            )
+            raise InputValidationError("Player IDs list cannot be empty")
 
     def calculate_player_averages(self, seasons: Dict) -> Optional[PlayerAvgStats]:
         """Calculate career averages for a single player"""
@@ -68,10 +65,7 @@ class RosterDomain:
         Raises HTTP 400 if the input list is empty.
         """
         if not players_stats:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No player statistics provided to average",
-            )
+            raise InputValidationError("No player statistics provided to average")
 
         total_k = 0.0
         total_bb = 0.0
@@ -91,10 +85,7 @@ class RosterDomain:
             count += 1
 
         if count == 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No valid player statistics to average",
-            )
+            raise InputValidationError("No valid player statistics to average")
 
         return {
             "strikeout_rate": round(total_k / count, 3),
@@ -202,10 +193,7 @@ class RosterDomain:
         value_score = latest_war + adjustment_score
         """
         if latest_war is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No player WAR available to compute value score",
-            )
+            raise InputValidationError("No player WAR available to compute value score")
         if not player_latest_stats:
             player_latest_stats = {
                 "strikeout_rate": 0.0,

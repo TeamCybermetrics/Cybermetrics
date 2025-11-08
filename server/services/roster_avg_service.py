@@ -1,6 +1,5 @@
-from fastapi import HTTPException, status
-from server.entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
 from typing import List, Dict, Optional
+from server.entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
 from server.repositories.roster_avg_repository import RosterRepository
 from server.useCaseHelpers.roster_helper import RosterDomain
 from server.repositories.player_repository import PlayerRepository
@@ -95,10 +94,8 @@ class RosterAvgService:
         players_data = await self.roster_repository.get_players_seasons_data([player_id])
         seasons = players_data.get(player_id)
         if seasons is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Player {player_id} not found or has no season data",
-            )
+            from server.useCaseHelpers.errors import QueryError
+            raise QueryError(f"Player {player_id} not found or has no season data")
 
         latest_war = self.roster_domain.calculate_player_latest_war(seasons)
         latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
@@ -136,15 +133,15 @@ class RosterAvgService:
                         value_score=vs.get("value_score", 0.0),
                     )
                 )
-            except HTTPException as e:
-                if e.status_code < 500:
+            except Exception as e:
+                from server.useCaseHelpers.errors import UseCaseError
+                # Skip known use case errors silently; log unexpected ones.
+                if isinstance(e, UseCaseError):
+                    logger.debug("Skipping player %s due to use-case error: %s", pid, e)
                     continue
-                else:
-                    raise
-            except Exception:
                 logger.exception("Unexpected error computing value score for player %s", pid)
-                # For any unexpected error with a single player, skip and continue
                 continue
+        
 
         return results
 

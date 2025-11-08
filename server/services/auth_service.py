@@ -1,6 +1,7 @@
 from useCaseHelpers.auth_helper import AuthDomain
 from repositories.auth_repository import AuthRepository
 from entities.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from useCaseHelpers.errors import InputValidationError, AuthError, DatabaseError, DependencyUnavailableError
 
 
 class AuthService:
@@ -26,14 +27,16 @@ class AuthService:
             SignupResponse: Response containing a success message, the created user's UID, and email.
         
         Raises:
-            HTTPException: 400 if validation fails or email already exists.
-            HTTPException: 500 if user creation fails with an unexpected error.
+            InputValidationError: if validation fails or email already exists.
+            DatabaseError: if user creation fails unexpectedly.
         """
-        # Call domain for business logic validation
-        self.auth_domain.validate_signup_data(signup_data)
-        
-        # Repository interface - create user
-        result = await self.auth_repository.create_user(signup_data)
+        try:
+            self.auth_domain.validate_signup_data(signup_data)
+            result = await self.auth_repository.create_user(signup_data)
+        except InputValidationError:
+            raise
+        except Exception as e:
+            raise DatabaseError("Failed to create user") from e
         
         return SignupResponse(
             message=result["message"],
@@ -56,25 +59,25 @@ class AuthService:
             LoginResponse: Contains message, user_id, email, and a UTF-8 decoded custom token.
         
         Raises:
-            HTTPException: 503 if Firebase Web API key is not configured.
-            HTTPException: 401 if the email/password are invalid or the user does not exist.
-            HTTPException: 500 for other unexpected errors encountered during login.
+            InputValidationError: invalid login input.
+            AuthError: invalid credentials or user not found.
+            DependencyUnavailableError: Firebase API key not configured.
+            DatabaseError: unexpected error during login.
         """
-        # Call domain for business logic validation
-        self.auth_domain.validate_login_data(login_data)
-        
-        # CRITICAL: Verify password using Firebase Authentication REST API
-        # Firebase Admin SDK doesn't provide password verification
-        user_id = await self.auth_repository.verify_password(login_data.email, login_data.password)
-        
-        # Get user details to verify account still exists
-        user = await self.auth_repository.get_user_by_id(user_id)
-        
-        # Domain validation - ensure user exists
-        self.auth_domain.validate_user_exists(user)
-        
-        # Create custom token for the authenticated user
-        token = await self.auth_repository.create_custom_token(user.user_id)
+        try:
+            self.auth_domain.validate_login_data(login_data)
+            user_id = await self.auth_repository.verify_password(login_data.email, login_data.password)
+            user = await self.auth_repository.get_user_by_id(user_id)
+            self.auth_domain.validate_user_exists(user)
+            token = await self.auth_repository.create_custom_token(user.user_id)
+        except InputValidationError:
+            raise
+        except AuthError:
+            raise
+        except KeyError:
+            raise DependencyUnavailableError("Firebase API key not configured")
+        except Exception as e:
+            raise DatabaseError("Login failed unexpectedly") from e
         
         return LoginResponse(
             message="Login successful",
@@ -94,12 +97,13 @@ class AuthService:
             dict: The authentication service's verification result (decoded token / verification payload).
         
         Raises:
-            HTTPException: 401 if token is invalid, expired, or user not found.
+            AuthError: token invalid, expired, or user not found.
         """
-        # Domain layer validating token format
-        self.auth_domain.validate_token_format(token)
-        
-        # Repository interface - verify token
-        result = await self.auth_repository.verify_custom_token(token)
-        
-        return result
+        try:
+            self.auth_domain.validate_token_format(token)
+            result = await self.auth_repository.verify_custom_token(token)
+            return result
+        except AuthError:
+            raise
+        except Exception as e:
+            raise AuthError("Token verification failed") from e
