@@ -185,4 +185,3 @@ __all__ = [
     "enforce_lineup_quota",
     "ensure_unique_lineup_name",
 ]
-        raise ValueError("Lineup name must be unique per user")
