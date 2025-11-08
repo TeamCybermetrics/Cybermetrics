@@ -1,4 +1,5 @@
 from config.firebase import firebase_service
+from config.settings import settings
 
 # auth related 
 from infrastructure.auth_repository import AuthRepositoryFirebase 
@@ -19,6 +20,11 @@ from services.roster_avg_service import RosterAvgService
 from infrastructure.saved_players_repository import SavedPlayersRepositoryFirebase
 from domain.saved_players_domain import SavedPlayersDomain
 from services.saved_players_service import SavedPlayersService
+
+# free agents related
+from infrastructure.free_agents_repository import FreeAgentsRepositorySportradar
+from domain.free_agents_domain import FreeAgentsDomain
+from services.free_agents_service import FreeAgentsService
 
 # auth related
 def get_auth_repository():
@@ -80,5 +86,24 @@ def get_saved_players_service():
     saved_players_repo = get_saved_players_repository()
     saved_players_domain = get_saved_players_domain()
     return SavedPlayersService(saved_players_repo, saved_players_domain)
+
+# free agents related
+def get_free_agents_repository():
+    """Create Sportradar free agents repository instance"""
+    return FreeAgentsRepositorySportradar(
+        firebase_service.db,
+        settings.SPORTRADAR_API_KEY,
+        settings.SPORTRADAR_BASE_URL
+    )
+
+def get_free_agents_domain() -> FreeAgentsDomain:
+    """Create free agents domain instance"""
+    return FreeAgentsDomain()
+
+def get_free_agents_service():
+    """Create free agents service instance"""
+    free_agents_repo = get_free_agents_repository()
+    free_agents_domain = get_free_agents_domain()
+    return FreeAgentsService(free_agents_repo, free_agents_domain)
 
 

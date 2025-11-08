@@ -9,6 +9,10 @@ class Settings:
     FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH", "./serviceAccountKey.json")
     FIREBASE_WEB_API_KEY = os.getenv("FIREBASE_WEB_API_KEY", "")  # Required for password verification
     
+    # Sportradar API
+    SPORTRADAR_API_KEY = os.getenv("SPORTRADAR_API_KEY", "")
+    SPORTRADAR_BASE_URL = "https://api.sportradar.com/mlb/trial/v8/en"
+    
     # Server
     HOST = os.getenv("HOST", "0.0.0.0")
     PORT = int(os.getenv("PORT", 8000))
