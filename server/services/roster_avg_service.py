@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from server.entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
 from typing import List, Dict, Optional
 from server.repositories.roster_avg_repository import RosterRepository
-from server.useCaseHelpers.roster_domain import RosterDomain
+from server.useCaseHelpers.roster_helper import RosterDomain
 from server.repositories.player_repository import PlayerRepository
 import logging
 
