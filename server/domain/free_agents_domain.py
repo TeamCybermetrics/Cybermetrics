@@ -39,7 +39,7 @@ class FreeAgentsDomain:
             weight=sportradar_agent.weight,
             throw_hand=sportradar_agent.throw_hand,
             bat_hand=sportradar_agent.bat_hand,
-            last_updated=sportradar_agent.updated,
+            last_updated=sportradar_agent.updated or datetime.utcnow().isoformat(),
             stored_at=datetime.utcnow().isoformat()
         )
     

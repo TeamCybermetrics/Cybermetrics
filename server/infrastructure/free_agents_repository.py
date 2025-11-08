@@ -3,6 +3,7 @@ from models.free_agents import FreeAgentPlayer, StoredFreeAgent, FreeAgentsRespo
 from fastapi import HTTPException, status
 from typing import List, Optional
 from datetime import datetime
+from anyio import to_thread
 import httpx
 import logging
 
@@ -93,6 +94,12 @@ class FreeAgentsRepositorySportradar(FreeAgentsRepository):
                 detail=f"Failed to fetch free agents: {str(e)}"
             )
     
+    def _store_free_agent_blocking(self, agent: StoredFreeAgent) -> StoredFreeAgent:
+        """Blocking version: Store a single free agent in Firebase"""
+        doc_ref = self.db.collection('free_agents').document(agent.mlbam_id)
+        doc_ref.set(agent.dict())
+        return agent
+    
     async def store_free_agent(self, agent: StoredFreeAgent) -> StoredFreeAgent:
         """Store a single free agent in Firebase"""
         if not self.db:
@@ -102,15 +109,26 @@ class FreeAgentsRepositorySportradar(FreeAgentsRepository):
             )
         
         try:
-            doc_ref = self.db.collection('free_agents').document(agent.mlbam_id)
-            doc_ref.set(agent.dict())
-            return agent
+            return await to_thread.run_sync(self._store_free_agent_blocking, agent)
         except Exception as e:
             self._logger.exception(f"Failed to store free agent {agent.mlbam_id}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to store free agent: {str(e)}"
             )
+    
+    def _get_stored_free_agents_blocking(self) -> List[StoredFreeAgent]:
+        """Blocking version: Get all stored free agents from Firebase"""
+        docs = self.db.collection('free_agents').stream()
+        agents = []
+        for doc in docs:
+            try:
+                agent = StoredFreeAgent(**doc.to_dict())
+                agents.append(agent)
+            except Exception as e:
+                self._logger.warning(f"Failed to parse stored free agent: {e}")
+                continue
+        return agents
     
     async def get_stored_free_agents(self) -> List[StoredFreeAgent]:
         """Get all stored free agents from Firebase"""
@@ -121,22 +139,20 @@ class FreeAgentsRepositorySportradar(FreeAgentsRepository):
             )
         
         try:
-            docs = self.db.collection('free_agents').stream()
-            agents = []
-            for doc in docs:
-                try:
-                    agent = StoredFreeAgent(**doc.to_dict())
-                    agents.append(agent)
-                except Exception as e:
-                    self._logger.warning(f"Failed to parse stored free agent: {e}")
-                    continue
-            return agents
+            return await to_thread.run_sync(self._get_stored_free_agents_blocking)
         except Exception as e:
             self._logger.exception("Failed to get stored free agents")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to get stored free agents: {str(e)}"
             )
+    
+    def _get_free_agent_by_mlbam_id_blocking(self, mlbam_id: str) -> Optional[StoredFreeAgent]:
+        """Blocking version: Get a specific free agent by MLBAM ID from Firebase"""
+        doc = self.db.collection('free_agents').document(mlbam_id).get()
+        if not doc.exists:
+            return None
+        return StoredFreeAgent(**doc.to_dict())
     
     async def get_free_agent_by_mlbam_id(self, mlbam_id: str) -> Optional[StoredFreeAgent]:
         """Get a specific free agent by MLBAM ID from Firebase"""
@@ -147,16 +163,18 @@ class FreeAgentsRepositorySportradar(FreeAgentsRepository):
             )
         
         try:
-            doc = self.db.collection('free_agents').document(mlbam_id).get()
-            if not doc.exists:
-                return None
-            return StoredFreeAgent(**doc.to_dict())
+            return await to_thread.run_sync(self._get_free_agent_by_mlbam_id_blocking, mlbam_id)
         except Exception as e:
             self._logger.exception(f"Failed to get free agent {mlbam_id}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to get free agent: {str(e)}"
             )
+    
+    def _delete_free_agent_blocking(self, mlbam_id: str) -> bool:
+        """Blocking version: Delete a free agent from Firebase"""
+        self.db.collection('free_agents').document(mlbam_id).delete()
+        return True
     
     async def delete_free_agent(self, mlbam_id: str) -> bool:
         """Delete a free agent from Firebase"""
@@ -167,14 +185,34 @@ class FreeAgentsRepositorySportradar(FreeAgentsRepository):
             )
         
         try:
-            self.db.collection('free_agents').document(mlbam_id).delete()
-            return True
+            return await to_thread.run_sync(self._delete_free_agent_blocking, mlbam_id)
         except Exception as e:
             self._logger.exception(f"Failed to delete free agent {mlbam_id}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to delete free agent: {str(e)}"
             )
+    
+    def _bulk_store_free_agents_blocking(self, agents: List[StoredFreeAgent]) -> int:
+        """Blocking version: Store multiple free agents in Firebase"""
+        batch = self.db.batch()
+        count = 0
+        
+        for agent in agents:
+            doc_ref = self.db.collection('free_agents').document(agent.mlbam_id)
+            batch.set(doc_ref, agent.dict())
+            count += 1
+            
+            # Firestore batch limit is 500 operations
+            if count % 500 == 0:
+                batch.commit()
+                batch = self.db.batch()
+        
+        # Commit remaining operations
+        if count % 500 != 0:
+            batch.commit()
+        
+        return count
     
     async def bulk_store_free_agents(self, agents: List[StoredFreeAgent]) -> int:
         """Store multiple free agents in Firebase, returns count of stored agents"""
@@ -185,24 +223,7 @@ class FreeAgentsRepositorySportradar(FreeAgentsRepository):
             )
         
         try:
-            batch = self.db.batch()
-            count = 0
-            
-            for agent in agents:
-                doc_ref = self.db.collection('free_agents').document(agent.mlbam_id)
-                batch.set(doc_ref, agent.dict())
-                count += 1
-                
-                # Firestore batch limit is 500 operations
-                if count % 500 == 0:
-                    batch.commit()
-                    batch = self.db.batch()
-            
-            # Commit remaining operations
-            if count % 500 != 0:
-                batch.commit()
-            
-            return count
+            return await to_thread.run_sync(self._bulk_store_free_agents_blocking, agents)
         except Exception as e:
             self._logger.exception("Failed to bulk store free agents")
             raise HTTPException(

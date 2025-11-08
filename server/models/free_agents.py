@@ -6,18 +6,18 @@ from datetime import datetime
 class FreeAgentPlayer(BaseModel):
     """Model for a single free agent player from Sportradar API"""
     id: str
-    first_name: str
-    last_name: str
-    preferred_name: str
-    full_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
+    full_name: str  # This should always be present
     position: Optional[str] = None
     status: str
-    mlbam_id: str
+    mlbam_id: Optional[str] = None  # Not all free agents have MLBAM IDs in the API
     height: Optional[str] = None
     weight: Optional[str] = None
     throw_hand: Optional[str] = None
     bat_hand: Optional[str] = None
-    updated: str
+    updated: Optional[str] = None  # Some free agents don't have update timestamps
     
     class Config:
         extra = "allow"
@@ -41,9 +41,9 @@ class StoredFreeAgent(BaseModel):
     mlbam_id: str
     sportradar_id: str
     full_name: str
-    first_name: str
-    last_name: str
-    preferred_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
     position: Optional[str] = None
     status: str
     height: Optional[str] = None

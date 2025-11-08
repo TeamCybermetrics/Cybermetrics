@@ -29,24 +29,29 @@ class Settings:
         Validate configuration and collect startup warnings.
         
         Checks for missing or insecure settings and returns user-facing warning messages.
-        Specifically, it warns when FIREBASE_WEB_API_KEY is not set and adds a production-mode
-        warning advising HTTPS. If running in production and FIREBASE_WEB_API_KEY is absent,
-        validation fails.
+        Specifically, it warns when FIREBASE_WEB_API_KEY or SPORTRADAR_API_KEY is not set 
+        and adds a production-mode warning advising HTTPS. If running in production and 
+        required keys are absent, validation fails.
         
         Returns:
             list[str]: List of warning messages; empty if no warnings.
         
         Raises:
-            ValueError: If ENVIRONMENT is "production" and FIREBASE_WEB_API_KEY is not set.
+            ValueError: If ENVIRONMENT is "production" and required API keys are not set.
         """
         warnings = []
         
         if not self.FIREBASE_WEB_API_KEY:
             warnings.append("⚠️  FIREBASE_WEB_API_KEY is not set - authentication will not work!")
         
+        if not self.SPORTRADAR_API_KEY:
+            warnings.append("⚠️  SPORTRADAR_API_KEY is not set - free agents API will not work!")
+        
         if self.ENVIRONMENT == "production":
             if not self.FIREBASE_WEB_API_KEY:
                 raise ValueError("FIREBASE_WEB_API_KEY must be set in production!")
+            if not self.SPORTRADAR_API_KEY:
+                raise ValueError("SPORTRADAR_API_KEY must be set in production!")
             warnings.append("🔒 Running in PRODUCTION mode - ensure HTTPS is enabled!")
         
         return warnings
