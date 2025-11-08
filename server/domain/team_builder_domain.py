@@ -25,7 +25,7 @@ MAX_SALARY = 100_000_000
 class LineupSlotModel(BaseModel):
     """Snapshot of a player assigned to a lineup position."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="forbid")
 
     player_id: int = Field(..., gt=0)
     name: Optional[str] = Field(default=None, max_length=120)
@@ -168,6 +168,7 @@ __all__ = [
     "SaveLineupRequest",
     "SavedLineupModel",
     "MAX_LINEUPS_PER_USER",
+    "MAX_SALARY",
     "enforce_lineup_quota",
     "ensure_unique_lineup_name",
 ]
