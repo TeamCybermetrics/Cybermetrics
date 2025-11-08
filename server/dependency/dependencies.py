@@ -19,6 +19,9 @@ from services.roster_avg_service import RosterAvgService
 from infrastructure.saved_players_repository import SavedPlayersRepositoryFirebase
 from domain.saved_players_domain import SavedPlayersDomain
 from services.saved_players_service import SavedPlayersService
+from infrastructure.team_builder_repository import TeamBuilderRepositoryFirebase
+from services.team_builder_service import TeamBuilderService
+from repositories.team_builder_repository import TeamBuilderRepository
 
 # auth related
 def get_auth_repository():
@@ -82,3 +85,13 @@ def get_saved_players_service():
     return SavedPlayersService(saved_players_repo, saved_players_domain)
 
 
+# team builder related
+def get_team_builder_repository() -> TeamBuilderRepository:
+    """Create Firebase team builder repository instance"""
+    return TeamBuilderRepositoryFirebase(firebase_service.db)
+
+
+def get_team_builder_service() -> TeamBuilderService:
+    """Create team builder service instance"""
+    repository = get_team_builder_repository()
+    return TeamBuilderService(repository)

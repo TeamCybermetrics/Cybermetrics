@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
+import { teamBuilderActions } from "@/actions/teamBuilder";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
+import type { LineupSlotPayload, SavedLineup } from "@/api/teamBuilder";
 import styles from "./TeamBuilderPage.module.css";
 
 type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "P" | "C" | "DH";
@@ -57,6 +59,78 @@ export default function TeamBuilderPage() {
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
   const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000000]);
   const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set(positionOrder));
+  const [isLoadingRemoteLineup, setIsLoadingRemoteLineup] = useState(true);
+  const [isSavingRemoteLineup, setIsSavingRemoteLineup] = useState(false);
+  const [lineupSyncMessage, setLineupSyncMessage] = useState("");
+  const [lineupSyncError, setLineupSyncError] = useState("");
+
+  const hydrateLineupFromServer = useCallback((remoteLineup: SavedLineup) => {
+    const nextLineup = positionOrder.reduce((acc, position) => {
+      const slot = remoteLineup.lineup[position];
+      acc[position] = slot
+        ? {
+            id: slot.player_id,
+            name: slot.name || `Player ${slot.player_id}`,
+            image_url: slot.image_url,
+            years_active: slot.years_active
+          }
+        : null;
+      return acc;
+    }, {} as LineupState);
+
+    setLineup(nextLineup);
+    setTeamName(remoteLineup.name || "TeamName1");
+    if (remoteLineup.filters?.salary_range) {
+      setSalaryRange(remoteLineup.filters.salary_range);
+    }
+    if (remoteLineup.filters?.selected_positions?.length) {
+      setSelectedPositions(new Set(remoteLineup.filters.selected_positions));
+    }
+  }, []);
+
+  const buildServerPayload = useCallback(() => {
+    const lineupPayload = positionOrder.reduce((acc, position) => {
+      const player = lineup[position];
+      acc[position] = player
+        ? ({
+            player_id: player.id,
+            name: player.name,
+            image_url: player.image_url,
+            years_active: player.years_active
+          } as LineupSlotPayload)
+        : null;
+      return acc;
+    }, {} as Record<DiamondPosition, LineupSlotPayload | null>);
+
+    return {
+      name: teamName.trim() || "My Lineup",
+      lineup: lineupPayload,
+      filters: {
+        salary_range: salaryRange,
+        selected_positions: Array.from(selectedPositions) as DiamondPosition[]
+      }
+    };
+  }, [lineup, selectedPositions, salaryRange, teamName]);
+
+  const syncLineupWithServer = useCallback(async () => {
+    setLineupSyncError("");
+    setLineupSyncMessage("");
+    setIsSavingRemoteLineup(true);
+    const payload = buildServerPayload();
+    const result = await teamBuilderActions.saveLineup(payload);
+    setIsSavingRemoteLineup(false);
+
+    if (result.success) {
+      setLineupSyncMessage("Lineup saved to cloud");
+      if (result.data.lineup) {
+        hydrateLineupFromServer(result.data.lineup);
+      }
+      return true;
+    }
+
+    setLineupSyncError(result.error || "Failed to save lineup");
+    return false;
+  }, [buildServerPayload, hydrateLineupFromServer]);
 
   // Load saved teams from localStorage on mount
   useEffect(() => {
@@ -81,6 +155,23 @@ export default function TeamBuilderPage() {
 
     void fetchSaved();
   }, []);
+
+  // Load lineup from backend on mount
+  useEffect(() => {
+    const fetchRemoteLineup = async () => {
+      setIsLoadingRemoteLineup(true);
+      const result = await teamBuilderActions.fetchLineup();
+      if (result.success && result.data?.lineup) {
+        hydrateLineupFromServer(result.data.lineup);
+        setLineupSyncMessage("Cloud lineup loaded");
+      } else if (!result.success) {
+        setLineupSyncError(result.error || "Failed to load lineup");
+      }
+      setIsLoadingRemoteLineup(false);
+    };
+
+    void fetchRemoteLineup();
+  }, [hydrateLineupFromServer]);
 
   const performSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
@@ -203,7 +294,12 @@ export default function TeamBuilderPage() {
     clearDragState();
   };
 
-  const saveTeam = () => {
+  const saveTeam = async () => {
+    const synced = await syncLineupWithServer();
+    if (!synced) {
+      return;
+    }
+
     const newTeam: SavedTeam = {
       id: Date.now().toString(),
       name: teamName,
@@ -214,7 +310,7 @@ export default function TeamBuilderPage() {
     const updatedTeams = [...savedTeams, newTeam];
     setSavedTeams(updatedTeams);
     localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
-    alert(`Team "${teamName}" saved successfully!`);
+    alert(`Team "${teamName}" saved!`);
   };
 
   const loadTeam = (team: SavedTeam) => {
@@ -599,13 +695,24 @@ export default function TeamBuilderPage() {
             })}
           </div>
 
-          <button 
-            className={styles.addButton} 
-            style={{ alignSelf: "flex-end", marginTop: 12 }}
-            onClick={saveTeam}
-          >
-            Save Lineup
-          </button>
+          <div className={styles.lineupActions}>
+            <button 
+              className={styles.addButton} 
+              style={{ alignSelf: "flex-end", marginTop: 12 }}
+              onClick={() => void saveTeam()}
+              disabled={isSavingRemoteLineup || isLoadingRemoteLineup}
+            >
+              {isSavingRemoteLineup ? "Saving..." : "Save Lineup"}
+            </button>
+            {lineupSyncMessage && (
+              <p className={styles.lineupStatus}>{lineupSyncMessage}</p>
+            )}
+            {lineupSyncError && (
+              <p className={`${styles.lineupStatus} ${styles.lineupStatusError}`}>
+                {lineupSyncError}
+              </p>
+            )}
+          </div>
         </section>
 
         {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
