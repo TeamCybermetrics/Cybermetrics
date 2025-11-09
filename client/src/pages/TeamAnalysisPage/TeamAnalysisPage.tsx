@@ -1,9 +1,6 @@
 import { useState } from "react";
 import styles from "./TeamAnalysisPage.module.css";
-import StrengthView from "./components/StrengthView";
 import WeaknessView from "./components/WeaknessView";
-
-type Tab = "strength" | "weakness";
 
 const STATIC_PLAYERS = [
   { id: 1, name: "Shohei Ohtani", years_active: "LA Dodgers", image_url: "" },
@@ -14,12 +11,11 @@ const STATIC_PLAYERS = [
 ];
 
 export default function TeamAnalysisPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("strength");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className={styles.page}>
-      {/* Floating handle (always visible) */}
+      {/* Sidebar toggle */}
       <button
         className={`${styles.sidebarHandle} ${sidebarOpen ? styles.handleOpen : styles.handleClosed}`}
         onClick={() => setSidebarOpen(o => !o)}
@@ -29,7 +25,7 @@ export default function TeamAnalysisPage() {
         {sidebarOpen ? "◀" : "▶"}
       </button>
 
-      {/* Sidebar container (width collapses to 0) */}
+      {/* Sidebar */}
       <div
         className={`${styles.sidebarContainer} ${
           sidebarOpen ? styles.sidebarContainerOpen : styles.sidebarContainerClosed
@@ -64,25 +60,14 @@ export default function TeamAnalysisPage() {
         </aside>
       </div>
 
+      {/* Header (single tab label) */}
       <main className={styles.mainContent}>
         <nav className={styles.tabNav}>
-          <button
-            className={`${styles.tab} ${activeTab === "strength" ? styles.tabActive : ""}`}
-            onClick={() => setActiveTab("strength")}
-          >
-            Strength
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === "weakness" ? styles.tabActive : ""}`}
-            onClick={() => setActiveTab("weakness")}
-          >
-            Weakness
-          </button>
+          <div className={`${styles.tab} ${styles.tabActive}`}>Weakness</div>
         </nav>
 
         <div className={styles.tabContent}>
-          {activeTab === "strength" && <StrengthView />}
-          {activeTab === "weakness" && <WeaknessView />}
+          <WeaknessView />
         </div>
       </main>
     </div>

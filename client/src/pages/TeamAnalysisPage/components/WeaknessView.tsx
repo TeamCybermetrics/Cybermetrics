@@ -1,12 +1,12 @@
-import styles from "./StrengthView.module.css";
+import styles from "./WeaknessView.module.css";
 
 export default function WeaknessView() {
   const players = [
-    { name: "Keymetric1", change: "+43%", avatar: "https://via.placeholder.com/50" },
-    { name: "Keymetric222", change: "+43%", avatar: "https://via.placeholder.com/50" },
-    { name: "Keymetric3", change: "+43%", avatar: "https://via.placeholder.com/50" },
-    { name: "Keymetric4", change: "+43%", avatar: "https://via.placeholder.com/50" },
-    { name: "Kemetriv5", change: "+43%", avatar: "https://via.placeholder.com/50" },
+    { name: "Keymetric1", change: "43%", avatar: "https://via.placeholder.com/50" },
+    { name: "Keymetric222", change: "43%", avatar: "https://via.placeholder.com/50" },
+    { name: "Keymetric3", change: "43%", avatar: "https://via.placeholder.com/50" },
+    { name: "Keymetric4", change: "43%", avatar: "https://via.placeholder.com/50" },
+    { name: "Kemetriv5", change: "43%", avatar: "https://via.placeholder.com/50" },
   ];
 
   return (
@@ -29,16 +29,13 @@ export default function WeaknessView() {
       {/* Main content grid */}
       <div className={styles.grid}>
         <div className={styles.leftColumn}>
-          <h2 className={styles.sectionTitle}>Your Team's worst performance metrics...</h2>
+          <h2 className={styles.sectionTitle}>Your team's top areas of improvement</h2>
           <div className={styles.playerList}>
             {players.map((p, i) => (
               <div key={i} className={styles.playerCard}>
                 <img src={p.avatar} alt={p.name} className={styles.avatar} />
                 <span className={styles.playerName}>{p.name}</span>
                 <div className={styles.chart}>
-                  <svg width="60" height="24" viewBox="0 0 60 24">
-                    <polyline points="0,20 15,16 30,12 45,8 60,4" fill="none" stroke="#00ff88" strokeWidth="2" />
-                  </svg>
                 </div>
                 <span className={styles.change}>{p.change}</span>
               </div>
