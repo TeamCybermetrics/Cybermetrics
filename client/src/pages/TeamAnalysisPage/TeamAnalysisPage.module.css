@@ -116,6 +116,32 @@
   overflow-y: auto;
 }
 
+.loadingState,
+.emptyState,
+.errorState {
+  padding: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  color: rgba(255,255,255,0.75);
+}
+
+.errorState { color: #ffb3b3; border-color: rgba(255,0,0,0.25); }
+
+.retryButton {
+  margin-left: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.retryButton:hover { background: rgba(255,255,255,0.18); }
+
 .playerCard {
   background: rgba(16, 17, 30, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.06);
