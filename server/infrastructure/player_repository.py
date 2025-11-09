@@ -2,7 +2,7 @@ from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
 from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from config.firebase import firebase_service
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from repositories.player_repository import PlayerRepository
 from anyio import to_thread, Lock
 import logging
@@ -98,3 +98,13 @@ class PlayerRepositoryFirebase(PlayerRepository):
             }, merge=True)
         else:
             return
+        
+    def bulk_upsert_players(self, players: List[Dict[str, Any]]) -> None:
+        if not players:
+            return
+        batch = self._db.batch()
+        col = self._db.collection("players")
+        for p in players:
+            doc = col.document(str(p["mlbam_id"]))
+            batch.set(doc, p, merge=True)
+        batch.commit()
