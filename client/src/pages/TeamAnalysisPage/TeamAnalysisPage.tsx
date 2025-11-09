@@ -2,12 +2,13 @@ import { useState } from "react";
 import styles from "./TeamAnalysisPage.module.css";
 import WeaknessView from "./components/WeaknessView";
 
+// TODO: Replace with real player data. This is placeholder data for UI development.
 const STATIC_PLAYERS = [
   { id: 1, name: "Shohei Ohtani", years_active: "LA Dodgers", image_url: "" },
   { id: 2, name: "Mookie Betts", years_active: "LA Dodgers", image_url: "" },
   { id: 3, name: "Freddie Freeman", years_active: "LA Dodgers", image_url: "" },
-  { id: 4, name: "Shohei Ohtani", years_active: "LA Dodgers", image_url: "" },
-  { id: 5, name: "Shohei Ohtani", years_active: "LA Dodgers", image_url: "" },
+  { id: 4, name: "Will Smith", years_active: "LA Dodgers", image_url: "" },
+  { id: 5, name: "Max Muncy", years_active: "LA Dodgers", image_url: "" },
 ];
 
 export default function TeamAnalysisPage() {
