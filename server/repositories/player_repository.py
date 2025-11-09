@@ -19,3 +19,7 @@ class PlayerRepository(ABC):
     @abstractmethod
     def bulk_upsert_players(self, players: List[Dict[str, Any]]) -> None:
         pass
+
+    @abstractmethod
+    def set_league_averages(self, league_doc: Dict[str, Any]) -> None:
+        pass

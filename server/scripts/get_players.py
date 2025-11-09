@@ -132,3 +132,7 @@ def refresh_players(repo: PlayerRepository, start_year: int = 2015, current_seas
     if players:
         repo.bulk_upsert_players(players)
     return len(players)
+
+
+if __name__ == "__main__":
+    raise SystemExit("Use a runner or scheduler to inject PlayerRepository.")

@@ -1,54 +1,40 @@
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
-
 import asyncio
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple
 from datetime import datetime
-from config.firebase import firebase_service
-from services.roster_avg_service import roster_avg_service
-from utils.logger import setup_logger
+
+from server.repositories.player_repository import PlayerRepository
+from server.services.roster_avg_service import RosterAvgService
+from server.utils.logger import setup_logger  # or get_logger if that's what you use
 
 logger = setup_logger(__name__)
 
-async def compute_team_roster_average(team_doc_ref) -> Tuple[Dict[str, float], int]:
-    """Compute roster averages for a single team document reference.
-
-    Returns a dict with averaged stats (strikeout_rate, walk_rate, isolated_power,
-    on_base_percentage, base_running) or empty dict if none could be computed.
-    """
+async def compute_team_roster_average(team_id: str, teams_repo: PlayerRepository, roster_service: RosterAvgService) -> Tuple[Dict[str, float], int]:
+    """Compute roster averages for one team by its document id."""
     try:
-        team_snapshot = team_doc_ref.get()
-        if not team_snapshot.exists:
-            logger.warning(f"Team document {team_doc_ref.id} does not exist")
-            return {}, 0
-
-        team_data = team_snapshot.to_dict()
-        positional_players = team_data.get("positional_players", [])
+        positional_players = teams_repo.get_team_positional_players(team_id) or []
         if not positional_players:
-            logger.info(f"No positional players for team {team_doc_ref.id}")
+            logger.info(f"No positional players for team {team_id}")
             return {}, 0
 
-        # Extract mlbam ids from players
         player_ids: List[int] = []
         for p in positional_players:
             pid = p.get("mlbam_id")
-            if pid:
-                player_ids.append(int(pid))
+            if pid is not None:
+                try:
+                    player_ids.append(int(pid))
+                except Exception:
+                    continue
 
         if not player_ids:
-            logger.info(f"No mlbam_ids for team {team_doc_ref.id}")
+            logger.info(f"No mlbam_ids for team {team_id}")
             return {}, 0
 
-        # Call the service (async)
-        roster_response = await roster_avg_service.get_roster_averages(player_ids)
-
-        stats_map = roster_response.stats or {}
+        roster_response = await roster_service.get_roster_averages(player_ids)
+        stats_map = getattr(roster_response, "stats", None) or {}
         if not stats_map:
-            logger.info(f"No stats returned for team {team_doc_ref.id}")
+            logger.info(f"No stats returned for team {team_id}")
             return {}, 0
 
-        # Compute averages across returned players
         sum_stats = {
             "strikeout_rate": 0.0,
             "walk_rate": 0.0,
@@ -57,91 +43,76 @@ async def compute_team_roster_average(team_doc_ref) -> Tuple[Dict[str, float], i
             "base_running": 0.0,
         }
         count = 0
+
         for pid_str, stats in stats_map.items():
-            # stats is a Pydantic model instance; access attributes
             try:
-                sum_stats["strikeout_rate"] += float(stats.strikeout_rate)
-                sum_stats["walk_rate"] += float(stats.walk_rate)
-                sum_stats["isolated_power"] += float(stats.isolated_power)
-                sum_stats["on_base_percentage"] += float(stats.on_base_percentage)
-                sum_stats["base_running"] += float(stats.base_running)
+                # Support either Pydantic object or plain dict
+                getv = (lambda k: getattr(stats, k)) if hasattr(stats, "__dict__") else (lambda k: stats.get(k))
+                sum_stats["strikeout_rate"] += float(getv("strikeout_rate"))
+                sum_stats["walk_rate"] += float(getv("walk_rate"))
+                sum_stats["isolated_power"] += float(getv("isolated_power"))
+                sum_stats["on_base_percentage"] += float(getv("on_base_percentage"))
+                sum_stats["base_running"] += float(getv("base_running"))
                 count += 1
             except Exception:
-                logger.exception(f"Failed to read stats for player {pid_str} on team {team_doc_ref.id}")
+                logger.exception(f"Failed to read stats for player {pid_str} on team {team_id}")
 
         if count == 0:
-            logger.info(f"No valid player stats to average for team {team_doc_ref.id}")
+            logger.info(f"No valid player stats to average for team {team_id}")
             return {}, 0
 
         avg_stats = {k: round(v / count, 4) for k, v in sum_stats.items()}
         return avg_stats, count
 
     except Exception as e:
-        logger.exception(f"Error computing roster average for team {team_doc_ref.id}: {e}")
+        logger.exception(f"Error computing roster average for team {team_id}: {e}")
         return {}, 0
 
 
-async def main():
-    db = firebase_service.db
-    if not db:
-        logger.error("Firebase is not configured. Exiting.")
-        return
-
-    teams_ref = db.collection("teams")
-    try:
-        docs = teams_ref.stream()
-    except Exception as e:
-        logger.exception(f"Failed to stream teams collection: {e}")
-        return
-
-    # Collect per-team averages to later compute league aggregates
+async def main(teams_repo: PlayerRepository, roster_service: RosterAvgService) -> None:
+    """Compute per-team roster averages and league aggregates; write via TeamsRepository."""
+    # Per-team averages
     team_averages: List[Dict[str, Any]] = []
+    for team_id in teams_repo.list_team_ids():
+        try:
+            logger.info(f"Processing team {team_id}...")
+            avg, player_count = await compute_team_roster_average(team_id, teams_repo, roster_service)
+            if avg:
+                try:
+                    teams_repo.set_team_roster_average(team_id, avg)
+                    logger.info(f"Saved roster_average for team {team_id}: {avg}")
+                except Exception as e:
+                    logger.exception(f"Failed to save roster_average for team {team_id}: {e}")
+                team_averages.append({"team_id": team_id, "avg": avg, "player_count": player_count})
+            else:
+                logger.info(f"No roster_average computed for team {team_id}")
+        except Exception:
+            logger.exception(f"Team processing failed: {team_id}")
 
-    # Process each team sequentially (small number of teams)
-    for doc in docs:
-        team_id = doc.id
-        logger.info(f"Processing team {team_id}...")
-        team_ref = teams_ref.document(team_id)
-        avg, player_count = await compute_team_roster_average(team_ref)
-        if avg:
-            try:
-                # Save per-team roster_average as before
-                team_ref.set({"roster_average": avg}, merge=True)
-                logger.info(f"Saved roster_average for team {team_id}: {avg}")
-            except Exception as e:
-                logger.exception(f"Failed to save roster_average for team {team_id}: {e}")
-            team_averages.append({"team_id": team_id, "avg": avg, "player_count": player_count})
-        else:
-            logger.info(f"No roster_average computed for team {team_id}")
-
-    # After processing all teams, compute league-level aggregates
+    # League aggregates
     try:
-        included_teams = [t for t in team_averages if t.get("avg")]
-        num_teams = len(included_teams)
-        total_players = sum(t.get("player_count", 0) for t in included_teams)
+        included = [t for t in team_averages if t.get("avg")]
+        num_teams = len(included)
+        total_players = sum(t.get("player_count", 0) for t in included)
 
         if num_teams == 0:
             logger.info("No team averages available to compute league averages.")
             return
 
-        # Determine stat keys from first team's avg
-        stat_keys = list(included_teams[0]["avg"].keys())
+        stat_keys = list(included[0]["avg"].keys())
 
-        # Unweighted average (mean across teams)
         unweighted = {}
         for k in stat_keys:
-            s = sum(t["avg"].get(k, 0.0) for t in included_teams)
+            s = sum(t["avg"].get(k, 0.0) for t in included)
             unweighted[k] = round(s / num_teams, 4)
 
-        # Weighted by player count average
-        weighted = {}
         if total_players > 0:
+            weighted = {}
             for k in stat_keys:
-                s = sum(t["avg"].get(k, 0.0) * t.get("player_count", 0) for t in included_teams)
+                s = sum(t["avg"].get(k, 0.0) * t.get("player_count", 0) for t in included)
                 weighted[k] = round(s / total_players, 4)
         else:
-            # Fallback to unweighted if no player counts
-            weighted = unweighted.copy()
+            weighted = dict(unweighted)
 
         league_doc = {
             "unweighted": unweighted,
@@ -151,7 +122,7 @@ async def main():
             "updated_at": datetime.utcnow().isoformat() + "Z",
         }
 
-        db.collection("league").document("averages").set(league_doc, merge=True)
+        teams_repo.set_league_averages(league_doc)
         logger.info(f"Wrote league averages: teams={num_teams}, players={total_players}")
 
     except Exception as e:
@@ -159,4 +130,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    raise SystemExit("Use a runner or scheduler to inject TeamsRepository and RosterAvgService.")

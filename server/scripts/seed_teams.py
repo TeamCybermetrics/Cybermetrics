@@ -131,3 +131,7 @@ def seed_all_teams(repo: PlayerRepository, year: int) -> None:
             repo.upload_team(team_code, team_name, players)
         except TypeError:
             repo.upload_team(team_upload)
+
+
+if __name__ == "__main__":
+    raise SystemExit("Use a runner or scheduler to inject PlayerRepository.")
