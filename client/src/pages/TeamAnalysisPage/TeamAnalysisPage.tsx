@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./TeamAnalysisPage.module.css";
 import WeaknessView from "./components/WeaknessView";
 import { playerActions } from "@/actions/players";
@@ -9,27 +9,33 @@ export default function TeamAnalysisPage() {
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);
   const [playersError, setPlayersError] = useState<string | null>(null);
+  const isMounted = useRef<boolean>(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      setLoadingPlayers(true);
-      setPlayersError(null);
+  const loadSavedPlayers = async () => {
+    setLoadingPlayers(true);
+    setPlayersError(null);
+    try {
       const result = await playerActions.getSavedPlayers();
-      if (!isMounted) return;
+      if (!isMounted.current) return;
       if (result.success) {
         setSavedPlayers(result.data || []);
       } else {
         setPlayersError(result.error || "Failed to load players");
       }
-      setLoadingPlayers(false);
-    };
+    } catch (err) {
+      if (!isMounted.current) return;
+      setPlayersError(err instanceof Error ? err.message : "Failed to load players");
+    } finally {
+      if (isMounted.current) {
+        setLoadingPlayers(false);
+      }
+    }
+  };
 
-    load();
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    isMounted.current = true;
+    loadSavedPlayers();
+    return () => { isMounted.current = false; };
   }, []);
 
   return (
@@ -66,18 +72,7 @@ export default function TeamAnalysisPage() {
                     <span>{playersError}</span>
                     <button
                       className={styles.retryButton}
-                      onClick={() => {
-                        setLoadingPlayers(true);
-                        playerActions.getSavedPlayers().then(res => {
-                          if (res.success) {
-                            setSavedPlayers(res.data || []);
-                            setPlayersError(null);
-                          } else {
-                            setPlayersError(res.error || "Failed to load players");
-                          }
-                          setLoadingPlayers(false);
-                        });
-                      }}
+                      onClick={() => { loadSavedPlayers(); }}
                     >Retry</button>
                   </div>
                 )}
