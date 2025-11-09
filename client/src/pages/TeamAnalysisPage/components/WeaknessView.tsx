@@ -6,7 +6,7 @@ export default function WeaknessView() {
     { name: "Keymetric222", change: "43%", avatar: "https://via.placeholder.com/50" },
     { name: "Keymetric3", change: "43%", avatar: "https://via.placeholder.com/50" },
     { name: "Keymetric4", change: "43%", avatar: "https://via.placeholder.com/50" },
-    { name: "Kemetriv5", change: "43%", avatar: "https://via.placeholder.com/50" },
+    { name: "Keymetric5", change: "43%", avatar: "https://via.placeholder.com/50" },
   ];
 
   return (
