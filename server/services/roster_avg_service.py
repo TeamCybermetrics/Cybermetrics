@@ -1,8 +1,8 @@
 from typing import List, Dict, Optional
-from server.entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
-from server.repositories.roster_avg_repository import RosterRepository
-from server.useCaseHelpers.roster_helper import RosterDomain
-from server.repositories.player_repository import PlayerRepository
+from entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
+from repositories.roster_avg_repository import RosterRepository
+from useCaseHelpers.roster_helper import RosterDomain
+from repositories.player_repository import PlayerRepository
 import logging
 
 logger = logging.getLogger(__name__)

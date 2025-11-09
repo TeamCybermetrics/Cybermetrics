@@ -83,3 +83,18 @@ class PlayerRepositoryFirebase(PlayerRepository):
                 detail="Failed to get player"
             ) from e
 
+    def upload_team(self, team, team_name, final_players) -> None:
+        if not self.db:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase is not configured"
+            )
+
+        if final_players != []:
+            self.db.collection("teams").document(team.upper()).set({
+                "full_team_name": team_name,
+                "positional_players": final_players,
+                "number": len(final_players)
+            }, merge=True)
+        else:
+            return
