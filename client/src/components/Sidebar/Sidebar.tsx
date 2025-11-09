@@ -4,7 +4,6 @@ import {
   DashboardIcon,
   TeamBuilderIcon,
   TeamAnalysisIcon,
-  MLBTeamsIcon
 } from "@/assets/icons";
 import logo from "@/assets/brand_badge.jpg";
 import styles from "./Sidebar.module.css";
@@ -13,7 +12,6 @@ const navItems = [
   { label: "Dashboard", to: ROUTES.DASHBOARD, icon: DashboardIcon },
   { label: "Team Builder", to: ROUTES.TEAM_BUILDER, icon: TeamBuilderIcon },
   { label: "Team Analysis", to: ROUTES.TEAM_ANALYSIS, icon: TeamAnalysisIcon },
-  { label: "MLB Teams", to: ROUTES.MLB_TEAMS, icon: MLBTeamsIcon }
 ] as const;
 
 export default function Sidebar() {
