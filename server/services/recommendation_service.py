@@ -56,8 +56,8 @@ class RecommendationService:
         self.roster_domain.validate_player_ids(player_ids)
 
         # Compute team unweighted average
-        players_data = await self.roster_repository.get_players_seasons_data(player_ids)
-        roster_response = self.roster_domain.calculate_roster_averages(players_data)
+        roster_players_data = await self.roster_repository.get_players_seasons_data(player_ids)
+        roster_response = self.roster_domain.calculate_roster_averages(roster_players_data)
         team_avg = self.roster_domain.compute_unweighted_roster_average_dict(list(roster_response.stats.values()))
 
         # Fetch league unweighted average
@@ -72,8 +72,7 @@ class RecommendationService:
         player_seasons_map: Dict[int, Dict] = {}
         for player_id in player_ids:
 
-            players_data = await self.roster_repository.get_players_seasons_data([player_id])
-            seasons = players_data.get(player_id)
+            seasons = roster_players_data.get(player_id)
             if seasons is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -143,26 +142,34 @@ class RecommendationService:
         original_vector_sum = sum(original_weakness_vector.values())
 
         # 4. for each team hypothetiically create a ne weakness vector with this player instead of the replaced player  
+        base_roster_without_replaced = {
+            pid: roster_players_data[pid]
+            for pid in player_ids
+            if pid != min_adjustment_score_player_id
+        }
+        candidate_seasons_cache: Dict[int, Dict] = {}
+
         for player in position_matched_players:
             candidate_player_id = player.get("mlbam_id")
             if not isinstance(candidate_player_id, int):
                 logger.debug("Skipping candidate with invalid mlbam_id: %s", candidate_player_id)
                 continue
 
-            candidate_player_ids = [
-                pid for pid in player_ids if pid != min_adjustment_score_player_id
-            ]
-            candidate_player_ids.append(candidate_player_id)
+            candidate_seasons = candidate_seasons_cache.get(candidate_player_id)
+            if candidate_seasons is None:
+                candidate_data_map = await self.roster_repository.get_players_seasons_data([candidate_player_id])
+                candidate_seasons = candidate_data_map.get(candidate_player_id)
+                if not candidate_seasons:
+                    logger.debug("Skipping candidate %s due to missing season data", candidate_player_id)
+                    continue
+                candidate_seasons_cache[candidate_player_id] = candidate_seasons
 
-            self.roster_domain.validate_player_ids(candidate_player_ids)
+            candidate_players_data = dict(base_roster_without_replaced)
+            candidate_players_data[candidate_player_id] = candidate_seasons
 
-            # Compute team unweighted average
-            players_data = await self.roster_repository.get_players_seasons_data(candidate_player_ids)
-            roster_response = self.roster_domain.calculate_roster_averages(players_data)
+            # Compute team unweighted average for the hypothetical roster
+            roster_response = self.roster_domain.calculate_roster_averages(candidate_players_data)
             team_avg = self.roster_domain.compute_unweighted_roster_average_dict(list(roster_response.stats.values()))
-
-            # Fetch league unweighted average
-            league_avg = await self.roster_repository.get_league_unweighted_average()
 
             # Compute normalized weakness scores
             potential_team_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg)
