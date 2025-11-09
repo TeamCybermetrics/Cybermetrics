@@ -1,8 +1,8 @@
 from rapidfuzz import process, fuzz
-from fastapi import HTTPException, status
-from models.players import PlayerSearchResult, PlayerDetail, SeasonStats
+from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from config.firebase import firebase_service
 from typing import List, Dict
+from .errors import InputValidationError, QueryError
 
 class PlayerDomain:
     """Contains the business logic related to players"""
@@ -12,10 +12,7 @@ class PlayerDomain:
     def validate_search_query(self, query: str) -> None:
         """Vallidate search query"""
         if not query or query.strip() == "":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Search query is required"
-            )
+            raise InputValidationError("Search query is required")
 
 
     def _get_player_image_url(self, player_id: int) -> str:
@@ -83,10 +80,7 @@ class PlayerDomain:
         Returns the full player with all  advanced stats.
         """
         if not player_data:
-            raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Player not found"
-        )
+            raise QueryError("Player not found")
 
         seasons_dict = {}
         for year, stats in player_data.get("seasons", {}).items():
@@ -109,6 +103,6 @@ class PlayerDomain:
     def validate_player_id(self, player_id: int) -> None:
         """Validate player ID"""
         if not player_id or player_id <= 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid player ID")
+            raise InputValidationError("Invalid player ID")
         
 

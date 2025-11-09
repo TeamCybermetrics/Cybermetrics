@@ -1,7 +1,15 @@
 from fastapi import APIRouter, status, Header, HTTPException, Depends
-from models.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from entities.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 from dependency.dependencies import get_auth_service
 from services.auth_service import AuthService
+from useCaseHelpers.errors import (
+    InputValidationError,
+    AuthError,
+    DatabaseError,
+    DependencyUnavailableError,
+    ConflictError,
+    UseCaseError,
+)
 from typing import Annotated
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
@@ -23,7 +31,16 @@ async def signup(
     Returns:
         SignupResponse: Details of the newly created user.
     """
-    return await auth_service.signup(signup_data)
+    try:
+        return await auth_service.signup(signup_data)
+    except InputValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+    except ConflictError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.message)
+    except UseCaseError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.message)
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
@@ -46,7 +63,18 @@ async def login(
     Raises:
         fastapi.HTTPException: Propagates HTTP exceptions from the authentication service.
     """
-    return await auth_service.login(login_data)
+    try:
+        return await auth_service.login(login_data)
+    except InputValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+    except AuthError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)
+    except DependencyUnavailableError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.message)
+    except UseCaseError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.message)
 
 @router.get("/verify")
 async def verify_token(
@@ -81,4 +109,11 @@ async def verify_token(
         )
     
     token = parts[1]
-    return await auth_service.verify_token(token)
+    try:
+        return await auth_service.verify_token(token)
+    except AuthError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)
+    except UseCaseError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.message)
+    except DatabaseError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.message)
