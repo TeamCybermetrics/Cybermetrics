@@ -1,13 +1,16 @@
 from repositories.roster_avg_repository import RosterRepository
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from fastapi import HTTPException, status
-from anyio import to_thread
+from anyio import to_thread, Lock
 import logging
 
 class RosterRepositoryFirebase(RosterRepository):
     def __init__(self, db):
         self.db = db 
         self._logger = logging.getLogger(__name__)
+        self._free_agents_cache: List[Dict[str, Any]] = []
+        self._free_agents_loaded = False
+        self._free_agents_lock = Lock()
     
     def _get_player_seasons_blocking(self, player_id: int) -> Optional[Dict]:
         """Blocking version: Get seasons data for a single player"""
@@ -92,4 +95,76 @@ class RosterRepositoryFirebase(RosterRepository):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch league averages",
+            ) from e
+
+    def _get_free_agents_blocking(self) -> List[Dict[str, Any]]:
+        """Blocking fetch for the free_agents document."""
+        doc = self.db.collection("league").document("free_agents").get()
+        if not doc.exists:
+            self._logger.info("free_agents document not found; returning empty list.")
+            return []
+
+        data = doc.to_dict() or {}
+        raw_agents = data.get("players") or data.get("free_agents") or []
+        if not isinstance(raw_agents, list):
+            self._logger.warning("free_agents document is malformed; expected a list of players.")
+            return []
+
+        agents: List[Dict[str, Any]] = []
+        for entry in raw_agents:
+            if not isinstance(entry, dict):
+                continue
+
+            name = str(entry.get("name") or "").strip()
+            mlbam_id = entry.get("mlbam_id")
+            position = entry.get("position")
+
+            try:
+                mlbam_id_int = int(mlbam_id)
+            except (TypeError, ValueError):
+                self._logger.debug("Skipping free agent with invalid mlbam_id: %s", mlbam_id)
+                continue
+
+            agents.append(
+                {
+                    "name": name,
+                    "mlbam_id": mlbam_id_int,
+                    "position": position,
+                }
+            )
+
+        return agents
+
+    async def _ensure_free_agents_loaded(self) -> None:
+        """Ensure the free agents cache is loaded in memory."""
+        if self._free_agents_loaded:
+            return
+
+        async with self._free_agents_lock:
+            if self._free_agents_loaded:
+                return
+            try:
+                agents = await to_thread.run_sync(self._get_free_agents_blocking)
+                self._free_agents_cache = agents
+                self._free_agents_loaded = True
+                self._logger.info("Loaded %d free agents from Firebase", len(agents))
+            except Exception:
+                self._logger.exception("Failed to load free agents cache")
+                raise
+
+    async def get_free_agents(self) -> List[Dict[str, Any]]:
+        """Return a list of free-agent players."""
+        if not self.db:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase is not configured",
+            )
+        try:
+            await self._ensure_free_agents_loaded()
+            return self._free_agents_cache
+        except Exception as e:
+            self._logger.exception("Failed to fetch free agents from Firestore")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to fetch free agents",
             ) from e

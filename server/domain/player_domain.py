@@ -2,7 +2,7 @@ from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
 from models.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from config.firebase import firebase_service
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 class PlayerDomain:
     """Contains the business logic related to players"""
@@ -38,6 +38,22 @@ class PlayerDomain:
             return first_year
         return f"{first_year}-{last_year}"
     
+    def _build_player_search_result(self, player: Dict, score: float) -> Optional[PlayerSearchResult]:
+        """Construct a PlayerSearchResult from raw player data."""
+        mlbam_id = player.get("mlbam_id")
+        seasons = player.get("seasons", {})
+
+        if not isinstance(mlbam_id, int) or mlbam_id <= 0:
+            return None
+
+        return PlayerSearchResult(
+            id=mlbam_id,
+            name=player.get("name", ""),
+            score=score,
+            image_url=self._get_player_image_url(mlbam_id),
+            years_active=self._get_years_active(seasons),
+        )
+    
     def fuzzy_search(self,players: List[Dict], query: str, limit: int = 5, score_cutoff: int = 60) -> List[PlayerSearchResult]:
         """
         Search for players by name using fuzzy matching
@@ -62,18 +78,9 @@ class PlayerDomain:
         results = []
         for _name, score, idx in matches:
             player = players[idx]
-            mlbam_id = player.get("mlbam_id")
-            seasons = player.get("seasons", {})
-            
-            if not isinstance(mlbam_id, int) or mlbam_id <= 0:
-                continue
-            results.append(PlayerSearchResult(
-                id=mlbam_id,
-                name=player.get("name", ""),
-                score=score,
-                image_url=self._get_player_image_url(mlbam_id),
-                years_active=self._get_years_active(seasons)
-            ))
+            search_result = self._build_player_search_result(player, score)
+            if search_result:
+                results.append(search_result)
         
         return results
     
@@ -110,5 +117,60 @@ class PlayerDomain:
         """Validate player ID"""
         if not player_id or player_id <= 0:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid player ID")
-        
+    
+    def get_primary_position(
+        self, player_data: Dict, seasons: Optional[Dict] = None
+    ) -> Optional[str]:
+        """
+        Derive a player's primary defensive position.
+
+        Checks, in order:
+          1. Explicit `position` field on the player document.
+          2. `positions` field on the document (list of abbreviations or dicts).
+          3. Latest season data for `primary_position`, `position`, or `positions`.
+        """
+        def normalize(pos: Optional[str]) -> Optional[str]:
+            if isinstance(pos, str):
+                cleaned = pos.strip().upper()
+                return cleaned or None
+            return None
+
+        position_value = normalize(player_data.get("position"))
+        if position_value:
+            return position_value
+
+        positions_field = player_data.get("positions")
+        if isinstance(positions_field, list) and positions_field:
+            first = positions_field[0]
+            if isinstance(first, dict):
+                return normalize(first.get("abbreviation") or first.get("code"))
+            return normalize(first)
+
+        seasons_data = seasons if seasons is not None else player_data.get("seasons")
+        if isinstance(seasons_data, dict) and seasons_data:
+            try:
+                ordered_years = sorted((int(y) for y in seasons_data.keys()), reverse=True)
+            except Exception:
+                ordered_years = list(seasons_data.keys())[::-1]
+
+            for year in ordered_years:
+                key = str(year)
+                stats = seasons_data.get(key) or {}
+                if not isinstance(stats, dict):
+                    continue
+                pos = normalize(stats.get("primary_position") or stats.get("position"))
+                if pos:
+                    return pos
+
+                positions_list = stats.get("positions")
+                if isinstance(positions_list, list) and positions_list:
+                    first_pos = positions_list[0]
+                    if isinstance(first_pos, dict):
+                        pos = normalize(first_pos.get("abbreviation") or first_pos.get("code"))
+                    else:
+                        pos = normalize(first_pos)
+                    if pos:
+                        return pos
+
+        return None
 

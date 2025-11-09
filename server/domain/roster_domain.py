@@ -184,6 +184,7 @@ class RosterDomain:
             "base_running": float(s.get("base_running", 0.0) or 0.0),
         }
 
+
     def compute_value_score(
         self,
         latest_war: float,
@@ -206,6 +207,38 @@ class RosterDomain:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No player WAR available to compute value score",
             )
+        if not player_latest_stats:
+            player_latest_stats = {
+                "strikeout_rate": 0.0,
+                "walk_rate": 0.0,
+                "isolated_power": 0.0,
+                "on_base_percentage": 0.0,
+                "base_running": 0.0,
+            }
+
+        adjustment_sum, contributions = self.compute_adjustment_sum(
+            player_latest_stats=player_latest_stats,
+            league_avg=league_avg,
+            team_weakness=team_weakness,
+        )
+        value_score = round(float(latest_war) + adjustment_sum, 3)
+        return {
+            "latest_war": round(float(latest_war), 3),
+            "adjustment_score": adjustment_sum,
+            "value_score": value_score,
+            "contributions": contributions,
+        }
+
+    def compute_adjustment_sum(
+        self,
+        player_latest_stats: Dict[str, float],
+        league_avg: Dict[str, float],
+        team_weakness: Dict[str, float],
+    ) -> tuple[float, Dict[str, float]]:
+        """Compute the weighted adjustment sum and per-stat contributions.
+
+        Mirrors the contribution logic used in `compute_value_score` but omits WAR.
+        """
         if not player_latest_stats:
             player_latest_stats = {
                 "strikeout_rate": 0.0,
@@ -240,10 +273,4 @@ class RosterDomain:
             adjustment_sum += contrib
 
         adjustment_sum = round(adjustment_sum, 3)
-        value_score = round(float(latest_war) + adjustment_sum, 3)
-        return {
-            "latest_war": round(float(latest_war), 3),
-            "adjustment_score": adjustment_sum,
-            "value_score": value_score,
-            "contributions": contributions,
-        }
+        return adjustment_sum, contributions

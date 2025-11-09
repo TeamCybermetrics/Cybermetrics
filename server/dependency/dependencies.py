@@ -14,6 +14,7 @@ from services.player_search_service import PlayerSearchService
 from infrastructure.roster_repository import RosterRepositoryFirebase
 from domain.roster_domain import RosterDomain
 from services.roster_avg_service import RosterAvgService
+from services.recommendation_service import RecommendationService
 
 # saved player related
 from infrastructure.saved_players_repository import SavedPlayersRepositoryFirebase
@@ -65,6 +66,15 @@ def get_roster_avg_service():
     roster_avg_domain = get_roster_domain()
     player_repo = get_player_repository()
     return RosterAvgService(roster_avg_repo, roster_avg_domain, player_repo)
+
+# rooster recomendation related
+def get_recommendation_service() -> RecommendationService:
+    """Create recommendation service instance."""
+    roster_repo = get_roster_repository()
+    roster_domain = get_roster_domain()
+    player_repo = get_player_repository()
+    player_domain = get_player_domain()
+    return RecommendationService(roster_repo, roster_domain, player_repo, player_domain)
 
 # save players related
 def get_saved_players_repository():

@@ -106,4 +106,10 @@ export const playersApi = {
   deleteSaved: async (playerId: number): Promise<DeletePlayerResponse> => {
     return apiClient.delete<DeletePlayerResponse>(`/api/players/saved/${playerId}`);
   },
+
+  getRecommendations: async (playerIds: number[]): Promise<PlayerSearchResult[]> => {
+    return apiClient.post<PlayerSearchResult[]>("/api/recommendations", {
+      player_ids: playerIds
+    });
+  },
 };
