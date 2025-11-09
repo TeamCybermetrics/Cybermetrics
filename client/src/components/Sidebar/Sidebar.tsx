@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { ROUTES } from "@/config";
 import {
-  DashboardIcon,
+  // DashboardIcon,
   TeamBuilderIcon,
   TeamAnalysisIcon,
 } from "@/assets/icons";
@@ -9,7 +9,7 @@ import logo from "@/assets/brand_badge.jpg";
 import styles from "./Sidebar.module.css";
 
 const navItems = [
-  { label: "Dashboard", to: ROUTES.DASHBOARD, icon: DashboardIcon },
+  // { label: "Dashboard", to: ROUTES.DASHBOARD, icon: DashboardIcon },
   { label: "Team Builder", to: ROUTES.TEAM_BUILDER, icon: TeamBuilderIcon },
   { label: "Team Analysis", to: ROUTES.TEAM_ANALYSIS, icon: TeamAnalysisIcon },
 ] as const;
