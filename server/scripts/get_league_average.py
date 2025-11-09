@@ -2,9 +2,9 @@ import asyncio
 from typing import List, Dict, Any, Tuple
 from datetime import datetime
 
-from server.repositories.player_repository import PlayerRepository
-from server.services.roster_avg_service import RosterAvgService
-from server.utils.logger import setup_logger  # or get_logger if that's what you use
+from repositories.player_repository import PlayerRepository
+from services.roster_avg_service import RosterAvgService
+from utils.logger import setup_logger  # or get_logger if that's what you use
 
 logger = setup_logger(__name__)
 

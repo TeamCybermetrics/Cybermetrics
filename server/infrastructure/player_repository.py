@@ -1,3 +1,4 @@
+import datetime
 from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
 from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
@@ -102,9 +103,58 @@ class PlayerRepositoryFirebase(PlayerRepository):
     def bulk_upsert_players(self, players: List[Dict[str, Any]]) -> None:
         if not players:
             return
-        batch = self._db.batch()
-        col = self._db.collection("players")
+        batch = self.db.batch()
+        col = self.db.collection("players")
         for p in players:
             doc = col.document(str(p["mlbam_id"]))
             batch.set(doc, p, merge=True)
         batch.commit()
+
+    def set_league_averages(self, league_doc: Dict[str, Any]) -> None:
+        if not self.db:
+            return
+        self.db.collection("league_averages").document("current").set(league_doc, merge=True)
+
+    def list_team_ids(self) -> List[str]:
+        if not self.db:
+            return []
+        try:
+            return [doc.id for doc in self.db.collection("teams").list_documents()]
+        except Exception:
+            self._logger.exception("list_team_ids failed")
+            return []
+
+    def get_team_positional_players(self, team_id: str) -> List[Dict]:
+        if not self.db:
+            return []
+        try:
+            snap = self.db.collection("teams").document(team_id.upper()).get()
+            if not snap.exists:
+                return []
+            data = snap.to_dict() or {}
+            return data.get("positional_players", []) or []
+        except Exception:
+            self._logger.exception("get_team_positional_players failed for %s", team_id)
+            return []
+
+    def set_team_roster_average(self, team_id: str, avg: Dict[str, float]) -> None:
+        if not self.db:
+            return
+        try:
+            self.db.collection("teams").document(team_id.upper()).set(
+                {
+                    "roster_average": avg,
+                    "roster_average_updated_at": datetime.utcnow().isoformat() + "Z",
+                },
+                merge=True,
+            )
+        except Exception:
+            self._logger.exception("set_team_roster_average failed for %s", team_id)
+
+    def set_league_averages(self, league_doc: Dict[str, Any]) -> None:
+        if not self.db:
+            return
+        try:
+            self.db.collection("league_averages").document("current").set(league_doc, merge=True)
+        except Exception:
+            self._logger.exception("set_league_averages failed")
