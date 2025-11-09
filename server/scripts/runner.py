@@ -20,10 +20,13 @@ CURRENT_SEASON = 2024
 def log(msg: str) -> None:
     print(f"[{datetime.utcnow().isoformat()}Z] {msg}")
 
-def run_seed_teams(repo: PlayerRepositoryFirebase) -> None:
+def run_seed_teams(
+    player_repo: PlayerRepositoryFirebase,
+    roster_repo: RosterRepositoryFirebase,
+) -> None:
     log("Seed teams start")
     try:
-        seed_all_teams(repo, CURRENT_SEASON)
+        seed_all_teams(player_repo, roster_repo, CURRENT_SEASON)
         log("Seed teams done")
     except Exception as e:
         log(f"Seed teams failed: {e}")
@@ -63,7 +66,7 @@ async def run_all():
         return
     player_repo = PlayerRepositoryFirebase(firebase_service.db)
     roster_repo = RosterRepositoryFirebase(firebase_service.db)
-    run_seed_teams(player_repo)
+    run_seed_teams(player_repo, roster_repo)
     run_refresh_players(player_repo, roster_repo)
     await run_league(player_repo, roster_repo)
 
