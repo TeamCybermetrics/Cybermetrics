@@ -127,10 +127,7 @@ def seed_all_teams(repo: PlayerRepository, year: int) -> None:
         team_code, team_name, players = team_upload
         if not players:
             continue
-        try:
-            repo.upload_team(team_code, team_name, players)
-        except TypeError:
-            repo.upload_team(team_upload)
+        repo.upload_team(team_code, team_name, players)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
 from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
@@ -109,11 +109,6 @@ class PlayerRepositoryFirebase(PlayerRepository):
             doc = col.document(str(p["mlbam_id"]))
             batch.set(doc, p, merge=True)
         batch.commit()
-
-    def set_league_averages(self, league_doc: Dict[str, Any]) -> None:
-        if not self.db:
-            return
-        self.db.collection("league_averages").document("current").set(league_doc, merge=True)
 
     def list_team_ids(self) -> List[str]:
         if not self.db:
