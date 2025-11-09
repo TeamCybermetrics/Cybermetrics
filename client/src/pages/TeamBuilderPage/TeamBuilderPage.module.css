@@ -67,6 +67,12 @@
   opacity: 0.6;
 }
 
+.playerError {
+  font-size: 12px;
+  color: #ff8a8a;
+  margin-top: 6px;
+}
+
 /* Search + Load a team section */
 .searchSection {
   background: rgba(16, 17, 30, 0.95);

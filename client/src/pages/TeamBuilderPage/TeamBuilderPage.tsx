@@ -57,6 +57,8 @@ export default function TeamBuilderPage() {
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
   const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000000]);
   const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set(positionOrder));
+  const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
+  const [playerOperationError, setPlayerOperationError] = useState("");
 
   // Load saved teams from localStorage on mount
   useEffect(() => {
@@ -81,6 +83,30 @@ export default function TeamBuilderPage() {
 
     void fetchSaved();
   }, []);
+
+  const ensurePlayerIsSaved = useCallback(
+    async (player: SavedPlayer) => {
+      if (savedPlayers.some((saved) => saved.id === player.id)) {
+        return true;
+      }
+
+      const result = await playerActions.addPlayer({
+        id: player.id,
+        name: player.name,
+        image_url: player.image_url,
+        years_active: player.years_active
+      });
+
+      if (result.success) {
+        setSavedPlayers((prev) => [...prev, player]);
+        return true;
+      }
+
+      setPlayerOperationError(result.error || "Failed to save player");
+      return false;
+    },
+    [savedPlayers]
+  );
 
   const performSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
@@ -158,6 +184,35 @@ export default function TeamBuilderPage() {
 
     setActivePosition(position);
   }, []);
+
+  const handleAddPlayer = useCallback(
+    async (player: SavedPlayer) => {
+      if (!activePosition) {
+        return;
+      }
+
+      setPlayerOperationError("");
+      setSavingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+
+      try {
+        const saved = await ensurePlayerIsSaved(player);
+        if (saved) {
+          assignPlayerToPosition(player, activePosition);
+        }
+      } finally {
+        setSavingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+          return next;
+        });
+      }
+    },
+    [activePosition, assignPlayerToPosition, ensurePlayerIsSaved]
+  );
 
   const handleClearSlot = (position: DiamondPosition) => {
     setLineup((prev) => ({
@@ -283,6 +338,10 @@ export default function TeamBuilderPage() {
             <div className={styles.searchStatus}>
               {searchTerm.trim() ? `${availablePlayers.length} results` : `${savedPlayers.length} saved players`}
             </div>
+
+            {playerOperationError && (
+              <p className={styles.playerError}>{playerOperationError}</p>
+            )}
 
             <div className={styles.searchActions}>
               <button 
@@ -456,9 +515,15 @@ export default function TeamBuilderPage() {
 
                     <button
                       className={styles.addButton}
-                      disabled={alreadyAssigned || !activePosition}
+                      disabled={
+                        alreadyAssigned ||
+                        !activePosition ||
+                        savingPlayerIds.has(player.id)
+                      }
                       onClick={() => {
-                        if (activePosition) assignPlayerToPosition(player, activePosition);
+                        if (activePosition) {
+                          void handleAddPlayer(player);
+                        }
                       }}
                       title={
                         alreadyAssigned
@@ -468,7 +533,11 @@ export default function TeamBuilderPage() {
                           : "Add to active position"
                       }
                     >
-                      {alreadyAssigned ? "Assigned" : "Add"}
+                      {alreadyAssigned
+                        ? "Assigned"
+                        : savingPlayerIds.has(player.id)
+                        ? "Saving..."
+                        : "Add"}
                     </button>
                   </div>
                 );
