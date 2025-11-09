@@ -2,14 +2,15 @@
 
 from typing import List, Dict, Optional
 
-from fastapi import HTTPException, status
-from models.players import PlayerSearchResult
-from repositories.roster_avg_repository import RosterRepository
-from domain.roster_domain import RosterDomain
-from repositories.player_repository import PlayerRepository
-from domain.player_domain import PlayerDomain
 import logging
 import time
+
+from entities.players import PlayerSearchResult
+from repositories.roster_avg_repository import RosterRepository
+from useCaseHelpers.roster_helper import RosterDomain
+from repositories.player_repository import PlayerRepository
+from useCaseHelpers.player_helper import PlayerDomain
+from useCaseHelpers.errors import InputValidationError, QueryError
 
 logger = logging.getLogger(__name__)
 
@@ -74,10 +75,7 @@ class RecommendationService:
 
             seasons = roster_players_data.get(player_id)
             if seasons is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Player {player_id} not found or has no season data",
-                )
+                raise QueryError(f"Player {player_id} not found or has no season data")
 
             latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
             # league_avg = await self.roster_repository.get_league_unweighted_average()
@@ -90,10 +88,7 @@ class RecommendationService:
             player_seasons_map[player_id] = seasons
 
         if not original_players_adjustment_scores:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unable to compute adjustment scores for roster",
-            )
+            raise QueryError("Unable to compute adjustment scores for roster")
         logger.debug(
             "Computed adjustment scores for %d players (min score %.3f)",
             len(original_players_adjustment_scores),
@@ -111,9 +106,8 @@ class RecommendationService:
         )
 
         if not primary_position:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Unable to determine position for player {min_adjustment_score_player_id}",
+            raise InputValidationError(
+                f"Unable to determine position for player {min_adjustment_score_player_id}"
             )
 
         # 3. Fetch all players and filter by target position
@@ -190,7 +184,7 @@ class RecommendationService:
             if not player_data:
                 continue
 
-            player_result = self.player_domain._build_player_search_result(player_data, contribution)
+            player_result = self.player_domain.build_player_search_result(player_data, contribution)
             if player_result:
                 results.append(player_result)
 

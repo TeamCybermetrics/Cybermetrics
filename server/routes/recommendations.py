@@ -4,11 +4,12 @@ from typing import List, Annotated
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from models.players import PlayerSearchResult, RosterAvgRequest
+from entities.players import PlayerSearchResult, RosterAvgRequest
 from services.recommendation_service import RecommendationService
 from dependency.dependencies import get_recommendation_service
+from useCaseHelpers.errors import InputValidationError, QueryError, UseCaseError
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
@@ -23,4 +24,11 @@ async def recommend_players(
 ) -> List[PlayerSearchResult]:
     """Return the top recommended free-agent replacements for a roster."""
     logger.info("Received recommendation request for %d player ids", len(request.player_ids))
-    return await recommendation_service.recommend_players(request.player_ids)
+    try:
+        return await recommendation_service.recommend_players(request.player_ids)
+    except InputValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+    except QueryError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
+    except UseCaseError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.message)

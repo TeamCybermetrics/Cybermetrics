@@ -2,23 +2,23 @@ from config.firebase import firebase_service
 
 # auth related 
 from infrastructure.auth_repository import AuthRepositoryFirebase 
-from domain.auth_domain import AuthDomain
+from useCaseHelpers.auth_helper import AuthDomain
 from services.auth_service import AuthService
 
 # player search related
 from infrastructure.player_repository import PlayerRepositoryFirebase
-from domain.player_domain import PlayerDomain
+from useCaseHelpers.player_helper import PlayerDomain
 from services.player_search_service import PlayerSearchService
 
 # roster average calculation related
 from infrastructure.roster_repository import RosterRepositoryFirebase
-from domain.roster_domain import RosterDomain
+from useCaseHelpers.roster_helper import RosterDomain
 from services.roster_avg_service import RosterAvgService
 from services.recommendation_service import RecommendationService
 
 # saved player related
 from infrastructure.saved_players_repository import SavedPlayersRepositoryFirebase
-from domain.saved_players_domain import SavedPlayersDomain
+from useCaseHelpers.saved_players_helper import SavedPlayersDomain
 from services.saved_players_service import SavedPlayersService
 
 # auth related

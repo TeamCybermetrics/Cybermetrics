@@ -1,6 +1,6 @@
 from repositories.saved_players_repository import SavedPlayersRepository
-from domain.saved_players_domain import SavedPlayersDomain
-from models.players import AddPlayerResponse, DeletePlayerResponse, SavedPlayer
+from useCaseHelpers.saved_players_helper import SavedPlayersDomain
+from entities.players import AddPlayerResponse, DeletePlayerResponse, SavedPlayer
 from typing import List
 
 class SavedPlayersService:

@@ -1,8 +1,7 @@
 from rapidfuzz import process, fuzz
-from fastapi import HTTPException, status
-from models.players import PlayerSearchResult, PlayerDetail, SeasonStats
-from config.firebase import firebase_service
+from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from typing import List, Dict, Optional
+from .errors import InputValidationError, QueryError
 
 class PlayerDomain:
     """Contains the business logic related to players"""
@@ -12,10 +11,7 @@ class PlayerDomain:
     def validate_search_query(self, query: str) -> None:
         """Vallidate search query"""
         if not query or query.strip() == "":
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Search query is required"
-            )
+            raise InputValidationError("Search query is required")
 
 
     def _get_player_image_url(self, player_id: int) -> str:
@@ -54,6 +50,10 @@ class PlayerDomain:
             years_active=self._get_years_active(seasons),
         )
     
+    def build_player_search_result(self, player: Dict, score: float) -> Optional[PlayerSearchResult]:
+        """Public helper to construct a player search result."""
+        return self._build_player_search_result(player, score)
+    
     def fuzzy_search(self,players: List[Dict], query: str, limit: int = 5, score_cutoff: int = 60) -> List[PlayerSearchResult]:
         """
         Search for players by name using fuzzy matching
@@ -90,10 +90,7 @@ class PlayerDomain:
         Returns the full player with all  advanced stats.
         """
         if not player_data:
-            raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Player not found"
-        )
+            raise QueryError("Player not found")
 
         seasons_dict = {}
         for year, stats in player_data.get("seasons", {}).items():
@@ -116,7 +113,7 @@ class PlayerDomain:
     def validate_player_id(self, player_id: int) -> None:
         """Validate player ID"""
         if not player_id or player_id <= 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid player ID")
+            raise InputValidationError("Invalid player ID")
     
     def get_primary_position(
         self, player_data: Dict, seasons: Optional[Dict] = None
@@ -173,4 +170,5 @@ class PlayerDomain:
                         return pos
 
         return None
+
 

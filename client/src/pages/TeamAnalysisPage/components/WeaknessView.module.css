@@ -1,0 +1,154 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Bubble statistics bar (more compact) */
+.statsBubble {
+  background: #2b313a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.statsHeader {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #d7d9de;
+}
+.statsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.statLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d7d9de;
+  opacity: 0.85;
+}
+.statValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: #e5e7eb;
+}
+.statValueGreen {
+  font-size: 22px;
+  font-weight: 800;
+  color: #00e05a;
+}
+
+/* Grid - more compact and responsive */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Left column with title + player list */
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  opacity: 0.3;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.playerCard {
+  background: rgba(31, 36, 68, 0.6);
+  border: 1px solid rgba(109, 123, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+.playerCard:hover {
+  background: rgba(31, 36, 68, 0.8);
+  border-color: rgba(109, 123, 255, 0.4);
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.playerName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chart {
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.change {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00ff88;
+  flex-shrink: 0;
+}
+
+.radarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  margin-top: 52px; /* offset to align radar card with first player card */
+}
+.radarCard {
+  background: rgba(16, 17, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.radarLabel {
+  font-size: 14px;
+  font-weight: 600;
+}
+.radarChart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+.radarChart svg {
+  max-width: 100%;
+  height: auto;
+}
