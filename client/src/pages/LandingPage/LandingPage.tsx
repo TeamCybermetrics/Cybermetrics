@@ -34,7 +34,7 @@ export default function LandingPage() {
       {/* Top-right auth buttons (absolute) */}
       <div className={styles.signUpButtonContainer}>
         {isAuthenticated ? (
-          <Link to={ROUTES.DASHBOARD} className={styles.signUpButton}>
+          <Link to={ROUTES.TEAM_BUILDER} className={styles.signUpButton}>
             Dashboard
           </Link>
         ) : (
