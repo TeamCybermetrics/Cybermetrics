@@ -15,6 +15,7 @@ export default function TeamAnalysisPage() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const isMounted = useRef<boolean>(false);
+  const analysisRequestId = useRef(0);
 
   const loadSavedPlayers = async () => {
     setLoadingPlayers(true);
@@ -52,10 +53,13 @@ export default function TeamAnalysisPage() {
   );
 
   const loadAnalysis = useCallback(async (ids: number[]) => {
+    const requestId = ++analysisRequestId.current;
     if (ids.length === 0) {
-      setWeakness(null);
-      setPlayerScores([]);
-      setAnalysisError(null);
+      if (analysisRequestId.current === requestId) {
+        setWeakness(null);
+        setPlayerScores([]);
+        setAnalysisError(null);
+      }
       return;
     }
 
@@ -68,7 +72,7 @@ export default function TeamAnalysisPage() {
         playerActions.getPlayerValueScores(ids)
       ]);
 
-      if (!isMounted.current) {
+      if (!isMounted.current || analysisRequestId.current !== requestId) {
         return;
       }
 
@@ -88,7 +92,7 @@ export default function TeamAnalysisPage() {
         setPlayerScores(scoresRes.data || []);
       }
     } catch (error) {
-      if (!isMounted.current) {
+      if (!isMounted.current || analysisRequestId.current !== requestId) {
         return;
       }
       setAnalysisError(
@@ -97,7 +101,7 @@ export default function TeamAnalysisPage() {
       setWeakness(null);
       setPlayerScores([]);
     } finally {
-      if (isMounted.current) {
+      if (isMounted.current && analysisRequestId.current === requestId) {
         setLoadingAnalysis(false);
       }
     }
