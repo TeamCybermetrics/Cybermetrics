@@ -68,6 +68,7 @@ export default function TeamBuilderPage() {
   const [isRecommending, setIsRecommending] = useState(false);
 
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
+  const [deletingPlayerIds, setDeletingPlayerIds] = useState<Set<number>>(() => new Set());
   const [playerOperationError, setPlayerOperationError] = useState("");
 
   useEffect(() => {
@@ -312,6 +313,45 @@ export default function TeamBuilderPage() {
       }
     },
     [activePosition, assignPlayerToPosition, ensurePlayerIsSaved]
+  );
+
+  const handleDeletePlayer = useCallback(
+    async (player: SavedPlayer) => {
+      setPlayerOperationError("");
+      setDeletingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+
+      try {
+        const result = await playerActions.deletePlayer(player.id);
+        if (!result.success) {
+          setPlayerOperationError(result.error || "Failed to delete player");
+          return;
+        }
+
+        setSavedPlayers((prev) => prev.filter((saved) => saved.id !== player.id));
+        setLineup((prev) => {
+          let updated = false;
+          const next: LineupState = { ...prev };
+          positionOrder.forEach((pos) => {
+            if (next[pos]?.id === player.id) {
+              next[pos] = null;
+              updated = true;
+            }
+          });
+          return updated ? next : prev;
+        });
+      } finally {
+        setDeletingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+          return next;
+        });
+      }
+    },
+    []
   );
 
   const handleClearSlot = (position: DiamondPosition) => {
@@ -671,44 +711,51 @@ export default function TeamBuilderPage() {
                     onDragEnd={clearDragState}
                   >
                     <div className={styles.playerProfile}>
-                      <img
-                        src={player.image_url}
-                        alt={player.name}
-                      />
+                      <img src={player.image_url} alt={player.name} />
                       <div>
                         <p className={styles.playerName}>{player.name}</p>
-                        <div className={styles.playerMeta}>
-                          {player.years_active || "N/A"}
-                        </div>
+                        {/* <div className={styles.playerMeta}>{player.years_active || "N/A"}</div> */}
                       </div>
                     </div>
 
-                    <button
-                      className={styles.addButton}
-                      disabled={
-                        alreadyAssigned ||
-                        !activePosition ||
-                        savingPlayerIds.has(player.id)
-                      }
-                      onClick={() => {
-                        if (activePosition) {
-                          void handleAddPlayer(player);
+                    <div className={styles.playerActions}>
+                      <button
+                        className={styles.deletePlayerButton}
+                        disabled={alreadyAssigned || deletingPlayerIds.has(player.id)}
+                        onClick={() => void handleDeletePlayer(player)}
+                        title={
+                          alreadyAssigned
+                            ? "Remove from the lineup before deleting"
+                            : "Delete from saved players"
                         }
-                      }}
-                      title={
-                        alreadyAssigned
-                          ? "Already assigned"
-                          : !activePosition
-                          ? "Select a position first"
-                          : "Add to active position"
-                      }
-                    >
-                      {alreadyAssigned
-                        ? "Assigned"
-                        : savingPlayerIds.has(player.id)
-                        ? "Saving..."
-                        : "Add"}
-                    </button>
+                      >
+                        {deletingPlayerIds.has(player.id) ? "Deleting…" : "Delete"}
+                      </button>
+                      <button
+                        className={styles.addButton}
+                        disabled={
+                          alreadyAssigned || !activePosition || savingPlayerIds.has(player.id)
+                        }
+                        onClick={() => {
+                          if (activePosition) {
+                            void handleAddPlayer(player);
+                          }
+                        }}
+                        title={
+                          alreadyAssigned
+                            ? "Already assigned"
+                            : !activePosition
+                            ? "Select a position first"
+                            : "Add to active position"
+                        }
+                      >
+                        {alreadyAssigned
+                          ? "Assigned"
+                          : savingPlayerIds.has(player.id)
+                          ? "Saving..."
+                          : "Add"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
