@@ -518,6 +518,36 @@
   overflow-y: auto;
 }
 
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0;
+  gap: 12px;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sectionHeader span {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.searchResultsSection {
+  flex: none;
+  min-height: 0;
+}
+
+.searchResultsScroller {
+  max-height: 360px;
+}
+
 .playerRow {
   display: flex;
   align-items: center;
