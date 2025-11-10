@@ -70,4 +70,16 @@ export const playerActions = {
       };
     }
   },
+
+  getRecommendations: async (playerIds: number[]) => {
+    try {
+      const response = await playersApi.getRecommendations(playerIds);
+      return { success: true, data: response };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get recommendations",
+      };
+    }
+  },
 };

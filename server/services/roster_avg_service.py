@@ -2,6 +2,7 @@ from typing import List, Dict, Optional
 from entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
 from repositories.roster_avg_repository import RosterRepository
 from useCaseHelpers.roster_helper import RosterDomain
+from useCaseHelpers.errors import QueryError, UseCaseError
 from repositories.player_repository import PlayerRepository
 import logging
 
@@ -94,7 +95,6 @@ class RosterAvgService:
         players_data = await self.roster_repository.get_players_seasons_data([player_id])
         seasons = players_data.get(player_id)
         if seasons is None:
-            from server.useCaseHelpers.errors import QueryError
             raise QueryError(f"Player {player_id} not found or has no season data")
 
         latest_war = self.roster_domain.calculate_player_latest_war(seasons)
@@ -134,7 +134,6 @@ class RosterAvgService:
                     )
                 )
             except Exception as e:
-                from server.useCaseHelpers.errors import UseCaseError
                 # Skip known use case errors silently; log unexpected ones.
                 if isinstance(e, UseCaseError):
                     logger.debug("Skipping player %s due to use-case error: %s", pid, e)

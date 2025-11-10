@@ -20,7 +20,7 @@ class SignupResponse(BaseModel):
     user_id: str
     email: str
 
-class User(BaseModel):  # ← Add this
+class User(BaseModel):
     user_id: str
     email: str
     name: str

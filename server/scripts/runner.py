@@ -20,34 +20,42 @@ CURRENT_SEASON = 2024
 def log(msg: str) -> None:
     print(f"[{datetime.utcnow().isoformat()}Z] {msg}")
 
-def run_seed_teams(repo: PlayerRepositoryFirebase) -> None:
+def run_seed_teams(
+    player_repo: PlayerRepositoryFirebase,
+    roster_repo: RosterRepositoryFirebase,
+) -> None:
     log("Seed teams start")
     try:
-        seed_all_teams(repo, CURRENT_SEASON)
+        seed_all_teams(player_repo, roster_repo, CURRENT_SEASON)
         log("Seed teams done")
     except Exception as e:
         log(f"Seed teams failed: {e}")
 
-def run_refresh_players(repo: PlayerRepositoryFirebase) -> None:
+def run_refresh_players(player_repo: PlayerRepositoryFirebase, roster_repo: RosterRepositoryFirebase) -> None:
     log("Refresh players start")
     try:
-        count = refresh_players(repo, start_year=START_YEAR, current_season=CURRENT_SEASON)
+        count = refresh_players(
+            player_repo,
+            roster_repo,
+            start_year=START_YEAR,
+            current_season=CURRENT_SEASON,
+        )
         log(f"Refresh players done (upserted {count})")
     except Exception as e:
         log(f"Refresh players failed: {e}")
 
-async def run_league(repo: PlayerRepositoryFirebase) -> None:
+async def run_league(player_repo: PlayerRepositoryFirebase, roster_repo: RosterRepositoryFirebase) -> None:
     if RosterAvgService is None:
         log("RosterAvgService not available; skipping league averages.")
         return
     log("League averages start")
     try:
         roster_service = RosterAvgService(
-            roster_repository=RosterRepositoryFirebase(firebase_service.db),
+            roster_repository=roster_repo,
             roster_domain=RosterDomain(),
-            player_repository=repo
+            player_repository=player_repo
         )
-        await run_league_average(repo, roster_service)
+        await run_league_average(player_repo, roster_service)
         log("League averages done")
     except Exception as e:
         log(f"League averages failed: {e}")
@@ -56,10 +64,11 @@ async def run_all():
     if not firebase_service.db:
         log("Firebase not configured; aborting.")
         return
-    repo = PlayerRepositoryFirebase(firebase_service.db)
-    run_seed_teams(repo)
-    run_refresh_players(repo)
-    await run_league(repo)
+    player_repo = PlayerRepositoryFirebase(firebase_service.db)
+    roster_repo = RosterRepositoryFirebase(firebase_service.db)
+    run_seed_teams(player_repo, roster_repo)
+    run_refresh_players(player_repo, roster_repo)
+    await run_league(player_repo, roster_repo)
 
 def main():
     asyncio.run(run_all())

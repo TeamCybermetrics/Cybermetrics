@@ -1,10 +1,18 @@
-from .auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from .auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse, User
 from .players import (
     PlayerSearchResult,
     AddPlayerResponse,
     DeletePlayerResponse,
     SavedPlayer,
-    PlayerDetail
+    PlayerDetail,
+    SeasonStats,
+    RosterAvgRequest,
+    PlayerAvgStats,
+    RosterAvgResponse,
+    TeamWeaknessResponse,
+    ValueScoreRequest,
+    ValueScoreResponse,
+    PlayerValueScore,
 )
 
 __all__ = [
@@ -12,10 +20,19 @@ __all__ = [
     "LoginResponse",
     "SignupRequest",
     "SignupResponse",
+    "User",
     "PlayerSearchResult",
     "AddPlayerResponse",
     "DeletePlayerResponse",
     "SavedPlayer",
-    "PlayerDetail"
+    "PlayerDetail",
+    "SeasonStats",
+    "RosterAvgRequest",
+    "PlayerAvgStats",
+    "RosterAvgResponse",
+    "TeamWeaknessResponse",
+    "ValueScoreRequest",
+    "ValueScoreResponse",
+    "PlayerValueScore",
 ]
 

@@ -71,7 +71,7 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
 
     
     async def get_player(self, user_id: str, player_id: str) -> SavedPlayer:
-        """Retrieve a specific player by ID for a user"""
+        """Retrieve a specific player by ID for a user in there saved section"""
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -100,7 +100,7 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
             ) from e
     
     async def delete_player(self, user_id: str, player_id: str) -> DeletePlayerResponse:
-        """Delete a specific player by ID for a user"""
+        """Delete a specific player by ID for a user in there saved section"""
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

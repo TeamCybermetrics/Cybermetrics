@@ -1,13 +1,17 @@
 from repositories.roster_avg_repository import RosterRepository
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from fastapi import HTTPException, status
-from anyio import to_thread
+from anyio import to_thread, Lock
 import logging
+import requests
 
 class RosterRepositoryFirebase(RosterRepository):
     def __init__(self, db):
         self.db = db 
         self._logger = logging.getLogger(__name__)
+        self._free_agents_cache: List[Dict[str, Any]] = []
+        self._free_agents_loaded = False
+        self._free_agents_lock = Lock()
     
     def _get_player_seasons_blocking(self, player_id: int) -> Optional[Dict]:
         """Blocking version: Get seasons data for a single player"""
@@ -93,3 +97,23 @@ class RosterRepositoryFirebase(RosterRepository):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to fetch league averages",
             ) from e
+
+    def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, Any]:
+        try:
+            resp = requests.get(
+                f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster/Active",
+                params={"season": season},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as exc:
+            self._logger.warning(
+                "Failed to fetch active roster for team %s in season %s: %s",
+                team_id,
+                season,
+                exc,
+            )
+            return {}
+
+    

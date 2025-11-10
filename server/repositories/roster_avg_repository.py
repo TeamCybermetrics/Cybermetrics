@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, List
-from entities.players import PlayerAvgStats
+from typing import Dict, List, Any
 
 class RosterRepository(ABC):
     @abstractmethod
@@ -12,3 +11,10 @@ class RosterRepository(ABC):
     async def get_league_unweighted_average(self) -> Dict[str, float]:
         """Fetch the league-wide unweighted average stats from Firebase (document: league/averages)."""
         pass
+
+    @abstractmethod
+    def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, Any]:
+        """Fetch active roster metadata for a given MLB team and season."""
+        pass
+
+    
