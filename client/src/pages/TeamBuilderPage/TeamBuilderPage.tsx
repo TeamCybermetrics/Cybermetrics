@@ -811,7 +811,7 @@ export default function TeamBuilderPage() {
         </div>
 
         {/* TOP-RIGHT: Team card */}
-        <section className={styles.teamCard}>
+        {/* <section className={styles.teamCard}>
           <div className={styles.teamInfo}>
             <div className={styles.teamNameWrapper}>
               {isEditingTeamName ? (
@@ -853,7 +853,7 @@ export default function TeamBuilderPage() {
             </div>
           </div>
           <div className={styles.radarChart}>Radar Chart</div>
-        </section>
+        </section> */}
 
         {/* MIDDLE-RIGHT: Diamond */}
         <section className={styles.diamondPanel}>

@@ -509,9 +509,13 @@
 }
 
 .playerScroller {
+  flex: 1;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  max-height: 820px;
+  overflow-y: auto;
 }
 
 .playerRow {
