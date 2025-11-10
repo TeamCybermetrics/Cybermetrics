@@ -172,7 +172,7 @@ class PlayerRepositoryFirebase(PlayerRepository):
         if not self.db:
             return
         try:
-            self.db.collection("league_averages").document("current").set(league_doc, merge=True)
+            self.db.collection("league").document("averages").set(league_doc, merge=True)
         except Exception:
             self._logger.exception("set_league_averages failed")
 
