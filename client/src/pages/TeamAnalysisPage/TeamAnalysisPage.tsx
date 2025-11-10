@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./TeamAnalysisPage.module.css";
 import WeaknessView from "./components/WeaknessView";
 import { playerActions } from "@/actions/players";
 import type { SavedPlayer } from "./types";
+import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
 
 export default function TeamAnalysisPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);
   const [playersError, setPlayersError] = useState<string | null>(null);
+  const [weakness, setWeakness] = useState<TeamWeaknessResponse | null>(null);
+  const [playerScores, setPlayerScores] = useState<PlayerValueScore[]>([]);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const isMounted = useRef<boolean>(false);
 
   const loadSavedPlayers = async () => {
@@ -37,6 +42,108 @@ export default function TeamAnalysisPage() {
     loadSavedPlayers();
     return () => { isMounted.current = false; };
   }, []);
+
+  const playerIds = useMemo(
+    () =>
+      savedPlayers
+        .map((player) => player.id)
+        .filter((id): id is number => typeof id === "number"),
+    [savedPlayers]
+  );
+
+  const loadAnalysis = useCallback(async (ids: number[]) => {
+    if (ids.length === 0) {
+      setWeakness(null);
+      setPlayerScores([]);
+      setAnalysisError(null);
+      return;
+    }
+
+    setLoadingAnalysis(true);
+    setAnalysisError(null);
+
+    try {
+      const [weaknessRes, scoresRes] = await Promise.all([
+        playerActions.getTeamWeakness(ids),
+        playerActions.getPlayerValueScores(ids)
+      ]);
+
+      if (!isMounted.current) {
+        return;
+      }
+
+      if (!weaknessRes.success) {
+        setAnalysisError(weaknessRes.error || "Failed to compute team weaknesses");
+        setWeakness(null);
+      } else {
+        setWeakness(weaknessRes.data || null);
+      }
+
+      if (!scoresRes.success) {
+        setAnalysisError(
+          scoresRes.error || weaknessRes.error || "Failed to compute player scores"
+        );
+        setPlayerScores([]);
+      } else {
+        setPlayerScores(scoresRes.data || []);
+      }
+    } catch (error) {
+      if (!isMounted.current) {
+        return;
+      }
+      setAnalysisError(
+        error instanceof Error ? error.message : "Failed to analyze lineup"
+      );
+      setWeakness(null);
+      setPlayerScores([]);
+    } finally {
+      if (isMounted.current) {
+        setLoadingAnalysis(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted.current || loadingPlayers) {
+      return;
+    }
+
+    if (playersError) {
+      setWeakness(null);
+      setPlayerScores([]);
+      setAnalysisError(playersError);
+      return;
+    }
+
+    if (playerIds.length === 0) {
+      setWeakness(null);
+      setPlayerScores([]);
+      setAnalysisError(null);
+      return;
+    }
+
+    loadAnalysis(playerIds);
+  }, [loadAnalysis, loadingPlayers, playerIds, playersError]);
+
+  const handleRetryAnalysis = useCallback(() => {
+    if (playerIds.length === 0) {
+      return;
+    }
+    loadAnalysis(playerIds);
+  }, [loadAnalysis, playerIds]);
+
+  const playersWithScores = useMemo(
+    () =>
+      playerScores.map((score) => {
+        const saved = savedPlayers.find((player) => player.id === score.id);
+        return {
+          ...score,
+          image_url: saved?.image_url,
+          years_active: saved?.years_active
+        };
+      }),
+    [playerScores, savedPlayers]
+  );
 
   return (
     <div className={styles.page}>
@@ -107,7 +214,14 @@ export default function TeamAnalysisPage() {
         </nav>
 
         <div className={styles.tabContent}>
-          <WeaknessView />
+          <WeaknessView
+            weakness={weakness}
+            players={playersWithScores}
+            loading={loadingAnalysis}
+            error={analysisError}
+            hasRoster={playerIds.length > 0}
+            onRetry={handleRetryAnalysis}
+          />
         </div>
       </main>
     </div>

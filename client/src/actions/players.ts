@@ -70,4 +70,28 @@ export const playerActions = {
       };
     }
   },
+
+  getTeamWeakness: async (playerIds: number[]) => {
+    try {
+      const result = await playersApi.getTeamWeakness(playerIds);
+      return { success: true, data: result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to load team weaknesses",
+      };
+    }
+  },
+
+  getPlayerValueScores: async (playerIds: number[]) => {
+    try {
+      const result = await playersApi.getPlayerValueScores(playerIds);
+      return { success: true, data: result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to load player scores",
+      };
+    }
+  },
 };

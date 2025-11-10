@@ -84,6 +84,21 @@ export interface DeletePlayerResponse {
   message: string;
 }
 
+export interface TeamWeaknessResponse {
+  strikeout_rate: number;
+  walk_rate: number;
+  isolated_power: number;
+  on_base_percentage: number;
+  base_running: number;
+}
+
+export interface PlayerValueScore {
+  id: number;
+  name: string;
+  adjustment_score: number;
+  value_score: number;
+}
+
 export const playersApi = {
   search: async (query: string, signal?: AbortSignal): Promise<PlayerSearchResult[]> => {
     return apiClient.get<PlayerSearchResult[]>(`/api/players/search?q=${encodeURIComponent(query)}`, {
@@ -105,5 +120,17 @@ export const playersApi = {
 
   deleteSaved: async (playerId: number): Promise<DeletePlayerResponse> => {
     return apiClient.delete<DeletePlayerResponse>(`/api/players/saved/${playerId}`);
+  },
+
+  getTeamWeakness: async (playerIds: number[]): Promise<TeamWeaknessResponse> => {
+    return apiClient.post<TeamWeaknessResponse>("/api/players/roster-averages/weakness", {
+      player_ids: playerIds
+    });
+  },
+
+  getPlayerValueScores: async (playerIds: number[]): Promise<PlayerValueScore[]> => {
+    return apiClient.post<PlayerValueScore[]>("/api/players/value-scores", {
+      player_ids: playerIds
+    });
   },
 };
