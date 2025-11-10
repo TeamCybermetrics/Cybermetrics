@@ -13,9 +13,6 @@ type SavedTeam = {
   savedAt: string;
 };
 
-const DEFAULT_PLAYER_IMAGE =
-  "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
-
 const positionOrder: DiamondPosition[] = ["LF", "CF", "RF", "3B", "SS", "2B", "1B", "C", "DH"];
 
 const positionCoordinates: Record<DiamondPosition, { top: string; left: string }> = {
@@ -675,7 +672,7 @@ export default function TeamBuilderPage() {
                   >
                     <div className={styles.playerProfile}>
                       <img
-                        src={player.image_url || DEFAULT_PLAYER_IMAGE}
+                        src={player.image_url}
                         alt={player.name}
                       />
                       <div>
@@ -747,7 +744,7 @@ export default function TeamBuilderPage() {
                 <li key={player.id} className={styles.recommendItem}>
                   <div className={styles.recommendPlayerInfo}>
                     <img
-                      src={player.image_url || DEFAULT_PLAYER_IMAGE}
+                      src={player.image_url}
                       alt={player.name}
                     />
                     <div>
@@ -863,7 +860,7 @@ export default function TeamBuilderPage() {
                   >
                     {assigned ? (
                       <div className={styles.positionPlayer}>
-                        <img src={assigned.image_url || DEFAULT_PLAYER_IMAGE} alt={assigned.name} />
+                        <img src={assigned.image_url} alt={assigned.name} />
                         <div className={styles.positionName}>{assigned.name}</div>
                       </div>
                     ) : (
