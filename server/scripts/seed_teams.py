@@ -1,7 +1,10 @@
 from typing import Dict, List, Optional, Tuple
+
 from pybaseball import playerid_reverse_lookup, batting_stats
-import requests
+
 from repositories.player_repository import PlayerRepository  # use package-qualified import
+from repositories.roster_avg_repository import RosterRepository
+
 
 season = 2024
 
@@ -63,16 +66,19 @@ def get_player_stats(fangraphs_id: int, league_df) -> Optional[dict[str, float]]
 def offensive_player_score(s: dict[str, float]) -> float:
     return s["strikeout_rate"] + s["walk_rate"] + s["on_base_percentage"] + s["isolated_power"] + s["base_running"]
 
-def upload_positional_players(team: str, year: int, league_df) -> Tuple[str, str, List[dict]]:
+def upload_positional_players(
+    team: str,
+    year: int,
+    league_df,
+    roster_repo: RosterRepository,
+) -> Tuple[str, str, List[dict]]:
     result: Dict[str, dict] = {}
     team_id = team_ids.get(team)
     if not team_id:
         return (team, team_names.get(team, ""), [])
 
-    api_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster/Active"
-    resp = requests.get(api_url, params={"season": year}, timeout=15)
-    resp.raise_for_status()
-    roster = resp.json().get('roster', []) or []
+    roster_data = roster_repo.fetch_team_roster(team_id, year)
+    roster = roster_data.get("roster", []) if roster_data else []
 
     all_player_scores: List[dict] = []
 
@@ -120,14 +126,18 @@ def upload_positional_players(team: str, year: int, league_df) -> Tuple[str, str
     team_name = team_names.get(team, "")
     return (team, team_name, final_players)
 
-def seed_all_teams(repo: PlayerRepository, year: int) -> None:
+def seed_all_teams(
+    player_repo: PlayerRepository,
+    roster_repo: RosterRepository,
+    year: int,
+) -> None:
     league_df = batting_stats(year, qual=0)
     for team in team_abbrev:
-        team_upload = upload_positional_players(team, year, league_df)
+        team_upload = upload_positional_players(team, year, league_df, roster_repo)
         team_code, team_name, players = team_upload
         if not players:
             continue
-        repo.upload_team(team_code, team_name, players)
+        player_repo.upload_team(team_code, team_name, players)
 
 
 if __name__ == "__main__":

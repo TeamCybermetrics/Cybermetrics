@@ -133,4 +133,10 @@ export const playersApi = {
       player_ids: playerIds
     });
   },
+
+  getRecommendations: async (playerIds: number[]): Promise<PlayerSearchResult[]> => {
+    return apiClient.post<PlayerSearchResult[]>("/api/recommendations", {
+      player_ids: playerIds
+    });
+  },
 };

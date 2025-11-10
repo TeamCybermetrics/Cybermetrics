@@ -23,3 +23,8 @@ class PlayerRepository(ABC):
     @abstractmethod
     def set_league_averages(self, league_doc: Dict[str, Any]) -> None:
         pass
+
+    @abstractmethod
+    def build_player_image_url(self, player_id: int) -> str:
+        """Return a player headshot URL suitable for UI display."""
+        pass

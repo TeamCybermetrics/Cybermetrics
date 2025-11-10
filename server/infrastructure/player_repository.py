@@ -7,11 +7,13 @@ from typing import List, Dict, Optional, Any
 from repositories.player_repository import PlayerRepository
 from anyio import to_thread, Lock
 import logging
+import requests
 
 class PlayerRepositoryFirebase(PlayerRepository):
     def __init__(self, db):
         self.db = db 
         self._players_cache: List[Dict] = []
+        self._players_cache_by_id: Dict[int, Dict] = {}
         self._cache_loaded = False
         self._logger = logging.getLogger(__name__)
         self._load_lock = Lock()
@@ -19,7 +21,18 @@ class PlayerRepositoryFirebase(PlayerRepository):
     def _load_database_blocking(self) -> int:
         """Blocking version: Load all players from Firebase into memory"""
         players_ref = self.db.collection('players').stream()
-        self._players_cache = [doc.to_dict() for doc in players_ref]
+        cache: List[Dict] = []
+        cache_by_id: Dict[int, Dict] = {}
+        for doc in players_ref:
+            data = doc.to_dict()
+            cache.append(data)
+            try:
+                mlbam_id = int(data.get("mlbam_id"))
+            except (TypeError, ValueError):
+                continue
+            cache_by_id[mlbam_id] = data
+        self._players_cache = cache
+        self._players_cache_by_id = cache_by_id
         self._cache_loaded = True
         return len(self._players_cache)
     
@@ -74,8 +87,17 @@ class PlayerRepositoryFirebase(PlayerRepository):
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Firebase is not configured"
             )
+        await self._ensure_cache_loaded()
+
+        cached = self._players_cache_by_id.get(player_id)
+        if cached is not None:
+            return cached
+
         try:
             player_data = await to_thread.run_sync(self._get_player_by_id_blocking, player_id)
+            if player_data:
+                self._players_cache_by_id[player_id] = player_data
+                self._players_cache.append(player_data)
             return player_data
         except Exception as e:
             self._logger.exception("Failed to get player by id: %s", player_id)
@@ -150,6 +172,37 @@ class PlayerRepositoryFirebase(PlayerRepository):
         if not self.db:
             return
         try:
-            self.db.collection("league_averages").document("current").set(league_doc, merge=True)
+            self.db.collection("league").document("averages").set(league_doc, merge=True)
         except Exception:
             self._logger.exception("set_league_averages failed")
+
+    def build_player_image_url(self, player_id: int) -> str:
+        if not isinstance(player_id, int) or player_id <= 0:
+            return (
+                "https://img.mlbstatic.com/mlb-photos/image/upload/"
+                "d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/"
+                "people/0/headshot/67/current"
+            )
+        return (
+            "https://img.mlbstatic.com/mlb-photos/image/upload/"
+            "d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/"
+            f"people/{player_id}/headshot/67/current"
+        )
+
+    def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, Any]:
+        try:
+            resp = requests.get(
+                f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster/Active",
+                params={"season": season},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as exc:
+            self._logger.warning(
+                "Failed to fetch active roster for team %s in season %s: %s",
+                team_id,
+                season,
+                exc,
+            )
+        return {}

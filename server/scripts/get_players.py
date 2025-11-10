@@ -1,6 +1,51 @@
 from typing import Optional, Dict, List, Any
 from pybaseball import playerid_reverse_lookup, batting_stats
 from repositories.player_repository import PlayerRepository
+from repositories.roster_avg_repository import RosterRepository
+
+TEAM_IDS = [
+    109, 144, 110, 111, 112, 113, 114, 115, 145, 116,
+    117, 118, 108, 119, 146, 158, 142, 121, 147, 133,
+    143, 134, 135, 136, 137, 138, 139, 140, 141, 120,
+]
+
+INFIELD_POSITIONS = {"C", "1B", "2B", "3B", "SS", "DH", "TWP"}
+OUTFIELD_POSITIONS = {"LF", "CF", "RF"}
+
+
+def get_team_roster_positions(roster_repo: RosterRepository, year: int) -> Dict[int, str]:
+    """
+    Fetch active MLB player positions via repository API calls and derive simplified positions.
+
+    Returns:
+        Dict mapping mlbam_id -> 'IF' or 'OF'
+    """
+    positions: Dict[int, str] = {}
+    print(f"Fetching active player positions from MLB StatsAPI for {year}...")
+
+    for tid in TEAM_IDS:
+        data = roster_repo.fetch_team_roster(tid, year)
+        if not data:
+            continue
+
+        for player in data.get("roster", []):
+            person = player.get("person", {})
+            position_info = player.get("position", {})
+            mlbam_id = person.get("id")
+            pos_abbrev = position_info.get("abbreviation")
+            if not (mlbam_id and pos_abbrev):
+                continue
+
+            if pos_abbrev in INFIELD_POSITIONS:
+                simplified = "IF"
+            elif pos_abbrev in OUTFIELD_POSITIONS:
+                simplified = "OF"
+            else:
+                simplified = "IF"
+            positions[mlbam_id] = simplified
+
+    print(f"✓ Retrieved {len(positions)} player positions.\n")
+    return positions
 
 def get_fangraphs_id(mlbam_id: int) -> Optional[int]:
     try:
@@ -11,6 +56,7 @@ def get_fangraphs_id(mlbam_id: int) -> Optional[int]:
         return int(v) if str(v) != "nan" else None
     except Exception:
         return None
+
 
 def get_player_stats_for_year(fg_id: int, year_df) -> Optional[Dict[str, Any]]:
     row = year_df[year_df["IDfg"] == fg_id]
@@ -73,7 +119,9 @@ def get_player_stats_for_year(fg_id: int, year_df) -> Optional[Dict[str, Any]]:
         "team_abbrev": team if team and team != "- - -" else None,
     }
 
-def build_all_seasons(fg_id: int, yearly_cache: Dict[int, Any], start_year: int, current_season: int) -> Dict[str, Dict]:
+
+def build_all_seasons(fg_id: int, yearly_cache: Dict[int, Any],
+                      start_year: int, current_season: int) -> Dict[str, Dict]:
     seasons: Dict[str, Dict] = {}
     for y in range(start_year, current_season + 1):
         df = yearly_cache.get(y)
@@ -84,8 +132,15 @@ def build_all_seasons(fg_id: int, yearly_cache: Dict[int, Any], start_year: int,
             seasons[str(y)] = stats
     return seasons
 
-def refresh_players(repo: PlayerRepository, start_year: int = 2015, current_season: int = 2024) -> int:
+def refresh_players(
+    player_repo: PlayerRepository,
+    roster_repo: RosterRepository,
+    start_year: int = 2015,
+    current_season: int = 2024,
+) -> int:
     yearly_cache: Dict[int, Any] = {}
+
+    # Preload all batting stats for each season
     for y in range(start_year, current_season + 1):
         try:
             yearly_cache[y] = batting_stats(y, qual=0)
@@ -96,13 +151,17 @@ def refresh_players(repo: PlayerRepository, start_year: int = 2015, current_seas
     if current_df is None:
         return 0
 
+    # ✅ Fetch simplified IF/OF positions once via repository
+    player_positions = get_team_roster_positions(roster_repo, current_season)
+
     players: List[Dict[str, Any]] = []
     for _, row in current_df.iterrows():
         try:
             fg_id = int(row["IDfg"])
         except Exception:
             continue
-        # Resolve MLBAM via fangraphs lookup
+
+        # Resolve MLBAM ID
         try:
             lookup = playerid_reverse_lookup([fg_id], key_type="fangraphs")
             if lookup.empty:
@@ -120,6 +179,7 @@ def refresh_players(repo: PlayerRepository, start_year: int = 2015, current_seas
 
         latest_year = max(seasons.keys(), key=int)
         overall = seasons[latest_year].get("wrc_plus", 0.0)
+
         players.append({
             "mlbam_id": mlbam,
             "fangraphs_id": fg_id,
@@ -127,10 +187,11 @@ def refresh_players(repo: PlayerRepository, start_year: int = 2015, current_seas
             "team_abbrev": seasons[latest_year].get("team_abbrev"),
             "overall_score": overall,
             "seasons": seasons,
+            "position": player_positions.get(mlbam, "IF"),  # ✅ add IF/OF position
         })
 
     if players:
-        repo.bulk_upsert_players(players)
+        player_repo.bulk_upsert_players(players)
     return len(players)
 
 

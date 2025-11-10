@@ -4,7 +4,7 @@ import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
 import styles from "./TeamBuilderPage.module.css";
 
-type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "P" | "C" | "DH";
+type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "C" | "DH";
 
 type SavedTeam = {
   id: string;
@@ -16,7 +16,7 @@ type SavedTeam = {
 const DEFAULT_PLAYER_IMAGE =
   "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
 
-const positionOrder: DiamondPosition[] = ["LF", "CF", "RF", "3B", "SS", "2B", "1B", "P", "C", "DH"];
+const positionOrder: DiamondPosition[] = ["LF", "CF", "RF", "3B", "SS", "2B", "1B", "C", "DH"];
 
 const positionCoordinates: Record<DiamondPosition, { top: string; left: string }> = {
   LF: { top: "16%", left: "13%" },
@@ -26,10 +26,17 @@ const positionCoordinates: Record<DiamondPosition, { top: string; left: string }
   "2B": { top: "38%", left: "68%" },
   "3B": { top: "56%", left: "18%" },
   "1B": { top: "56%", left: "82%" },
-  P: { top: "48%", left: "50%" },
   C: { top: "75%", left: "50%" },
   DH: { top: "82%", left: "80%" }
 };
+
+const staticSpots = [
+  {
+    label: "P",
+    top: "48%",
+    left: "50%"
+  }
+];
 
 type LineupState = Record<DiamondPosition, SavedPlayer | null>;
 
@@ -57,6 +64,10 @@ export default function TeamBuilderPage() {
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
   const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000000]);
   const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set(positionOrder));
+  const [recommendedPlayers, setRecommendedPlayers] = useState<PlayerSearchResult[]>([]);
+  const [recommendationError, setRecommendationError] = useState("");
+  const [isRecommending, setIsRecommending] = useState(false);
+
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
   const [playerOperationError, setPlayerOperationError] = useState("");
 
@@ -231,6 +242,13 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
+  const incompletePositions = useMemo(
+    () => positionOrder.filter((position) => !lineup[position]),
+    [lineup]
+  );
+
+  const isRosterComplete = incompletePositions.length === 0;
+
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
     setDraggingId(player.id);
@@ -295,6 +313,45 @@ export default function TeamBuilderPage() {
       }
       return next;
     });
+  };
+
+  const handleGetRecommendations = async () => {
+    setRecommendationError("");
+
+    if (!isRosterComplete) {
+      const formatted = incompletePositions.join(", ");
+      setRecommendationError(
+        `Fill your lineup before requesting recommendations. Missing: ${formatted}`
+      );
+      return;
+    }
+
+    const playerIds = positionOrder
+      .map((pos) => lineup[pos]?.id)
+      .filter((id): id is number => typeof id === "number");
+
+    if (playerIds.length === 0) {
+      setRecommendationError("Select players to build your lineup first.");
+      return;
+    }
+
+    setIsRecommending(true);
+    setRecommendedPlayers([]);
+
+    const result = await playerActions.getRecommendations(playerIds);
+
+    setIsRecommending(false);
+
+    if (result.success && result.data) {
+      if (result.data.length === 0) {
+        setRecommendationError("No recommendations available. Try adjusting your lineup.");
+        return;
+      }
+      setRecommendedPlayers(result.data);
+      return;
+    }
+
+    setRecommendationError(result.error || "Failed to fetch recommendations.");
   };
 
   const toggleAllPositions = () => {
@@ -544,6 +601,53 @@ export default function TeamBuilderPage() {
               })}
             </div>
           </div>
+          {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
+        <section className={styles.actionsCard}>
+          {/* <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button> */}
+          <div className={styles.recommendRow}>
+            <span className={styles.recommendCopy}>Click to get recommendations</span>
+            <button
+              className={styles.recommendBtn}
+              onClick={handleGetRecommendations}
+              disabled={isRecommending || !isRosterComplete}
+            >
+              {isRecommending ? "Loading..." : "Get Recommendations!"}
+            </button>
+          </div>
+          {!isRosterComplete && (
+            <div className={styles.recommendHint}>
+              Select players for every position before requesting recommendations.
+            </div>
+          )}
+          {recommendationError && (
+            <div className={styles.recommendError}>{recommendationError}</div>
+          )}
+          {isRecommending && !recommendationError && (
+            <div className={styles.recommendLoading}>Calculating best fits…</div>
+          )}
+          {recommendedPlayers.length > 0 && (
+            <ul className={styles.recommendList}>
+              {recommendedPlayers.map((player) => (
+                <li key={player.id} className={styles.recommendItem}>
+                  <div className={styles.recommendPlayerInfo}>
+                    <img
+                      src={player.image_url || DEFAULT_PLAYER_IMAGE}
+                      alt={player.name}
+                    />
+                    <div>
+                      <div className={styles.recommendName}>{player.name}</div>
+                      <div className={styles.recommendMeta}>{player.years_active}</div>
+                    </div>
+                  </div>
+                  <span className={styles.recommendScore}>
+                    Impact Score: {player.score.toFixed(1)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          
+        </section>
         </div>
 
         {/* TOP-RIGHT: Team card */}
@@ -666,6 +770,18 @@ export default function TeamBuilderPage() {
                 </div>
               );
             })}
+
+            {staticSpots.map((spot) => (
+              <div
+                key={spot.label}
+                className={`${styles.positionNode} ${styles.staticPosition}`}
+                style={{ top: spot.top, left: spot.left }}
+                aria-hidden="true"
+              >
+                <div className={styles.positionLabel}>{spot.label}</div>
+                <div className={styles.staticHint}>Pitcher</div>
+              </div>
+            ))}
           </div>
 
           <button 
@@ -677,11 +793,6 @@ export default function TeamBuilderPage() {
           </button>
         </section>
 
-        {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
-        <section className={styles.actionsCard}>
-          <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button>
-          <button className={styles.recommendBtn}>Get Recommendations!</button>
-        </section>
       </div>
     </div>
   );
