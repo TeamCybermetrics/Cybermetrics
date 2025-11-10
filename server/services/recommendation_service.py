@@ -78,7 +78,6 @@ class RecommendationService:
                 raise QueryError(f"Player {player_id} not found or has no season data")
 
             latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
-            # league_avg = await self.roster_repository.get_league_unweighted_average()
 
             original_players_adjustment_scores[player_id] = self.roster_domain.compute_adjustment_sum(
                 player_latest_stats=latest_stats,
