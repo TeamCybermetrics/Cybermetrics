@@ -49,10 +49,12 @@ export default function TeamBuilderPage() {
   const [lineup, setLineup] = useState<LineupState>(() =>
     positionOrder.reduce((acc, position) => ({ ...acc, [position]: null }), {} as LineupState)
   );
+  const lineupRef = useRef(lineup);
   const [activePosition, setActivePosition] = useState<DiamondPosition | null>("CF");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
+  const [savedPlayersLoaded, setSavedPlayersLoaded] = useState(false);
   const searchControllerRef = useRef<AbortController | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
@@ -71,6 +73,10 @@ export default function TeamBuilderPage() {
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
   const [playerOperationError, setPlayerOperationError] = useState("");
 
+  useEffect(() => {
+    lineupRef.current = lineup;
+  }, [lineup]);
+
   // Load saved teams from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("savedTeams");
@@ -86,9 +92,15 @@ export default function TeamBuilderPage() {
   // Load saved players on mount
   useEffect(() => {
     const fetchSaved = async () => {
-      const result = await playerActions.getSavedPlayers();
-      if (result.success && result.data) {
-        setSavedPlayers(result.data);
+      try {
+        const result = await playerActions.getSavedPlayers();
+        if (result.success && result.data) {
+          setSavedPlayers(result.data);
+        } else if (!result.success) {
+          setPlayerOperationError(result.error || "Failed to load saved players");
+        }
+      } finally {
+        setSavedPlayersLoaded(true);
       }
     };
 
@@ -167,6 +179,28 @@ export default function TeamBuilderPage() {
     };
   }, []);
 
+  const buildLineupFromSavedPlayers = useCallback((players: SavedPlayer[]) => {
+    return positionOrder.reduce((acc, position) => {
+      const playerForSlot = players.find((saved) => saved.position === position) || null;
+      acc[position] = playerForSlot;
+      return acc;
+    }, {} as LineupState);
+  }, []);
+
+  useEffect(() => {
+    if (!savedPlayersLoaded) {
+      return;
+    }
+
+    const nextLineup = buildLineupFromSavedPlayers(savedPlayers);
+    setLineup((prev) => {
+      const hasChanges = positionOrder.some(
+        (position) => (prev[position]?.id ?? null) !== (nextLineup[position]?.id ?? null)
+      );
+      return hasChanges ? nextLineup : prev;
+    });
+  }, [savedPlayers, savedPlayersLoaded, buildLineupFromSavedPlayers]);
+
   const availablePlayers = useMemo(() => {
     if (searchTerm.trim()) {
       return searchResults.map((result) => ({
@@ -179,22 +213,80 @@ export default function TeamBuilderPage() {
     return savedPlayers;
   }, [searchResults, searchTerm, savedPlayers]);
 
-  const assignPlayerToPosition = useCallback((player: SavedPlayer, position: DiamondPosition) => {
-    setLineup((prev) => {
-      const next: LineupState = { ...prev };
+  const persistPlayerPosition = useCallback(
+    async (playerId: number, position: DiamondPosition | null) => {
+      const result = await playerActions.updatePlayerPosition(playerId, position);
+      if (result.success && result.data) {
+        setPlayerOperationError("");
+        setSavedPlayers((prev) => {
+          const index = prev.findIndex((saved) => saved.id === playerId);
+          if (index === -1) {
+            return [...prev, result.data];
+          }
+          return prev.map((saved, idx) =>
+            idx === index ? { ...saved, ...result.data } : saved
+          );
+        });
+      } else if (!result.success) {
+        setPlayerOperationError(result.error || "Failed to update player position");
+      }
+    },
+    []
+  );
 
-      positionOrder.forEach((slot) => {
-        if (next[slot]?.id === player.id) {
-          next[slot] = null;
-        }
+  const assignPlayerToPosition = useCallback(
+    (player: SavedPlayer, position: DiamondPosition) => {
+      const currentLineup = lineupRef.current;
+      const replacedPlayer = currentLineup[position];
+
+      setLineup((prev) => {
+        const next: LineupState = { ...prev };
+
+        positionOrder.forEach((slot) => {
+          if (next[slot]?.id === player.id) {
+            next[slot] = null;
+          }
+        });
+
+        next[position] = player;
+        return next;
       });
 
-      next[position] = player;
-      return next;
-    });
+      setActivePosition(position);
 
-    setActivePosition(position);
-  }, []);
+      setSavedPlayers((prev) => {
+        const updated = prev.map((saved) => {
+          if (saved.id === player.id) {
+            return { ...saved, position };
+          }
+          if (replacedPlayer && saved.id === replacedPlayer.id && replacedPlayer.id !== player.id) {
+            return { ...saved, position: null };
+          }
+          return saved;
+        });
+
+        if (!prev.some((saved) => saved.id === player.id)) {
+          updated.push({ ...player, position });
+        }
+
+        if (
+          replacedPlayer &&
+          replacedPlayer.id !== player.id &&
+          !prev.some((saved) => saved.id === replacedPlayer.id)
+        ) {
+          updated.push({ ...replacedPlayer, position: null });
+        }
+
+        return updated;
+      });
+
+      void persistPlayerPosition(player.id, position);
+      if (replacedPlayer && replacedPlayer.id !== player.id) {
+        void persistPlayerPosition(replacedPlayer.id, null);
+      }
+    },
+    [persistPlayerPosition]
+  );
 
   const handleAddPlayer = useCallback(
     async (player: SavedPlayer) => {
@@ -226,10 +318,27 @@ export default function TeamBuilderPage() {
   );
 
   const handleClearSlot = (position: DiamondPosition) => {
+    const player = lineupRef.current[position];
+    if (!player) {
+      return;
+    }
+
     setLineup((prev) => ({
       ...prev,
       [position]: null
     }));
+
+    setSavedPlayers((prev) => {
+      const found = prev.some((saved) => saved.id === player.id);
+      if (!found) {
+        return [...prev, { ...player, position: null }];
+      }
+      return prev.map((saved) =>
+        saved.id === player.id ? { ...saved, position: null } : saved
+      );
+    });
+
+    void persistPlayerPosition(player.id, null);
   };
 
   const assignedIds = useMemo(
@@ -263,7 +372,7 @@ export default function TeamBuilderPage() {
     setDraggingId(null);
   };
 
-  const handlePositionDrop = (event: DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
+  const handlePositionDrop = async (event: DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
     event.preventDefault();
     event.stopPropagation();
     const player = dragPlayerRef.current;
@@ -272,8 +381,15 @@ export default function TeamBuilderPage() {
       return;
     }
 
-    assignPlayerToPosition(player, position);
-    clearDragState();
+    try {
+      setPlayerOperationError("");
+      const saved = await ensurePlayerIsSaved(player);
+      if (saved) {
+        assignPlayerToPosition(player, position);
+      }
+    } finally {
+      clearDragState();
+    }
   };
 
   const saveTeam = () => {
