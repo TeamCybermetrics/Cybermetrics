@@ -76,20 +76,25 @@ export default function TeamAnalysisPage() {
         return;
       }
 
+      let errorMessage: string | null = null;
+
       if (!weaknessRes.success) {
-        setAnalysisError(weaknessRes.error || "Failed to compute team weaknesses");
+        errorMessage = weaknessRes.error || "Failed to compute team weaknesses";
         setWeakness(null);
       } else {
         setWeakness(weaknessRes.data || null);
       }
 
       if (!scoresRes.success) {
-        setAnalysisError(
-          scoresRes.error || weaknessRes.error || "Failed to compute player scores"
-        );
+        const scoreError = scoresRes.error || "Failed to compute player scores";
+        errorMessage = errorMessage ? `${errorMessage}; ${scoreError}` : scoreError;
         setPlayerScores([]);
       } else {
         setPlayerScores(scoresRes.data || []);
+      }
+
+      if (errorMessage) {
+        setAnalysisError(errorMessage);
       }
     } catch (error) {
       if (!isMounted.current || analysisRequestId.current !== requestId) {
