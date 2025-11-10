@@ -184,7 +184,11 @@ class RecommendationService:
             if not player_data:
                 continue
 
-            player_result = self.player_domain.build_player_search_result(player_data, contribution)
+            player_result = self.player_domain.build_player_search_result(
+                player_data,
+                contribution,
+                self.player_repository.build_player_image_url,
+            )
             if player_result:
                 results.append(player_result)
 

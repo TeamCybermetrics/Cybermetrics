@@ -7,6 +7,7 @@ from typing import List, Dict, Optional, Any
 from repositories.player_repository import PlayerRepository
 from anyio import to_thread, Lock
 import logging
+import requests
 
 class PlayerRepositoryFirebase(PlayerRepository):
     def __init__(self, db):
@@ -174,6 +175,19 @@ class PlayerRepositoryFirebase(PlayerRepository):
             self.db.collection("league_averages").document("current").set(league_doc, merge=True)
         except Exception:
             self._logger.exception("set_league_averages failed")
+
+    def build_player_image_url(self, player_id: int) -> str:
+        if not isinstance(player_id, int) or player_id <= 0:
+            return (
+                "https://img.mlbstatic.com/mlb-photos/image/upload/"
+                "d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/"
+                "people/0/headshot/67/current"
+            )
+        return (
+            "https://img.mlbstatic.com/mlb-photos/image/upload/"
+            "d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/"
+            f"people/{player_id}/headshot/67/current"
+        )
 
     def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, Any]:
         try:

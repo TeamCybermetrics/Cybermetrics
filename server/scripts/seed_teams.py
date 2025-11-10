@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 from pybaseball import playerid_reverse_lookup, batting_stats
 
 from repositories.player_repository import PlayerRepository  # use package-qualified import
+from repositories.roster_avg_repository import RosterRepository
 
 
 season = 2024

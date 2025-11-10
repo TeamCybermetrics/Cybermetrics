@@ -132,10 +132,6 @@ def build_all_seasons(fg_id: int, yearly_cache: Dict[int, Any],
             seasons[str(y)] = stats
     return seasons
 
-
-# ======================================
-# MAIN REFRESH FUNCTION (UPDATED)
-# ======================================
 def refresh_players(
     player_repo: PlayerRepository,
     roster_repo: RosterRepository,
