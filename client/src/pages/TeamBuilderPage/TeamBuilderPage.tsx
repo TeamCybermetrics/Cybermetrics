@@ -703,23 +703,22 @@ export default function TeamBuilderPage() {
               <p className={styles.playerError}>{playerOperationError}</p>
             )}
 
-            <div className={styles.searchActions}>
-              <button 
+            {/* <div className={styles.searchActions}>
+              <button
                 className={styles.loadTeamBtn}
                 onClick={() => setLoadTeamOpen(!loadTeamOpen)}
               >
                 Load a team {loadTeamOpen ? "▲" : "▼"}
               </button>
-              <button 
+              <button
                 className={styles.filtersBtn}
                 onClick={() => setFiltersOpen(!filtersOpen)}
               >
                 Filters {filtersOpen ? "▲" : "▼"}
               </button>
-            </div>
+            </div> */}
 
-            {/* Load team panel */}
-            {loadTeamOpen && (
+            {/* {loadTeamOpen && (
               <div className={styles.loadTeamPanel}>
                 {savedTeams.length === 0 ? (
                   <div className={styles.emptyTeams}>
@@ -754,12 +753,11 @@ export default function TeamBuilderPage() {
                   </div>
                 )}
               </div>
-            )}
+            )} */}
 
-            {/* Filters panel */}
-            {filtersOpen && (
+            {/* {filtersOpen && (
               <div className={styles.filtersPanel}>
-                {/* <div className={styles.filterSection}>
+                <div className={styles.filterSection}>
                   <label className={styles.filterLabel}>Salary Range</label>
                   <div className={styles.salaryInputs}>
                     <input
@@ -810,7 +808,7 @@ export default function TeamBuilderPage() {
                     <span>${(salaryRange[0] / 1000000).toFixed(0)}M</span>
                     <span>${(salaryRange[1] / 1000000).toFixed(0)}M</span>
                   </div>
-                </div> */}
+                </div>
 
                 <div className={styles.filterSection}>
                   <div className={styles.positionHeader}>
@@ -836,7 +834,7 @@ export default function TeamBuilderPage() {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </section>
           
           {hasSearchTerm && (
