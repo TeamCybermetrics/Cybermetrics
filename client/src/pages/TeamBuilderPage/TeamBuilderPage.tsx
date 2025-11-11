@@ -216,6 +216,16 @@ export default function TeamBuilderPage() {
 
   const quickAddPool = hasSearchTerm ? searchResultPlayers : savedPlayers;
 
+  const savedPlayerIds = useMemo(
+    () =>
+      new Set(
+        savedPlayers
+          .map((player) => player.id)
+          .filter((id): id is number => typeof id === "number")
+      ),
+    [savedPlayers]
+  );
+
   const persistPlayerPosition = useCallback(
     async (playerId: number, position: DiamondPosition | null) => {
       const result = await playerActions.updatePlayerPosition(playerId, position);
@@ -439,15 +449,38 @@ export default function TeamBuilderPage() {
     {
       showDelete = true,
       overrideAddHandler,
-      addButtonLabel
+      addButtonLabel,
+      isAlreadySaved = false
     }: {
       showDelete?: boolean;
       overrideAddHandler?: () => void;
       addButtonLabel?: string;
+      isAlreadySaved?: boolean;
     } = {}
   ) => {
     const alreadyAssigned = assignedIds.has(player.id);
     const isDragging = draggingId === player.id;
+    const isSaving = savingPlayerIds.has(player.id);
+    const hasOverride = !!overrideAddHandler && !isAlreadySaved;
+
+    const disableAdd = isAlreadySaved
+      ? true
+      : hasOverride
+      ? isSaving
+      : alreadyAssigned || !activePosition || isSaving;
+
+    const buttonLabel = (() => {
+      if (isAlreadySaved) {
+        return addButtonLabel ?? "Already saved";
+      }
+      if (alreadyAssigned) {
+        return "Assigned";
+      }
+      if (isSaving) {
+        return "Saving...";
+      }
+      return addButtonLabel || "Add";
+    })();
 
     return (
       <div
@@ -482,13 +515,12 @@ export default function TeamBuilderPage() {
           )}
           <button
             className={styles.addButton}
-            disabled={
-              overrideAddHandler
-                ? savingPlayerIds.has(player.id)
-                : alreadyAssigned || !activePosition || savingPlayerIds.has(player.id)
-            }
+            disabled={disableAdd}
             onClick={() => {
-              if (overrideAddHandler) {
+              if (disableAdd) {
+                return;
+              }
+              if (hasOverride && overrideAddHandler) {
                 overrideAddHandler();
                 return;
               }
@@ -499,18 +531,16 @@ export default function TeamBuilderPage() {
             title={
               alreadyAssigned
                 ? "Already assigned"
-                : overrideAddHandler
+                : isAlreadySaved
+                ? "Already saved"
+                : hasOverride
                 ? "Add to saved players"
                 : !activePosition
                 ? "Select a position first"
                 : "Add to active position"
             }
           >
-            {alreadyAssigned
-              ? "Assigned"
-              : savingPlayerIds.has(player.id)
-              ? "Saving..."
-              : addButtonLabel || "Add"}
+            {buttonLabel}
           </button>
         </div>
       </div>
@@ -823,13 +853,15 @@ export default function TeamBuilderPage() {
                     <span>Try a different search.</span>
                   </div>
                 ) : (
-                  searchResultPlayers.map((player) =>
-                    renderPlayerRow(player, {
+                  searchResultPlayers.map((player) => {
+                    const isSaved = savedPlayerIds.has(player.id);
+                    return renderPlayerRow(player, {
                       showDelete: false,
-                      overrideAddHandler: () => void handleSavePlayerOnly(player),
-                      addButtonLabel: "Add to Saved"
-                    })
-                  )
+                      overrideAddHandler: isSaved ? undefined : () => void handleSavePlayerOnly(player),
+                      addButtonLabel: isSaved ? "Already Saved" : "Add to Saved",
+                      isAlreadySaved: isSaved
+                    });
+                  })
                 )}
               </div>
             </section>
