@@ -14,7 +14,6 @@ export interface SavedPlayer {
   image_url?: string;
   years_active?: string;
   position?: string | null;
-  //[key: string]: any; // Allow additional fields
 }
 
 export interface SeasonStats {

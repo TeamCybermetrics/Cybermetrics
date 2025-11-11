@@ -64,9 +64,9 @@ export default function TeamBuilderPage() {
   useEffect(() => {
     const fetchSaved = async () => {
       try {
-        const result = await playerActions.getSavedPlayers();
-        if (result.success && result.data) {
-          setSavedPlayers(result.data);
+      const result = await playerActions.getSavedPlayers();
+      if (result.success && result.data) {
+        setSavedPlayers(result.data);
         } else if (!result.success) {
           setPlayerOperationError(result.error || "Failed to load saved players");
         }
@@ -179,15 +179,13 @@ export default function TeamBuilderPage() {
     if (!hasSearchTerm) {
       return [];
     }
-    return searchResults.map((result) => ({
-      id: result.id,
-      name: result.name,
-      image_url: result.image_url,
-      years_active: result.years_active
-    })) as SavedPlayer[];
+      return searchResults.map((result) => ({
+        id: result.id,
+        name: result.name,
+        image_url: result.image_url,
+        years_active: result.years_active
+      })) as SavedPlayer[];
   }, [hasSearchTerm, searchResults]);
-
-  const quickAddPool = hasSearchTerm ? searchResultPlayers : savedPlayers;
 
   const savedPlayerIds = useMemo(
     () =>
@@ -225,20 +223,20 @@ export default function TeamBuilderPage() {
       const currentLineup = lineupRef.current;
       const replacedPlayer = currentLineup[position];
 
-      setLineup((prev) => {
-        const next: LineupState = { ...prev };
+    setLineup((prev) => {
+      const next: LineupState = { ...prev };
 
-        positionOrder.forEach((slot) => {
-          if (next[slot]?.id === player.id) {
-            next[slot] = null;
-          }
-        });
-
-        next[position] = player;
-        return next;
+      positionOrder.forEach((slot) => {
+        if (next[slot]?.id === player.id) {
+          next[slot] = null;
+        }
       });
 
-      setActivePosition(position);
+      next[position] = player;
+      return next;
+    });
+
+    setActivePosition(position);
 
       setSavedPlayers((prev) => {
         const updated = prev.map((saved) => {
@@ -376,19 +374,6 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
-  const handleQuickAddFromSearch = useCallback(() => {
-    if (quickAddPool.length === 0) {
-      return;
-    }
-
-    const firstCandidate =
-      quickAddPool.find((player) => !assignedIds.has(player.id)) || quickAddPool[0];
-
-    if (firstCandidate && activePosition) {
-      assignPlayerToPosition(firstCandidate, activePosition);
-    }
-  }, [quickAddPool, assignedIds, activePosition, assignPlayerToPosition]);
-
   const incompletePositions = useMemo(
     () => positionOrder.filter((position) => !lineup[position]),
     [lineup]
@@ -423,10 +408,10 @@ export default function TeamBuilderPage() {
       setPlayerOperationError("");
       const saved = await ensurePlayerIsSaved(player);
       if (saved) {
-        assignPlayerToPosition(player, position);
+    assignPlayerToPosition(player, position);
       }
     } finally {
-      clearDragState();
+    clearDragState();
     }
   };
 
@@ -448,7 +433,7 @@ export default function TeamBuilderPage() {
     async (player: SavedPlayer) => {
       setPlayerOperationError("");
       setSavingPlayerIds((prev) => {
-        const next = new Set(prev);
+      const next = new Set(prev);
         next.add(player.id);
         return next;
       });
@@ -467,8 +452,8 @@ export default function TeamBuilderPage() {
         setSavingPlayerIds((prev) => {
           const next = new Set(prev);
           next.delete(player.id);
-          return next;
-        });
+      return next;
+    });
       }
     },
     [ensurePlayerIsSaved]
@@ -527,7 +512,6 @@ export default function TeamBuilderPage() {
             <SearchBar
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
-              onSubmit={handleQuickAddFromSearch}
               statusText={
                 hasSearchTerm
                   ? `${searchResultPlayers.length} results`
@@ -536,7 +520,7 @@ export default function TeamBuilderPage() {
               errorMessage={playerOperationError}
             />
           </section>
-
+          
           {hasSearchTerm && (
             <SearchResultsSection
               players={searchResultPlayers}

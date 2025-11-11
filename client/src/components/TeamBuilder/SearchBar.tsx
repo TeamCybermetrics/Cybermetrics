@@ -4,7 +4,6 @@ import styles from "./SearchBar.module.css";
 type SearchBarProps = {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
-  onSubmit: () => void;
   statusText: string;
   errorMessage?: string;
   actions?: ReactNode;
@@ -13,7 +12,6 @@ type SearchBarProps = {
 export function SearchBar({
   searchTerm,
   onSearchTermChange,
-  onSubmit,
   statusText,
   errorMessage,
   actions,
@@ -27,11 +25,6 @@ export function SearchBar({
           placeholder="Search players by name, team, or position…"
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              onSubmit();
-            }
-          }}
         />
       </div>
 
