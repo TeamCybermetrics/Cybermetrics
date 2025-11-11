@@ -3,39 +3,17 @@ import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
 import styles from "./TeamBuilderPage.module.css";
-
-type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "C" | "DH";
-
-type SavedTeam = {
-  id: string;
-  name: string;
-  lineup: LineupState;
-  savedAt: string;
-};
-
-const positionOrder: DiamondPosition[] = ["LF", "CF", "RF", "3B", "SS", "2B", "1B", "C", "DH"];
-
-const positionCoordinates: Record<DiamondPosition, { top: string; left: string }> = {
-  LF: { top: "16%", left: "13%" },
-  CF: { top: "8%", left: "50%" },
-  RF: { top: "16%", left: "87%" },
-  SS: { top: "38%", left: "32%" },
-  "2B": { top: "38%", left: "68%" },
-  "3B": { top: "56%", left: "18%" },
-  "1B": { top: "56%", left: "82%" },
-  C: { top: "75%", left: "50%" },
-  DH: { top: "82%", left: "80%" }
-};
-
-const staticSpots = [
-  {
-    label: "P",
-    top: "48%",
-    left: "50%"
-  }
-];
-
-type LineupState = Record<DiamondPosition, SavedPlayer | null>;
+import {
+  DiamondPosition,
+  LineupState,
+  SavedTeam,
+  positionOrder,
+} from "@/components/TeamBuilder/constants";
+import { SearchBar } from "@/components/TeamBuilder/SearchBar";
+import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection";
+import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection";
+import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection";
+import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel";
 
 /**
  * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
@@ -56,13 +34,8 @@ export default function TeamBuilderPage() {
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [teamName, setTeamName] = useState("TeamName1");
-  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [loadTeamOpen, setLoadTeamOpen] = useState(false);
+  const [teamName] = useState("TeamName1");
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
-  const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000000]);
-  const [selectedPositions, setSelectedPositions] = useState<Set<string>>(new Set(positionOrder));
   const [recommendedPlayers, setRecommendedPlayers] = useState<PlayerSearchResult[]>([]);
   const [recommendationError, setRecommendationError] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
@@ -403,6 +376,19 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
+  const handleQuickAddFromSearch = useCallback(() => {
+    if (quickAddPool.length === 0) {
+      return;
+    }
+
+    const firstCandidate =
+      quickAddPool.find((player) => !assignedIds.has(player.id)) || quickAddPool[0];
+
+    if (firstCandidate && activePosition) {
+      assignPlayerToPosition(firstCandidate, activePosition);
+    }
+  }, [quickAddPool, assignedIds, activePosition, assignPlayerToPosition]);
+
   const incompletePositions = useMemo(
     () => positionOrder.filter((position) => !lineup[position]),
     [lineup]
@@ -442,109 +428,6 @@ export default function TeamBuilderPage() {
     } finally {
       clearDragState();
     }
-  };
-
-  const renderPlayerRow = (
-    player: SavedPlayer,
-    {
-      showDelete = true,
-      overrideAddHandler,
-      addButtonLabel,
-      isAlreadySaved = false
-    }: {
-      showDelete?: boolean;
-      overrideAddHandler?: () => void;
-      addButtonLabel?: string;
-      isAlreadySaved?: boolean;
-    } = {}
-  ) => {
-    const alreadyAssigned = assignedIds.has(player.id);
-    const isDragging = draggingId === player.id;
-    const isSaving = savingPlayerIds.has(player.id);
-    const hasOverride = !!overrideAddHandler && !isAlreadySaved;
-
-    const disableAdd = isAlreadySaved
-      ? true
-      : hasOverride
-      ? isSaving
-      : alreadyAssigned || !activePosition || isSaving;
-
-    const buttonLabel = (() => {
-      if (isAlreadySaved) {
-        return addButtonLabel ?? "Already saved";
-      }
-      if (alreadyAssigned) {
-        return "Assigned";
-      }
-      if (isSaving) {
-        return "Saving...";
-      }
-      return addButtonLabel || "Add";
-    })();
-
-    return (
-      <div
-        key={player.id}
-        className={`${styles.playerRow} ${isDragging ? styles.dragging : ""}`}
-        draggable={!alreadyAssigned}
-        onDragStart={() => !alreadyAssigned && prepareDragPlayer(player)}
-        onDragEnd={clearDragState}
-      >
-        <div className={styles.playerProfile}>
-          <img src={player.image_url || ""} alt={player.name} />
-          <div>
-            <p className={styles.playerName}>{player.name}</p>
-            {/* <div className={styles.playerMeta}>{player.years_active || "N/A"}</div> */}
-          </div>
-        </div>
-
-        <div className={styles.playerActions}>
-          {showDelete && (
-            <button
-              className={styles.deletePlayerButton}
-              disabled={alreadyAssigned || deletingPlayerIds.has(player.id)}
-              onClick={() => void handleDeletePlayer(player)}
-              title={
-                alreadyAssigned
-                  ? "Remove from the lineup before deleting"
-                  : "Delete from saved players"
-              }
-            >
-              {deletingPlayerIds.has(player.id) ? "Deleting…" : "Delete"}
-            </button>
-          )}
-          <button
-            className={styles.addButton}
-            disabled={disableAdd}
-            onClick={() => {
-              if (disableAdd) {
-                return;
-              }
-              if (hasOverride && overrideAddHandler) {
-                overrideAddHandler();
-                return;
-              }
-              if (activePosition) {
-                void handleAddPlayer(player);
-              }
-            }}
-            title={
-              alreadyAssigned
-                ? "Already assigned"
-                : isAlreadySaved
-                ? "Already saved"
-                : hasOverride
-                ? "Add to saved players"
-                : !activePosition
-                ? "Select a position first"
-                : "Add to active position"
-            }
-          >
-            {buttonLabel}
-          </button>
-        </div>
-      </div>
-    );
   };
 
   const saveTeam = () => {
@@ -591,31 +474,6 @@ export default function TeamBuilderPage() {
     [ensurePlayerIsSaved]
   );
 
-  const loadTeam = (team: SavedTeam) => {
-    setTeamName(team.name);
-    setLineup(team.lineup);
-    setLoadTeamOpen(false);
-    alert(`Team "${team.name}" loaded!`);
-  };
-
-  const deleteTeam = (teamId: string) => {
-    const updatedTeams = savedTeams.filter((t) => t.id !== teamId);
-    setSavedTeams(updatedTeams);
-    localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
-  };
-
-  const togglePosition = (position: string) => {
-    setSelectedPositions((prev) => {
-      const next = new Set(prev);
-      if (next.has(position)) {
-        next.delete(position);
-      } else {
-        next.add(position);
-      }
-      return next;
-    });
-  };
-
   const handleGetRecommendations = async () => {
     setRecommendationError("");
 
@@ -655,15 +513,6 @@ export default function TeamBuilderPage() {
     setRecommendationError(result.error || "Failed to fetch recommendations.");
   };
 
-  const toggleAllPositions = () => {
-    if (selectedPositions.size === positionOrder.length) {
-      setSelectedPositions(new Set());
-    } else {
-      setSelectedPositions(new Set(positionOrder));
-    }
-  };
-
-
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -675,212 +524,44 @@ export default function TeamBuilderPage() {
         <div className={styles.leftColumn}>
           {/* Search section with Load a team and Filters */}
           <section className={styles.searchSection}>
-            <div className={styles.searchBar}>
-              <span className={styles.searchIcon}>🔍</span>
-              <input
-                type="text"
-                placeholder="Search players by name, team, or position…"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const first =
-                      quickAddPool.find((p) => !assignedIds.has(p.id)) ||
-                      quickAddPool[0];
-                    if (first && activePosition) assignPlayerToPosition(first, activePosition);
-                  }
-                }}
-              />
-            </div>
-
-            <div className={styles.searchStatus}>
-              {hasSearchTerm
-                ? `${searchResultPlayers.length} results`
-                : `${savedPlayers.length} saved players`}
-            </div>
-
-            {playerOperationError && (
-              <p className={styles.playerError}>{playerOperationError}</p>
-            )}
-
-            {/* <div className={styles.searchActions}>
-              <button
-                className={styles.loadTeamBtn}
-                onClick={() => setLoadTeamOpen(!loadTeamOpen)}
-              >
-                Load a team {loadTeamOpen ? "▲" : "▼"}
-              </button>
-              <button
-                className={styles.filtersBtn}
-                onClick={() => setFiltersOpen(!filtersOpen)}
-              >
-                Filters {filtersOpen ? "▲" : "▼"}
-              </button>
-            </div> */}
-
-            {/* {loadTeamOpen && (
-              <div className={styles.loadTeamPanel}>
-                {savedTeams.length === 0 ? (
-                  <div className={styles.emptyTeams}>
-                    <span>No saved teams yet. Save your current lineup to get started!</span>
-                  </div>
-                ) : (
-                  <div className={styles.teamsList}>
-                    {savedTeams.map((team) => (
-                      <div key={team.id} className={styles.teamItem}>
-                        <div className={styles.teamItemInfo}>
-                          <strong>{team.name}</strong>
-                          <span className={styles.teamDate}>
-                            {new Date(team.savedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className={styles.teamItemActions}>
-                          <button
-                            className={styles.loadBtn}
-                            onClick={() => loadTeam(team)}
-                          >
-                            Load
-                          </button>
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => deleteTeam(team.id)}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )} */}
-
-            {/* {filtersOpen && (
-              <div className={styles.filtersPanel}>
-                <div className={styles.filterSection}>
-                  <label className={styles.filterLabel}>Salary Range</label>
-                  <div className={styles.salaryInputs}>
-                    <input
-                      type="number"
-                      className={styles.salaryInput}
-                      placeholder="Min"
-                      value={salaryRange[0]}
-                      onChange={(e) => setSalaryRange([Number(e.target.value), salaryRange[1]])}
-                      min={0}
-                      max={salaryRange[1]}
-                    />
-                    <span className={styles.salaryDivider}>to</span>
-                    <input
-                      type="number"
-                      className={styles.salaryInput}
-                      placeholder="Max"
-                      value={salaryRange[1]}
-                      onChange={(e) => setSalaryRange([salaryRange[0], Number(e.target.value)])}
-                      min={salaryRange[0]}
-                      max={100000000}
-                    />
-                  </div>
-                          
-                  <div style={{ position: 'relative', height: '6px', marginTop: '8px' }}>
-                    <input
-                      type="range"
-                      className={styles.salarySlider}
-                      min={0}
-                      max={100000000}
-                      step={1000000}
-                      value={salaryRange[0]}
-                      onChange={(e) => setSalaryRange([Math.min(Number(e.target.value), salaryRange[1] - 1000000), salaryRange[1]])}
-                      style={{ position: 'absolute', width: '100%', pointerEvents: 'auto' }}
-                    />
-                    <input
-                      type="range"
-                      className={styles.salarySlider}
-                      min={0}
-                      max={100000000}
-                      step={1000000}
-                      value={salaryRange[1]}
-                      onChange={(e) => setSalaryRange([salaryRange[0], Math.max(Number(e.target.value), salaryRange[0] + 1000000)])}
-                      style={{ position: 'absolute', width: '100%', pointerEvents: 'auto' }}
-                    />
-                  </div>
-                  
-                  <div className={styles.salaryLabels}>
-                    <span>${(salaryRange[0] / 1000000).toFixed(0)}M</span>
-                    <span>${(salaryRange[1] / 1000000).toFixed(0)}M</span>
-                  </div>
-                </div>
-
-                <div className={styles.filterSection}>
-                  <div className={styles.positionHeader}>
-                    <label className={styles.filterLabel}>Current Position</label>
-                    <button 
-                      className={styles.selectAllBtn}
-                      onClick={toggleAllPositions}
-                    >
-                      {selectedPositions.size === positionOrder.length ? "Deselect All" : "Select All"}
-                    </button>
-                  </div>
-                  <div className={styles.positionGrid}>
-                    {positionOrder.map((pos) => (
-                      <label key={pos} className={styles.positionCheckbox}>
-                        <input
-                          type="checkbox"
-                          checked={selectedPositions.has(pos)}
-                          onChange={() => togglePosition(pos)}
-                        />
-                        <span>{pos}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )} */}
+            <SearchBar
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              onSubmit={handleQuickAddFromSearch}
+              statusText={
+                hasSearchTerm
+                  ? `${searchResultPlayers.length} results`
+                  : `${savedPlayers.length} saved players`
+              }
+              errorMessage={playerOperationError}
+            />
           </section>
-          
+
           {hasSearchTerm && (
-            <section className={`${styles.displayBox} ${styles.searchResultsSection}`}>
-              <div className={styles.sectionHeader}>
-                <h3>Search Results</h3>
-                <span>{searchResultPlayers.length}</span>
-              </div>
-              <div className={`${styles.playerScroller} ${styles.searchResultsScroller}`}>
-                {searchResultPlayers.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <strong>No players found</strong>
-                    <span>Try a different search.</span>
-                  </div>
-                ) : (
-                  searchResultPlayers.map((player) => {
-                    const isSaved = savedPlayerIds.has(player.id);
-                    return renderPlayerRow(player, {
-                      showDelete: false,
-                      overrideAddHandler: isSaved ? undefined : () => void handleSavePlayerOnly(player),
-                      addButtonLabel: isSaved ? "Already Saved" : "Add to Saved",
-                      isAlreadySaved: isSaved
-                    });
-                  })
-                )}
-              </div>
-            </section>
+            <SearchResultsSection
+              players={searchResultPlayers}
+              savedPlayerIds={savedPlayerIds}
+              assignedIds={assignedIds}
+              draggingId={draggingId}
+              savingPlayerIds={savingPlayerIds}
+              onPrepareDrag={prepareDragPlayer}
+              onClearDrag={clearDragState}
+              onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+            />
           )}
 
-          {/* Saved players */}
-          <div className={styles.displayBox}>
-            <div className={styles.sectionHeader}>
-              <h3>Saved Players</h3>
-              <span>{savedPlayers.length}</span>
-            </div>
-            <div className={styles.playerScroller}>
-              {savedPlayers.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <strong>No saved players</strong>
-                  <span>Search for players and add them to your team.</span>
-                </div>
-              ) : (
-                savedPlayers.map((player) => renderPlayerRow(player))
-              )}
-            </div>
-          </div>
+          <SavedPlayersSection
+            players={savedPlayers}
+            assignedIds={assignedIds}
+            draggingId={draggingId}
+            savingPlayerIds={savingPlayerIds}
+            deletingPlayerIds={deletingPlayerIds}
+            activePosition={activePosition}
+            onPrepareDrag={prepareDragPlayer}
+            onClearDrag={clearDragState}
+            onAddPlayer={handleAddPlayer}
+            onDeletePlayer={handleDeletePlayer}
+          />
           {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
         <section className={styles.actionsCard}>
           {/* <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button> */}
@@ -905,204 +586,34 @@ export default function TeamBuilderPage() {
           {isRecommending && !recommendationError && (
             <div className={styles.recommendLoading}>Calculating best fits…</div>
           )}
-          {recommendedPlayers.length > 0 && (
-            <ul className={styles.recommendList}>
-              {recommendedPlayers.map((player) => (
-                <li key={player.id} className={styles.recommendItem}>
-                  <div className={styles.recommendPlayerInfo}>
-                    <img
-                      src={player.image_url}
-                      alt={player.name}
-                    />
-                    <div>
-                      <div className={styles.recommendName}>{player.name}</div>
-                      <div className={styles.recommendMeta}>{player.years_active}</div>
-                    </div>
-                  </div>
-                  <div className={styles.recommendActions}>
-                    {/* <span className={styles.recommendScore}>
-                      Impact Score: {player.score.toFixed(1)}
-                    </span> */}
-                    {(() => {
-                      const isSaved = savedPlayerIds.has(player.id);
-                      const isSaving = savingPlayerIds.has(player.id);
-                      const disabled = isSaved || isSaving;
-                      const label = isSaved ? "Already Saved" : isSaving ? "Saving..." : "Add to Saved";
-
-                      const savedCandidate: SavedPlayer = {
-                        id: player.id,
-                        name: player.name,
-                        image_url: player.image_url,
-                        years_active: player.years_active
-                      };
-
-                      return (
-                        <button
-                          className={styles.addButton}
-                          disabled={disabled}
-                          onClick={() => {
-                            if (!disabled) {
-                              void handleSavePlayerOnly(savedCandidate);
-                            }
-                          }}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })()}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <RecommendationsSection
+            players={recommendedPlayers}
+            savedPlayerIds={savedPlayerIds}
+            savingPlayerIds={savingPlayerIds}
+            onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+          />
           
         </section>
         </div>
 
-        {/* TOP-RIGHT: Team card */}
-        {/* <section className={styles.teamCard}>
-          <div className={styles.teamInfo}>
-            <div className={styles.teamNameWrapper}>
-              {isEditingTeamName ? (
-                <input
-                  type="text"
-                  className={styles.teamNameInput}
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  onBlur={() => setIsEditingTeamName(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") setIsEditingTeamName(false);
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <h2 className={styles.teamName}>
-                  {teamName}
-                  <span
-                    className={styles.editIcon}
-                    onClick={() => setIsEditingTeamName(true)}
-                  >
-                    ✏️
-                  </span>
-                </h2>
-              )}
-            </div>
-
-            <div className={styles.teamScore}>
-              <label>Team Score</label>
-              <span>123456</span>
-            </div>
-            <div className={styles.teamBudget}>
-              <label>Team Budget</label>
-              <span>$255,380,936</span>
-            </div>
-            <div className={styles.otherStat}>
-              <label>someOtherStat</label>
-              <span>255,380,936</span>
-            </div>
-          </div>
-          <div className={styles.radarChart}>Radar Chart</div>
-        </section> */}
-
-        {/* MIDDLE-RIGHT: Diamond */}
-        <section className={styles.diamondPanel}>
-          <div className={styles.panelHeader}>
-            <div>
-              <h2>Your lineup</h2>
-              <p>Select a position, then add or drag a player.</p>
-            </div>
-            <span className={styles.positionHint}>
-              {activePosition ? `Active: ${activePosition}` : "Pick a position"}
-            </span>
-          </div>
-
-          <div className={styles.diamond}>
-            <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
-              <rect x="5" y="5" width="90" height="90" rx="8" ry="8" />
-              <line x1="50" y1="10" x2="10" y2="50" />
-              <line x1="50" y1="10" x2="90" y2="50" />
-              <line x1="10" y1="50" x2="50" y2="90" />
-              <line x1="50" y1="90" x2="90" y2="50" />
-              <circle cx="50" cy="12" r="2" />
-              <circle cx="50" cy="50" r="2" />
-            </svg>
-
-            {positionOrder.map((pos) => {
-              const assigned = lineup[pos];
-              const isActive = activePosition === pos;
-              const canDrop = dragPlayerRef.current && !assigned;
-              return (
-                <div
-                  key={pos}
-                  className={`${styles.positionNode} ${assigned ? styles.filled : ""} ${
-                    isActive ? styles.active : ""
-                  } ${canDrop && dropTarget === pos ? styles.droppable : ""}`}
-                  style={positionCoordinates[pos]}
-                >
-                  <button
-                    type="button"
-                    className={styles.positionTrigger}
-                    onClick={() => setActivePosition(pos)}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setDropTarget(pos);
-                    }}
-                    onDragLeave={() => setDropTarget(null)}
-                    onDrop={(e) => handlePositionDrop(e, pos)}
-                    draggable={!!assigned}
-                    onDragStart={() => assigned && prepareDragPlayer(assigned, pos)}
-                    onDragEnd={clearDragState}
-                    aria-label={`Position ${pos}`}
-                  >
-                    {assigned ? (
-                      <div className={styles.positionPlayer}>
-                        <img src={assigned.image_url} alt={assigned.name} />
-                        <div className={styles.positionName}>{assigned.name}</div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className={styles.positionLabel}>{pos}</div>
-                        <div style={{ fontSize: 12, opacity: 0.7 }}>Drop or click</div>
-                      </>
-                    )}
-                  </button>
-
-                  {assigned && (
-                    <button
-                      className={styles.clearSlot}
-                      onClick={() => handleClearSlot(pos)}
-                      title="Clear"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-
-            {staticSpots.map((spot) => (
-              <div
-                key={spot.label}
-                className={`${styles.positionNode} ${styles.staticPosition}`}
-                style={{ top: spot.top, left: spot.left }}
-                aria-hidden="true"
-              >
-                <div className={styles.positionLabel}>{spot.label}</div>
-                <div className={styles.staticHint}>Pitcher</div>
-              </div>
-            ))}
-          </div>
-
-          <button 
-            className={styles.addButton} 
-            style={{ alignSelf: "flex-end", marginTop: 12 }}
-            onClick={saveTeam}
-          >
-            Save Lineup
-          </button>
-        </section>
+        <DiamondPanel
+          lineup={lineup}
+          activePosition={activePosition}
+          dropTarget={dropTarget}
+          dragPlayer={dragPlayerRef.current}
+          onSelectPosition={(position) => setActivePosition(position)}
+          onDragOverPosition={(position) => setDropTarget(position)}
+          onDragLeavePosition={() => setDropTarget(null)}
+          onDropOnPosition={handlePositionDrop}
+          onPrepareDrag={prepareDragPlayer}
+          onClearDragState={clearDragState}
+          onClearSlot={handleClearSlot}
+          onSaveTeam={saveTeam}
+        />
 
       </div>
     </div>
   );
 }
+
+
