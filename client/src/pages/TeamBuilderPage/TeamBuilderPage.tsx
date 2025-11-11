@@ -923,9 +923,9 @@ export default function TeamBuilderPage() {
                     </div>
                   </div>
                   <div className={styles.recommendActions}>
-                    <span className={styles.recommendScore}>
+                    {/* <span className={styles.recommendScore}>
                       Impact Score: {player.score.toFixed(1)}
-                    </span>
+                    </span> */}
                     {(() => {
                       const isSaved = savedPlayerIds.has(player.id);
                       const isSaving = savingPlayerIds.has(player.id);
