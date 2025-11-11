@@ -922,9 +922,38 @@ export default function TeamBuilderPage() {
                       <div className={styles.recommendMeta}>{player.years_active}</div>
                     </div>
                   </div>
-                  <span className={styles.recommendScore}>
-                    Impact Score: {player.score.toFixed(1)}
-                  </span>
+                  <div className={styles.recommendActions}>
+                    <span className={styles.recommendScore}>
+                      Impact Score: {player.score.toFixed(1)}
+                    </span>
+                    {(() => {
+                      const isSaved = savedPlayerIds.has(player.id);
+                      const isSaving = savingPlayerIds.has(player.id);
+                      const disabled = isSaved || isSaving;
+                      const label = isSaved ? "Already Saved" : isSaving ? "Saving..." : "Add to Saved";
+
+                      const savedCandidate: SavedPlayer = {
+                        id: player.id,
+                        name: player.name,
+                        image_url: player.image_url,
+                        years_active: player.years_active
+                      };
+
+                      return (
+                        <button
+                          className={styles.addButton}
+                          disabled={disabled}
+                          onClick={() => {
+                            if (!disabled) {
+                              void handleSavePlayerOnly(savedCandidate);
+                            }
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })()}
+                  </div>
                 </li>
               ))}
             </ul>

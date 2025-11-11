@@ -788,6 +788,12 @@
   color: #ced3ff;
 }
 
+.recommendActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .loadTeamBtn,
 .targetMetricsBtn,
 .filtersBtn {
