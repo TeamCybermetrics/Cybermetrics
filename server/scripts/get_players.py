@@ -35,14 +35,6 @@ def get_team_roster_positions(roster_repo: RosterRepository, year: int) -> Dict[
             pos_abbrev = position_info.get("abbreviation")
             if not (mlbam_id and pos_abbrev):
                 continue
-
-            # Commented out simplfications from 3B to IF for example
-            # if pos_abbrev in INFIELD_POSITIONS:
-            #     simplified = "IF"
-            # elif pos_abbrev in OUTFIELD_POSITIONS:
-            #     simplified = "OF"
-            # else:
-            #     simplified = "IF"
             positions[mlbam_id] = pos_abbrev
 
     print(f"✓ Retrieved {len(positions)} player positions.\n")
