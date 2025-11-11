@@ -759,7 +759,7 @@ export default function TeamBuilderPage() {
             {/* Filters panel */}
             {filtersOpen && (
               <div className={styles.filtersPanel}>
-                <div className={styles.filterSection}>
+                {/* <div className={styles.filterSection}>
                   <label className={styles.filterLabel}>Salary Range</label>
                   <div className={styles.salaryInputs}>
                     <input
@@ -783,7 +783,6 @@ export default function TeamBuilderPage() {
                     />
                   </div>
                           
-                  {/* Dual range sliders */}
                   <div style={{ position: 'relative', height: '6px', marginTop: '8px' }}>
                     <input
                       type="range"
@@ -811,7 +810,7 @@ export default function TeamBuilderPage() {
                     <span>${(salaryRange[0] / 1000000).toFixed(0)}M</span>
                     <span>${(salaryRange[1] / 1000000).toFixed(0)}M</span>
                   </div>
-                </div>
+                </div> */}
 
                 <div className={styles.filterSection}>
                   <div className={styles.positionHeader}>
