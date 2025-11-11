@@ -436,7 +436,15 @@ export default function TeamBuilderPage() {
 
   const renderPlayerRow = (
     player: SavedPlayer,
-    { showDelete = true }: { showDelete?: boolean } = {}
+    {
+      showDelete = true,
+      overrideAddHandler,
+      addButtonLabel
+    }: {
+      showDelete?: boolean;
+      overrideAddHandler?: () => void;
+      addButtonLabel?: string;
+    } = {}
   ) => {
     const alreadyAssigned = assignedIds.has(player.id);
     const isDragging = draggingId === player.id;
@@ -474,8 +482,16 @@ export default function TeamBuilderPage() {
           )}
           <button
             className={styles.addButton}
-            disabled={alreadyAssigned || !activePosition || savingPlayerIds.has(player.id)}
+            disabled={
+              overrideAddHandler
+                ? savingPlayerIds.has(player.id)
+                : alreadyAssigned || !activePosition || savingPlayerIds.has(player.id)
+            }
             onClick={() => {
+              if (overrideAddHandler) {
+                overrideAddHandler();
+                return;
+              }
               if (activePosition) {
                 void handleAddPlayer(player);
               }
@@ -483,6 +499,8 @@ export default function TeamBuilderPage() {
             title={
               alreadyAssigned
                 ? "Already assigned"
+                : overrideAddHandler
+                ? "Add to saved players"
                 : !activePosition
                 ? "Select a position first"
                 : "Add to active position"
@@ -492,7 +510,7 @@ export default function TeamBuilderPage() {
               ? "Assigned"
               : savingPlayerIds.has(player.id)
               ? "Saving..."
-              : "Add"}
+              : addButtonLabel || "Add"}
           </button>
         </div>
       </div>
@@ -512,6 +530,36 @@ export default function TeamBuilderPage() {
     localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
     alert(`Team "${teamName}" saved successfully!`);
   };
+
+  const handleSavePlayerOnly = useCallback(
+    async (player: SavedPlayer) => {
+      setPlayerOperationError("");
+      setSavingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+
+      try {
+        const saved = await ensurePlayerIsSaved(player);
+        if (saved) {
+          setSavedPlayers((prev) => {
+            if (prev.some((existing) => existing.id === player.id)) {
+              return prev;
+            }
+            return [...prev, player];
+          });
+        }
+      } finally {
+        setSavingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+          return next;
+        });
+      }
+    },
+    [ensurePlayerIsSaved]
+  );
 
   const loadTeam = (team: SavedTeam) => {
     setTeamName(team.name);
@@ -776,7 +824,11 @@ export default function TeamBuilderPage() {
                   </div>
                 ) : (
                   searchResultPlayers.map((player) =>
-                    renderPlayerRow(player, { showDelete: false })
+                    renderPlayerRow(player, {
+                      showDelete: false,
+                      overrideAddHandler: () => void handleSavePlayerOnly(player),
+                      addButtonLabel: "Add to Saved"
+                    })
                   )
                 )}
               </div>
