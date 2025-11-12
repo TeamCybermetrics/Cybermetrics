@@ -1,5 +1,5 @@
 import { SavedPlayer } from "@/api/players";
-import { PlayerRow } from "./PlayerRow";
+import { PlayerRow } from "../PlayerRow/PlayerRow";
 import styles from "./SearchResultsSection.module.css";
 
 type SearchResultsSectionProps = {

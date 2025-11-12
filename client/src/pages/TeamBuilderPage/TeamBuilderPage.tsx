@@ -9,11 +9,11 @@ import {
   SavedTeam,
   positionOrder,
 } from "@/components/TeamBuilder/constants";
-import { SearchBar } from "@/components/TeamBuilder/SearchBar";
-import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection";
-import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection";
-import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection";
-import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel";
+import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
+import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection/SavedPlayersSection";
+import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
+import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
+import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 
 /**
  * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
