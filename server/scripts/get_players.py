@@ -15,10 +15,10 @@ OUTFIELD_POSITIONS = {"LF", "CF", "RF"}
 
 def get_team_roster_positions(roster_repo: RosterRepository, year: int) -> Dict[int, str]:
     """
-    Fetch active MLB player positions via repository API calls and derive simplified positions.
+    Fetch active MLB player positions via repository API calls and capture their native abbreviations.
 
     Returns:
-        Dict mapping mlbam_id -> 'IF' or 'OF'
+        Dict mapping mlbam_id -> raw position abbreviation (e.g., '3B', 'CF')
     """
     positions: Dict[int, str] = {}
     print(f"Fetching active player positions from MLB StatsAPI for {year}...")
@@ -35,14 +35,7 @@ def get_team_roster_positions(roster_repo: RosterRepository, year: int) -> Dict[
             pos_abbrev = position_info.get("abbreviation")
             if not (mlbam_id and pos_abbrev):
                 continue
-
-            if pos_abbrev in INFIELD_POSITIONS:
-                simplified = "IF"
-            elif pos_abbrev in OUTFIELD_POSITIONS:
-                simplified = "OF"
-            else:
-                simplified = "IF"
-            positions[mlbam_id] = simplified
+            positions[mlbam_id] = pos_abbrev
 
     print(f"✓ Retrieved {len(positions)} player positions.\n")
     return positions
@@ -151,7 +144,7 @@ def refresh_players(
     if current_df is None:
         return 0
 
-    # ✅ Fetch simplified IF/OF positions once via repository
+    # ✅ Fetch raw position abbreviations once via repository
     player_positions = get_team_roster_positions(roster_repo, current_season)
 
     players: List[Dict[str, Any]] = []
