@@ -1,5 +1,6 @@
 from repositories.saved_players_repository import SavedPlayersRepository
-from entities.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
+from dtos.saved_player_dtos import AddPlayerResponse, DeletePlayerResponse
+from entities.players import SavedPlayer
 from fastapi import HTTPException, status
 from typing import List, Optional
 from anyio import to_thread

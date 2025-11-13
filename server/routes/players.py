@@ -1,18 +1,15 @@
 from fastapi import APIRouter, Query, status, Depends, HTTPException
-from entities.players import (
-    PlayerSearchResult, 
-    AddPlayerResponse, 
-    DeletePlayerResponse, 
-    SavedPlayer, 
-    PlayerDetail,
+from dtos.player_dtos import PlayerSearchResult, PlayerDetail
+from dtos.saved_player_dtos import AddPlayerResponse, DeletePlayerResponse, UpdateSavedPlayerPositionRequest
+from dtos.roster_dtos import (
     RosterAvgRequest,
     RosterAvgResponse,
     TeamWeaknessResponse,
     ValueScoreRequest,
     ValueScoreResponse,
     PlayerValueScore,
-    UpdateSavedPlayerPositionRequest,
 )
+from entities.players import SavedPlayer
 from middleware.auth import get_current_user
 from typing import List, Annotated
 from dependency.dependencies import get_player_search_service, get_roster_avg_service, get_saved_players_service
