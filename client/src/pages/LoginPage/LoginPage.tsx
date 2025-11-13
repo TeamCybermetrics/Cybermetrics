@@ -1,78 +1,68 @@
-import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthCard, Input, Button, Alert, Link, ProtectedRoute } from "@/components";
-import { authActions } from "@/actions/auth";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ROUTES } from "@/config";
+import logo from "@/assets/brand_badge.jpg";
 import styles from "./LoginPage.module.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    setSuccess("");
-
-    const result = await authActions.login(email, password);
-
-    if (result.success) {
-      setSuccess("Login successful!");
-      setTimeout(() => {
-        navigate(ROUTES.TEAM_BUILDER);
-      }, 1000);
-    } else {
-      setError(result.error || "An error occurred");
-    }
-
-    setIsLoading(false);
-  };
+    setLoading(true);
+    // auth logic here
+  }
 
   return (
-    <ProtectedRoute requireAuth={false}>
-      <AuthCard
-        title="Login"
-        subtitle="Welcome back to Cybermetrics"
-        footer={
-          <p>
-            Don&apos;t have an account? <Link href={ROUTES.SIGNUP}>Sign up</Link>
-          </p>
-        }
-      >
+    <div className={styles.page}>
+      <div className={styles.stripeBottom}></div>
+      
+      <div className={styles.logo}>
+        <img src={logo} alt="Cybermetrics" />
+        <span>Cybermetrics</span>
+      </div>
+
+      <div className={styles.container}>
+        <h1 className={styles.title}>Login</h1>
+        <p className={styles.subtitle}>Access your Cybermetrics account</p>
+
         <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
 
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              disabled={loading}
+            />
+          </div>
 
-          {error && <Alert type="error">{error}</Alert>}
-          {success && <Alert type="success">{success}</Alert>}
-
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Logging in..." : "Login"}
-          </Button>
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
-      </AuthCard>
-    </ProtectedRoute>
+
+        <p className={styles.footer}>
+          Don't have an account? <Link to={ROUTES.SIGNUP}>Sign up</Link>
+        </p>
+      </div>
+    </div>
   );
 }

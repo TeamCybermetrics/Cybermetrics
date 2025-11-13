@@ -1,94 +1,80 @@
-import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthCard, Input, Button, Alert, Link, ProtectedRoute } from "@/components";
-import { authActions } from "@/actions/auth";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ROUTES } from "@/config";
+import logo from "@/assets/brand_badge.jpg";
 import styles from "./SignupPage.module.css";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    setSuccess("");
-
-    const result = await authActions.signup(email, password, displayName);
-
-    if (result.success) {
-      setSuccess("Account created successfully! Redirecting to login...");
-      setEmail("");
-      setPassword("");
-      setDisplayName("");
-
-      setTimeout(() => {
-        navigate(ROUTES.LOGIN);
-      }, 2000);
-    } else {
-      setError(result.error || "An error occurred");
-    }
-
-    setIsLoading(false);
-  };
+    setLoading(true);
+    // auth logic here
+  }
 
   return (
-    <ProtectedRoute requireAuth={false}>
-      <AuthCard
-        title="Sign Up"
-        subtitle="Create your Cybermetrics account"
-        footer={
-          <p>
-            Already have an account? <Link href={ROUTES.LOGIN}>Login</Link>
-          </p>
-        }
-      >
+    <div className={styles.page}>
+      <div className={styles.stripeBottom}></div> {/* Third stripe */}
+      
+      <div className={styles.logo}>
+        <img src={logo} alt="Cybermetrics" />
+        <span>Cybermetrics</span>
+      </div>
+
+      <div className={styles.container}>
+        <h1 className={styles.title}>Sign Up</h1>
+        <p className={styles.subtitle}>Create your Cybermetrics account</p>
+
         <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            label="Display Name (optional)"
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="John Doe"
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Display Name (optional)</label>
+            <input
+              type="text"
+              placeholder="John Doe"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              disabled={loading}
+            />
+          </div>
 
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
 
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            minLength={6}
-            disabled={isLoading}
-            hint="Minimum 6 characters"
-          />
+          <div className={styles.field}>
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              disabled={loading}
+            />
+          </div>
 
-          {error && <Alert type="error">{error}</Alert>}
-          {success && <Alert type="success">{success}</Alert>}
-
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Sign Up"}
-          </Button>
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? "Creating..." : "Login"}
+          </button>
         </form>
-      </AuthCard>
-    </ProtectedRoute>
+
+        <p className={styles.footer}>
+          Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
+        </p>
+      </div>
+    </div>
   );
 }
