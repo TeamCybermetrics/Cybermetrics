@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
 import logo from "@/assets/brand_badge.jpg";
@@ -14,45 +14,29 @@ export default function SignupPage() {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError("");
-  setSuccess("");
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
 
-  const result = await authActions.signup(email, password, displayName);
+    const result = await authActions.signup(email, password, displayName);
 
-  // Clear password from state as soon as possible
-  setPassword("");
+    if (result.success) {
+      setSuccess("Account created successfully! Redirecting to login...");
+      setEmail("");
+      setPassword("");
+      setDisplayName("");
 
-  if (result.success) {
-    setSuccess("Account created successfully! Logging you in...");
-    
-    // Prefer using auth token from signup if available
-    let loginResult;
-    if (result.authToken) {
-      loginResult = await authActions.loginWithToken(result.authToken);
-    } else {
-      // Fallback to legacy login if token not returned
-      loginResult = await authActions.login(email, password);
-    }
-    
-    if (loginResult.success) {
-      setTimeout(() => {
-        navigate(ROUTES.TEAM_BUILDER); // Go straight to app, not login page
-      }, 1000);
-    } else {
-      // If auto-login fails, redirect to login
       setTimeout(() => {
         navigate(ROUTES.LOGIN);
       }, 2000);
+    } else {
+      setError(result.error || "An error occurred");
     }
-  } else {
-    setError(result.error || "An error occurred");
-  }
 
-  setIsLoading(false);
-};
+    setIsLoading(false);
+  };
 
   return (
     <div className={styles.page}>
@@ -64,7 +48,7 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
       </div>
 
       <div className={styles.container}>
-        <h1 className={styles.title}>Sign Up</h1>
+        <h1 className={styles.title}>sign up</h1>
         <p className={styles.subtitle}>Create your Cybermetrics account</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -102,9 +86,9 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
               minLength={6}
               disabled={isLoading}
             />
-            <div style={{ fontSize: "0.9em", color: "#888", marginTop: "4px" }}>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginTop: "4px" }}>
               Minimum 6 characters
-            </div>
+            </span>
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
@@ -116,10 +100,6 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         </form>
 
         <p className={styles.footer}>
-import { Link } from "react-router-dom";
-
-// ... other code ...
-
           Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
         </p>
       </div>
