@@ -14,29 +14,36 @@ export default function SignupPage() {
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    setSuccess("");
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
+  setSuccess("");
 
-    const result = await authActions.signup(email, password, displayName);
+  const result = await authActions.signup(email, password, displayName);
 
-    if (result.success) {
-      setSuccess("Account created successfully! Redirecting to login...");
-      setEmail("");
-      setPassword("");
-      setDisplayName("");
-
+  if (result.success) {
+    setSuccess("Account created successfully! Logging you in...");
+    
+    // Auto-login after successful signup
+    const loginResult = await authActions.login(email, password);
+    
+    if (loginResult.success) {
+      setTimeout(() => {
+        navigate(ROUTES.TEAM_BUILDER); // Go straight to app, not login page
+      }, 1000);
+    } else {
+      // If auto-login fails, redirect to login
       setTimeout(() => {
         navigate(ROUTES.LOGIN);
       }, 2000);
-    } else {
-      setError(result.error || "An error occurred");
     }
+  } else {
+    setError(result.error || "An error occurred");
+  }
 
-    setIsLoading(false);
-  };
+  setIsLoading(false);
+};
 
   return (
     <div className={styles.page}>

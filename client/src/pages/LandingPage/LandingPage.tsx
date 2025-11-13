@@ -5,7 +5,8 @@ import { Spinner } from "@/components";
 import { ROUTES } from "@/config";
 import styles from "./LandingPage.module.css";
 import logo from "@/assets/logo_bubble.svg";
-import connector from "@/assets/svg/landingPageConnector.svg";
+import demoImage from "@/assets/demo.png";
+import connector from "@/assets/svg/landingPageConnector.svg"; // Re-add this import
 
 export default function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,11 +28,9 @@ export default function LandingPage() {
 
   return (
     <main className={styles.main}>
-      {/* Brand (absolute) */}
       <img src={logo} alt="Cybermetrics logo" className={styles.brandLogo} />
       <div className={styles.brandName}>Cybermetrics</div>
 
-      {/* Top-right auth buttons (absolute) */}
       <div className={styles.signUpButtonContainer}>
         {isAuthenticated ? (
           <Link to={ROUTES.TEAM_BUILDER} className={styles.signUpButton}>
@@ -49,38 +48,21 @@ export default function LandingPage() {
         )}
       </div>
 
-      {/* Flow container */}
       <div className={styles.page}>
-        {/* HERO */}
         <section className={styles.hero}>
           <h2 className={styles.heroTitle}>
             One Dashboard to Manage
             <br />
             Your Baseball team
           </h2>
-          <h3 className={styles.subtitle1}>
-            quick description about Cybermetrics here
-          </h3>
+        </section>
 
-          {/* input + button row */}
-          <div className={styles.ctaRow}>
-            <input
-              type="text"
-              placeholder="Input your MLB team..."
-              className={styles.inputYourTeam}
-            />
-            <Link to={ROUTES.SIGNUP} className={styles.TestOurDemoButton}>
-              Test our demo
-            </Link>
+        <section className={styles.demoSection}>
+          <div className={styles.demoScreen}>
+            <img src={demoImage} alt="Cybermetrics Dashboard Demo" className={styles.demoImage} />
           </div>
         </section>
 
-        {/* DEMO */}
-        <section className={styles.demoSection}>
-          <div className={styles.demoScreen} />
-        </section>
-
-        {/* HOW IT WORKS */}
         <section className={styles.howSection}>
           <h1 className={styles.heading1}>How does it work?</h1>
           <p className={styles.subtitle}>
@@ -107,7 +89,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <img src={connector} alt="" className={styles.connectorSvg} />
+            <img src={connector} alt="" className={styles.connectorSvg} /> {/* Re-add this line */}
           </div>
         </section>
       </div>

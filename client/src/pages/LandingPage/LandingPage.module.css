@@ -2,7 +2,7 @@
   display: block;
   padding: 96px 0 120px;
   position: relative;
-  min-height: 100vh; /* ensures gradient always shows */
+  min-height: 100vh; 
   background: linear-gradient(
     to bottom,
     #0D1728 0% 50%,
@@ -39,7 +39,7 @@
   font-size: 38px;
   font-style: normal;
   font-weight: 500;
-  line-height: 32px; /* 84.211% */
+  line-height: 32px;
 }
 
 .heading1 {
@@ -109,12 +109,12 @@
   align-items: center;
   text-align: center;
   gap: 12px;
-  margin-top: 40px; /* adjust as needed under brand */
+  margin-top: 40px;
 }
 
 /* Remove absolute positioning from hero title/subtitle */
 .heroTitle {
-  position: static; /* was absolute */
+  position: static;
   top: auto; left: auto; right: auto;
   transform: none;
   margin: 0;
@@ -148,16 +148,16 @@
   align-items: stretch;
   justify-content: center;
   gap: 12px;
-  flex-wrap: wrap; /* wrap on smaller screens */
+  flex-wrap: wrap;
 }
 
   .signUpButtonContainer {
-  position: absolute;     /* so we can place it freely */
-  top: 60px;              /* distance from top edge */
-  right: 60px;            /* distance from right edge */
-  display: flex;          /* put buttons in a row */
-  gap: 12px;              /* space between them */
-  z-index: 10;            /* ensure it's above background */
+  position: absolute;  
+  top: 60px;            
+  right: 60px;        
+  display: flex;         
+  gap: 12px;       
+  z-index: 10;        
 }
 
 /* Main button style */
@@ -220,42 +220,43 @@
     border-color: #FFF;          /* keep white border on focus */
   }
 
-/* Button now in normal flow, placed to the right of input */
-.TestOurDemoButton {
-  position: static; /* was absolute */
-  top: auto; left: auto; transform: none; margin-left: 0;
-  height: 82px;
-  display: inline-flex;
-  padding: 14px 32px;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  border-radius: 1000px;
-  background: #FFF;
-  color: #293241;
-  border: none;
-  font-family: "Anybody", Medium 300;
-  font-size: 18px;
-  font-weight: 500;
-  cursor: pointer;
-  z-index: 1;
-}
+/* ...existing code... */
 
-/* DEMO section centered, in flow */
+/* Pull demo section up closer to hero */
 .demoSection {
-  margin-top: 40px;
+  margin-top: 32px;
   display: flex;
   justify-content: center;
 }
 
+/* Rounded device frame that clips the image */
 .demoScreen {
-  position: static;                 /* in normal flow */
+  position: relative;
   width: 100%;
-  max-width: 1320px;                /* 1320 on large screens */
-  aspect-ratio: 1320 / 923;
-  height: auto;                     
-  border-radius: 50px;
-  border: 15px solid #4C5562;
+  max-width: 1200px;
+  border-radius: 24px;
+  padding: 12px; /* Creates space for the frame/border */
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Inner container that holds and clips the image */
+.demoScreen::after {
+  content: "";
+  position: absolute;
+  inset: 12px; /* Match the padding */
+  border-radius: 16px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Image fills perfectly inside the frame */
+.demoImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  object-fit: cover;
 }
 
 
@@ -263,7 +264,7 @@
 .howSection {
   position: relative;
   top: auto; left: auto; transform: none;
-  margin-top: 32px;               /* ~20px below demo + breathing */
+  margin-top: 32px;
   width: 100%;
   text-align: center;
   display: flex;
@@ -287,7 +288,7 @@
   width: calc(4 * 312px + 3 * 24.5px);
   max-width: 100%;
   margin: 84px auto 0;
-  padding-bottom: 160px; /* reserve space so it won't overflow bottom */
+  padding-bottom: 160px;
 }
 
 .featuresRow {
@@ -342,7 +343,7 @@
     font-size: 18px;
     font-style: normal;
     font-weight: 700;
-    line-height: 32px; /* 177.778% */
+    line-height: 32px;
   }
 
   .whiteTextRegular {
@@ -352,5 +353,5 @@
     font-size: 16px;
     font-style: normal;
     font-weight: 400;
-    line-height: 24px; /* 150% */
+    line-height: 24px;
   }
