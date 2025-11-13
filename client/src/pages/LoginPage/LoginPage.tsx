@@ -81,7 +81,7 @@ export default function LoginPage() {
         </form>
 
         <p className={styles.footer}>
-          Don't have an account? <a href={ROUTES.SIGNUP}>Sign up</a>
+          Don’t have an account? <a href={ROUTES.SIGNUP}>Sign up</a>
         </p>
       </div>
     </div>
