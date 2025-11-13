@@ -1,19 +1,38 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
 import logo from "@/assets/brand_badge.jpg";
 import styles from "./LoginPage.module.css";
 
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
-  function handleSubmit(e: React.FormEvent) {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    // auth logic here
-  }
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
+
+    const result = await authActions.login(email, password);
+
+    if (result.success) {
+      setSuccess("Login successful!");
+      setTimeout(() => {
+        navigate(ROUTES.TEAM_BUILDER);
+      }, 1000);
+    } else {
+      setError(result.error || "An error occurred");
+    }
+
+    setIsLoading(false);
+  };
 
   return (
     <div className={styles.page}>
@@ -26,7 +45,7 @@ export default function LoginPage() {
 
       <div className={styles.container}>
         <h1 className={styles.title}>Login</h1>
-        <p className={styles.subtitle}>Access your Cybermetrics account</p>
+        <p className={styles.subtitle}>Welcome back to Cybermetrics</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
@@ -37,7 +56,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
@@ -49,18 +68,20 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          {error && <div className={styles.error}>{error}</div>}
+          {success && <div className={styles.success}>{success}</div>}
+
+          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <p className={styles.footer}>
-          Don't have an account? <Link to={ROUTES.SIGNUP}>Sign up</Link>
+          Don't have an account? <a href={ROUTES.SIGNUP}>Sign up</a>
         </p>
       </div>
     </div>

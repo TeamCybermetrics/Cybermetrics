@@ -144,3 +144,25 @@
 .footer a:hover {
   color: rgba(106, 123, 255, 1);
 }
+
+.error {
+  padding: 10px 14px;
+  background: rgba(255, 60, 60, 0.12);
+  border: 1px solid rgba(255, 60, 60, 0.4);
+  border-radius: 10px;
+  color: #ff6b6b;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.success {
+  padding: 10px 14px;
+  background: rgba(0, 224, 90, 0.12);
+  border: 1px solid rgba(0, 224, 90, 0.4);
+  border-radius: 10px;
+  color: #00e05a;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
