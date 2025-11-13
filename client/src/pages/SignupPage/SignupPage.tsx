@@ -93,6 +93,9 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
               minLength={6}
               disabled={isLoading}
             />
+            <div style={{ fontSize: "0.9em", color: "#888", marginTop: "4px" }}>
+              Minimum 6 characters
+            </div>
           </div>
 
           {error && <div className={styles.error}>{error}</div>}
