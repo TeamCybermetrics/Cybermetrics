@@ -1,6 +1,6 @@
 from useCaseHelpers.auth_helper import AuthDomain
 from repositories.auth_repository import AuthRepository
-from entities.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from dtos.auth_dtos import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 from useCaseHelpers.errors import InputValidationError, AuthError, DatabaseError, DependencyUnavailableError
 
 

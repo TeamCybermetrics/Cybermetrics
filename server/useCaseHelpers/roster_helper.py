@@ -1,4 +1,4 @@
-from entities.players import PlayerAvgStats, RosterAvgResponse
+from dtos.roster_dtos import PlayerAvgStats, RosterAvgResponse
 from typing import Dict, List, Optional
 from .errors import InputValidationError
 

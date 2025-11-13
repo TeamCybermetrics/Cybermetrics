@@ -1,4 +1,5 @@
-from entities.auth import LoginRequest, SignupRequest, User
+from dtos.auth_dtos import LoginRequest, SignupRequest
+from entities.auth import User
 from .errors import InputValidationError, AuthError
 
 class AuthDomain:

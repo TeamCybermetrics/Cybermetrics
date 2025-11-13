@@ -1,7 +1,8 @@
 from datetime import datetime
 from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
-from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
+from dtos.player_dtos import PlayerSearchResult, PlayerDetail
+from entities.players import SeasonStats
 from config.firebase import firebase_service
 from typing import List, Dict, Optional, Any
 from repositories.player_repository import PlayerRepository

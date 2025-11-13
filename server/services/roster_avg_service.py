@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional
-from entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
+from dtos.roster_dtos import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
 from repositories.roster_avg_repository import RosterRepository
 from useCaseHelpers.roster_helper import RosterDomain
 from useCaseHelpers.errors import QueryError, UseCaseError

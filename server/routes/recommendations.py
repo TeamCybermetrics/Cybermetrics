@@ -6,7 +6,8 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from entities.players import PlayerSearchResult, RosterAvgRequest
+from dtos.player_dtos import PlayerSearchResult
+from dtos.roster_dtos import RosterAvgRequest
 from services.recommendation_service import RecommendationService
 from dependency.dependencies import get_recommendation_service
 from useCaseHelpers.errors import InputValidationError, QueryError, UseCaseError

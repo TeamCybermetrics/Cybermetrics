@@ -1,5 +1,6 @@
 from rapidfuzz import process, fuzz
-from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
+from dtos.player_dtos import PlayerSearchResult, PlayerDetail
+from entities.players import SeasonStats
 from typing import List, Dict, Optional, Callable
 from .errors import InputValidationError, QueryError
 

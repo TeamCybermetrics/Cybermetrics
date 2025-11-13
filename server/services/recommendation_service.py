@@ -5,7 +5,7 @@ from typing import List, Dict, Optional
 import logging
 import time
 
-from entities.players import PlayerSearchResult
+from dtos.player_dtos import PlayerSearchResult
 from repositories.roster_avg_repository import RosterRepository
 from useCaseHelpers.roster_helper import RosterDomain
 from repositories.player_repository import PlayerRepository

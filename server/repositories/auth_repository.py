@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
-from entities.auth import LoginRequest, SignupRequest, User
+from dtos.auth_dtos import LoginRequest, SignupRequest
+from entities.auth import User
 
 class AuthRepository(ABC):
     @abstractmethod

@@ -1,6 +1,7 @@
 from repositories.saved_players_repository import SavedPlayersRepository
 from useCaseHelpers.saved_players_helper import SavedPlayersDomain
-from entities.players import AddPlayerResponse, DeletePlayerResponse, SavedPlayer
+from dtos.saved_player_dtos import AddPlayerResponse, DeletePlayerResponse
+from entities.players import SavedPlayer
 from typing import List
 
 class SavedPlayersService:
