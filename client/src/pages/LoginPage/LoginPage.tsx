@@ -1,8 +1,8 @@
 import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthCard, Input, Button, Alert, Link, ProtectedRoute } from "@/components";
+import { useNavigate, Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
+import logo from "@/assets/brand_badge.jpg";
 import styles from "./LoginPage.module.css";
 
 export default function LoginPage() {
@@ -34,45 +34,57 @@ export default function LoginPage() {
   };
 
   return (
-    <ProtectedRoute requireAuth={false}>
-      <AuthCard
-        title="Login"
-        subtitle="Welcome back to Cybermetrics"
-        footer={
-          <p>
-            Don&apos;t have an account? <Link href={ROUTES.SIGNUP}>Sign up</Link>
-          </p>
-        }
-      >
+    <div className={styles.page}>
+      <div className={styles.stripeBottom}></div>
+      
+      <div className={styles.logo}>
+        <img src={logo} alt="Cybermetrics" />
+        <span>Cybermetrics</span>
+      </div>
+
+      <div className={styles.container}>
+        <h1 className={styles.title}>Login</h1>
+        <p className={styles.subtitle}>Welcome back to Cybermetrics</p>
+
         <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+              autoComplete="email"
+            />
+          </div>
 
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              autoComplete="current-password"
+            />
+          </div>
 
-          {error && <Alert type="error">{error}</Alert>}
-          {success && <Alert type="success">{success}</Alert>}
+          {error && <div className={styles.error} role="alert" aria-live="polite">{error}</div>}
+          {success && <div className={styles.success} role="alert" aria-live="polite">{success}</div>}
 
-          <Button type="submit" disabled={isLoading}>
+          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
             {isLoading ? "Logging in..." : "Login"}
-          </Button>
+          </button>
         </form>
-      </AuthCard>
-    </ProtectedRoute>
+
+        <p className={styles.footer}>
+          Don't have an account? <Link to={ROUTES.SIGNUP}>Sign up</Link>
+        </p>
+      </div>
+    </div>
   );
 }
