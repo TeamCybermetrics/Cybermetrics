@@ -22,11 +22,20 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
   const result = await authActions.signup(email, password, displayName);
 
+  // Clear password from state as soon as possible
+  setPassword("");
+
   if (result.success) {
     setSuccess("Account created successfully! Logging you in...");
     
-    // Auto-login after successful signup
-    const loginResult = await authActions.login(email, password);
+    // Prefer using auth token from signup if available
+    let loginResult;
+    if (result.authToken) {
+      loginResult = await authActions.loginWithToken(result.authToken);
+    } else {
+      // Fallback to legacy login if token not returned
+      loginResult = await authActions.login(email, password);
+    }
     
     if (loginResult.success) {
       setTimeout(() => {
@@ -107,7 +116,11 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         </form>
 
         <p className={styles.footer}>
-          Already have an account? <a href={ROUTES.LOGIN}>Log in</a>
+import { Link } from "react-router-dom";
+
+// ... other code ...
+
+          Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
         </p>
       </div>
     </div>
