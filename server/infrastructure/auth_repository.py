@@ -2,7 +2,8 @@ from firebase_admin import auth, firestore
 from fastapi import HTTPException, status
 from config.firebase import firebase_service
 from config.settings import settings
-from entities.auth import LoginRequest, SignupRequest, User
+from dtos.auth_dtos import LoginRequest, SignupRequest
+from entities.auth import User
 from repositories.auth_repository import AuthRepository
 from typing import Dict, Optional
 import jwt

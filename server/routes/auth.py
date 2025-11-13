@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, Header, HTTPException, Depends
-from entities.auth import LoginRequest, LoginResponse, SignupRequest, SignupResponse
+from dtos.auth_dtos import LoginRequest, LoginResponse, SignupRequest, SignupResponse
 from dependency.dependencies import get_auth_service
 from services.auth_service import AuthService
 from useCaseHelpers.errors import (
