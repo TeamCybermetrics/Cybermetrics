@@ -240,16 +240,6 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-/* Inner container that holds and clips the image */
-.demoScreen::after {
-  content: "";
-  position: absolute;
-  inset: 12px; /* Match the padding */
-  border-radius: 16px;
-  overflow: hidden;
-  pointer-events: none;
-}
-
 /* Image fills perfectly inside the frame */
 .demoImage {
   width: 100%;
