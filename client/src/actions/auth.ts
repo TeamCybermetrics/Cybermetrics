@@ -3,11 +3,8 @@ import { authApi } from "@/api/auth";
 export const authActions = {
   login: async (email: string, password: string) => {
     try {
-      console.log("Attempting login with:", email); // Debug
       const response = await authApi.login({ email, password });
-      
-      console.log("Login response:", response); // Debug
-      
+
       // Store auth data
       localStorage.setItem("auth_token", response.token);
       localStorage.setItem("user_id", response.user_id);
@@ -15,7 +12,6 @@ export const authActions = {
 
       return { success: true, data: response };
     } catch (error) {
-      console.error("Login error details:", error); // Debug
       return {
         success: false,
         error: error instanceof Error ? error.message : "Login failed",
@@ -25,25 +21,21 @@ export const authActions = {
 
   signup: async (email: string, password: string, displayName?: string) => {
     try {
-      console.log("Attempting signup with:", email, displayName); // Debug
       const response = await authApi.signup({
         email,
         password,
         display_name: displayName || null,
       });
-      
-      console.log("Signup response:", response); // Debug
 
       return { success: true, data: response };
     } catch (error) {
-      console.error("Signup error details:", error); // Debug
       return {
         success: false,
         error: error instanceof Error ? error.message : "Signup failed",
       };
     }
   },
-  
+
   logout: () => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_id");
