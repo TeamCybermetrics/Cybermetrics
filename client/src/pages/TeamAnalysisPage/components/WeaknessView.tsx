@@ -23,6 +23,10 @@ const STAT_LABELS: { key: keyof TeamWeaknessResponse; label: string }[] = [
   { key: "base_running", label: "Base Running" }
 ];
 
+const RING_FRACTIONS = [0.25, 0.5, 0.75, 1];
+const RADAR_CENTER = { x: 140, y: 140 };
+const RADAR_RADIUS = 95;
+
 const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
 export default function WeaknessView({
@@ -86,8 +90,13 @@ export default function WeaknessView({
                   />
                   <span className={styles.playerName}>{player.name}</span>
                   <span className={styles.playerMeta}>{player.years_active || ""}</span>
-                  <span className={styles.change}>
-                    Adj. Score: {player.adjustment_score.toFixed(2)}
+                  <span
+                    className={
+                      player.adjustment_score >= 0 ? styles.scorePositive : styles.scoreNegative
+                    }
+                  >
+                    Adj. Score: {player.adjustment_score >= 0 ? "+" : ""}
+                    {player.adjustment_score.toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -100,16 +109,68 @@ export default function WeaknessView({
             <div className={styles.radarLabel}>Weakness radar</div>
             <div className={styles.radarChart}>
               <svg viewBox="0 0 280 280" style={{ maxWidth: "280px", width: "100%", height: "auto" }}>
-                <polygon points="140,30 210,80 210,200 140,250 70,200 70,80" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                <polygon points="140,60 190,95 190,185 140,220 90,185 90,95" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                <polygon points="140,90 170,110 170,170 140,190 110,170 110,110" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                {/* rings */}
+                {RING_FRACTIONS.map((fraction) => (
+                  <polygon
+                    key={fraction}
+                    points={buildRingPolygon(fraction)}
+                    fill="none"
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="1"
+                  />
+                ))}
+                {/* axis lines */}
+                {STAT_LABELS.map((_, idx) => {
+                  const { x, y } = getPointForFraction(1, idx);
+                  return (
+                    <line
+                      key={`axis-${idx}`}
+                      x1={RADAR_CENTER.x}
+                      y1={RADAR_CENTER.y}
+                      x2={x}
+                      y2={y}
+                      stroke="rgba(255,255,255,0.12)"
+                      strokeWidth="1"
+                    />
+                  );
+                })}
+                {/* ring labels */}
+                {RING_FRACTIONS.map((fraction) => {
+                  const { x, y } = getPointForFraction(fraction, 0);
+                  return (
+                    <text
+                      key={`label-${fraction}`}
+                      x={x}
+                      y={y - 4}
+                      textAnchor="middle"
+                      className={styles.ringLabel}
+                    >
+                      {formatPercent(fraction)}
+                    </text>
+                  );
+                })}
+                {/* axis labels */}
+                {STAT_LABELS.map((axis, idx) => {
+                  const { x, y } = getPointForFraction(1.15, idx);
+                  const anchor =
+                    Math.abs(Math.cos(getAngle(idx))) < 0.2
+                      ? "middle"
+                      : Math.cos(getAngle(idx)) > 0
+                      ? "start"
+                      : "end";
+                  return (
+                    <text
+                      key={`axis-label-${axis.key}`}
+                      x={x}
+                      y={y}
+                      textAnchor={anchor}
+                      className={styles.axisLabel}
+                    >
+                      {axis.label}
+                    </text>
+                  );
+                })}
                 {renderRadarPolygon(weakness)}
-                <text x="140" y="20" textAnchor="middle" fill="#fff" fontSize="10">Strikeouts</text>
-                <text x="225" y="85" textAnchor="start" fill="#fff" fontSize="10">Walk Rate</text>
-                <text x="225" y="205" textAnchor="start" fill="#fff" fontSize="10">ISO</text>
-                <text x="140" y="270" textAnchor="middle" fill="#fff" fontSize="10">OBP</text>
-                <text x="50" y="205" textAnchor="end" fill="#fff" fontSize="10">BsR</text>
-                <text x="50" y="85" textAnchor="end" fill="#fff" fontSize="10">K%</text>
               </svg>
             </div>
           </div>
@@ -120,26 +181,45 @@ export default function WeaknessView({
 }
 
 function renderRadarPolygon(weakness: TeamWeaknessResponse) {
-  // Map each stat to a radius (0-1 scaled) and compute polygon points
-  const center = { x: 140, y: 140 };
-  const radius = 90;
-  const stats = [
-    weakness.strikeout_rate,
-    weakness.walk_rate,
-    weakness.isolated_power,
-    weakness.on_base_percentage,
-    weakness.base_running,
-    weakness.strikeout_rate, // close the loop, reuse first
-  ];
+  const fractions = STAT_LABELS.map(({ key }) =>
+    Math.min(Math.max(weakness[key], 0), 1)
+  );
 
-  const points = stats.map((value, idx) => {
-    const angle = (Math.PI / 3) * idx - Math.PI / 2; // hexagon style
-    const clamped = Math.min(Math.max(value, 0), 1);
-    const r = (clamped * radius) + 20;
-    const x = center.x + r * Math.cos(angle);
-    const y = center.y + r * Math.sin(angle);
-    return `${x},${y}`;
-  }).join(" ");
+  const points = buildPolygonPoints(fractions);
 
-  return <polygon points={points} fill="rgba(109,123,255,0.25)" stroke="#6d7bff" strokeWidth="2" />;
+  return (
+    <polygon
+      points={points}
+      fill="rgba(109,123,255,0.25)"
+      stroke="#6d7bff"
+      strokeWidth="2"
+    />
+  );
+}
+
+function getAngle(axisIndex: number) {
+  return (2 * Math.PI * axisIndex) / STAT_LABELS.length - Math.PI / 2;
+}
+
+function getPointForFraction(fraction: number, axisIndex: number) {
+  const clamped = Math.min(Math.max(fraction, 0), 1);
+  const angle = getAngle(axisIndex);
+  const r = clamped * RADAR_RADIUS;
+  return {
+    x: RADAR_CENTER.x + r * Math.cos(angle),
+    y: RADAR_CENTER.y + r * Math.sin(angle),
+  };
+}
+
+function buildPolygonPoints(fractions: number[]) {
+  return fractions
+    .map((fraction, idx) => {
+      const { x, y } = getPointForFraction(fraction, idx);
+      return `${x},${y}`;
+    })
+    .join(" ");
+}
+
+function buildRingPolygon(fraction: number) {
+  return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction));
 }
