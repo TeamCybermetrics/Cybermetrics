@@ -24,8 +24,13 @@ const STAT_LABELS: { key: keyof TeamWeaknessResponse; label: string }[] = [
 ];
 
 const RING_FRACTIONS = [0.25, 0.5, 0.75, 1];
-const RADAR_CENTER = { x: 140, y: 140 };
-const RADAR_RADIUS = 95;
+const RADAR_SIZE = 320;
+const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
+const RADAR_RADIUS = 120;
+const AXIS_LABEL_OFFSET = 1.32;
+const LEFT_AXIS_PADDING = 14;
+const RIGHT_AXIS_PADDING = 22;
+const BASE_AXIS_VERTICAL_OFFSET = 6;
 
 const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
@@ -108,7 +113,10 @@ export default function WeaknessView({
           <div className={styles.radarCard}>
             <div className={styles.radarLabel}>Weakness radar</div>
             <div className={styles.radarChart}>
-              <svg viewBox="0 0 280 280" style={{ maxWidth: "280px", width: "100%", height: "auto" }}>
+              <svg
+                viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
+                style={{ maxWidth: "320px", width: "100%", height: "auto", overflow: "visible" }}
+              >
                 {/* rings */}
                 {RING_FRACTIONS.map((fraction) => (
                   <polygon
@@ -135,44 +143,62 @@ export default function WeaknessView({
                   );
                 })}
                 {/* ring labels */}
-                {RING_FRACTIONS.map((fraction) => {
-                  const { x, y } = getPointForFraction(fraction, 0);
-                  return (
-                    <text
-                      key={`label-${fraction}`}
-                      x={x}
-                      y={y - 4}
-                      textAnchor="middle"
-                      className={styles.ringLabel}
-                    >
-                      {formatPercent(fraction)}
-                    </text>
-                  );
-                })}
+                {RING_FRACTIONS.map((fraction, idx) => (
+                  <text
+                    key={`label-${fraction}`}
+                    x={RADAR_CENTER.x}
+                    y={RADAR_CENTER.y - RADAR_RADIUS * fraction - (idx === RING_FRACTIONS.length - 1 ? 12 : 6)}
+                    textAnchor="middle"
+                    className={styles.ringLabel}
+                  >
+                    {formatPercent(fraction)}
+                  </text>
+                ))}
                 {/* axis labels */}
                 {STAT_LABELS.map((axis, idx) => {
-                  const { x, y } = getPointForFraction(1.15, idx);
-                  const anchor =
-                    Math.abs(Math.cos(getAngle(idx))) < 0.2
-                      ? "middle"
-                      : Math.cos(getAngle(idx)) > 0
-                      ? "start"
-                      : "end";
+                  let { x, y } = getPointForFraction(AXIS_LABEL_OFFSET, idx, false);
+                  let anchor: "start" | "end" | "middle";
+                  const cosine = Math.cos(getAngle(idx));
+                  if (idx === 4) {
+                    x -= LEFT_AXIS_PADDING;
+                    y += BASE_AXIS_VERTICAL_OFFSET;
+                    anchor = "end";
+                  } else if (idx === 1) {
+                    x -= RIGHT_AXIS_PADDING;
+                    anchor = "start";
+                  } else if (Math.abs(cosine) < 0.15) {
+                    anchor = "middle";
+                  } else {
+                    anchor = cosine > 0 ? "start" : "end";
+                  }
+                  const axisValue = weakness[axis.key];
+                  const labelClass =
+                    axisValue >= 0.75
+                      ? styles.axisLabelSevere
+                      : axisValue >= 0.5
+                      ? styles.axisLabelWarn
+                      : styles.axisLabel;
+
                   return (
                     <text
                       key={`axis-label-${axis.key}`}
                       x={x}
                       y={y}
                       textAnchor={anchor}
-                      className={styles.axisLabel}
+                      className={labelClass}
                     >
                       {axis.label}
+                      <title>{`${axis.label}: ${formatPercent(axisValue)} weakness`}</title>
                     </text>
                   );
                 })}
                 {renderRadarPolygon(weakness)}
               </svg>
             </div>
+            <ul className={styles.radarLegend}>
+              <li>0% = on par with the league</li>
+              <li>100% = largest deficit observed</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -201,10 +227,10 @@ function getAngle(axisIndex: number) {
   return (2 * Math.PI * axisIndex) / STAT_LABELS.length - Math.PI / 2;
 }
 
-function getPointForFraction(fraction: number, axisIndex: number) {
-  const clamped = Math.min(Math.max(fraction, 0), 1);
+function getPointForFraction(fraction: number, axisIndex: number, clamp: boolean = true) {
+  const value = clamp ? Math.min(Math.max(fraction, 0), 1) : fraction;
   const angle = getAngle(axisIndex);
-  const r = clamped * RADAR_RADIUS;
+  const r = Math.max(value, 0) * RADAR_RADIUS;
   return {
     x: RADAR_CENTER.x + r * Math.cos(angle),
     y: RADAR_CENTER.y + r * Math.sin(angle),
