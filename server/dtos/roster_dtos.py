@@ -1,9 +1,36 @@
 from pydantic import BaseModel, Field
 from typing import Dict, List
 
+# ============================================================================
+# INPUT DTOs (Requests)
+# ============================================================================
+
 class RosterAvgRequest(BaseModel):
     """DTO: Request model for roster average stats"""
     player_ids: List[int] = Field(..., min_items=1, description="List of MLB player IDs (mlbam_id)")
+
+class ValueScoreRequest(BaseModel):
+    """DTO: Request body for computing a player's value score.
+
+    Accepts root-level per-stat weakness weights, e.g.:
+    {
+        "strikeout_rate": 0.0,
+        "walk_rate": 0.0,
+        "isolated_power": 0.221,
+        "on_base_percentage": 0.066,
+        "base_running": 0.764
+    }
+    """
+    strikeout_rate: float = 0.0
+    walk_rate: float = 0.0
+    isolated_power: float = 0.0
+    on_base_percentage: float = 0.0
+    base_running: float = 0.0
+
+
+# ============================================================================
+# OUTPUT DTOs (Responses)
+# ============================================================================
 
 class PlayerAvgStats(BaseModel):
     """DTO: Average statistics for a single player"""
@@ -25,24 +52,6 @@ class TeamWeaknessResponse(BaseModel):
     isolated_power: float
     on_base_percentage: float
     base_running: float
-
-class ValueScoreRequest(BaseModel):
-    """DTO: Request body for computing a player's value score.
-
-    Accepts root-level per-stat weakness weights, e.g.:
-    {
-        "strikeout_rate": 0.0,
-        "walk_rate": 0.0,
-        "isolated_power": 0.221,
-        "on_base_percentage": 0.066,
-        "base_running": 0.764
-    }
-    """
-    strikeout_rate: float = 0.0
-    walk_rate: float = 0.0
-    isolated_power: float = 0.0
-    on_base_percentage: float = 0.0
-    base_running: float = 0.0
 
 class ValueScoreResponse(BaseModel):
     """DTO: Response for player value score calculation"""

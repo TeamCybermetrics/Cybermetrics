@@ -2,6 +2,10 @@ from pydantic import BaseModel
 from typing import Optional, Dict
 from entities.players import SeasonStats
 
+# ============================================================================
+# OUTPUT DTOs (Responses)
+# ============================================================================
+
 class PlayerSearchResult(BaseModel):
     """DTO: Player search result from the index"""
     id: int
