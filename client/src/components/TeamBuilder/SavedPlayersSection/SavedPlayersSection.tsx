@@ -76,7 +76,7 @@ export function SavedPlayersSection({
                 }
                 addTitle={
                   alreadyAssigned
-                    ? "Already assigned"
+                    ? "Already Assigned"
                     : !activePosition
                     ? "Select a position first"
                     : "Add to active position"
