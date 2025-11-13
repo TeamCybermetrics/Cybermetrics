@@ -72,8 +72,8 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && <div className={styles.error}>{error}</div>}
-          {success && <div className={styles.success}>{success}</div>}
+          {error && <div className={styles.error} role="alert" aria-live="polite">{error}</div>}
+          {success && <div className={styles.success} role="alert" aria-live="polite">{success}</div>}
 
           <button type="submit" className={styles.submitBtn} disabled={isLoading}>
             {isLoading ? "Logging in..." : "Login"}
