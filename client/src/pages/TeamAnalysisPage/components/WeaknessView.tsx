@@ -159,11 +159,11 @@ export default function WeaknessView({
                   let { x, y } = getPointForFraction(AXIS_LABEL_OFFSET, idx, false);
                   let anchor: "start" | "end" | "middle";
                   const cosine = Math.cos(getAngle(idx));
-                  if (idx === 4) {
+                  if (axis.key === "base_running") {
                     x -= LEFT_AXIS_PADDING;
                     y += BASE_AXIS_VERTICAL_OFFSET;
                     anchor = "end";
-                  } else if (idx === 1) {
+                  } else if (axis.key === "walk_rate") {
                     x -= RIGHT_AXIS_PADDING;
                     anchor = "start";
                   } else if (Math.abs(cosine) < 0.15) {
