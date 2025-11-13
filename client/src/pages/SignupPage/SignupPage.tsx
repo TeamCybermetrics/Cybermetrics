@@ -48,7 +48,7 @@ export default function SignupPage() {
       </div>
 
       <div className={styles.container}>
-        <h1 className={styles.title}>sign up</h1>
+        <h1 className={styles.title}>Sign Up</h1>
         <p className={styles.subtitle}>Create your Cybermetrics account</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -60,6 +60,7 @@ export default function SignupPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
+              autoComplete="name"
             />
           </div>
 
@@ -72,6 +73,7 @@ export default function SignupPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
 
@@ -85,14 +87,15 @@ export default function SignupPage() {
               required
               minLength={6}
               disabled={isLoading}
+              autoComplete="new-password"
             />
             <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginTop: "4px" }}>
               Minimum 6 characters
             </span>
           </div>
 
-          {error && <div className={styles.error}>{error}</div>}
-          {success && <div className={styles.success}>{success}</div>}
+          {error && <div className={styles.error} role="alert" aria-live="polite">{error}</div>}
+          {success && <div className={styles.success} role="alert" aria-live="polite">{success}</div>}
 
           <button type="submit" className={styles.submitBtn} disabled={isLoading}>
             {isLoading ? "Creating account..." : "Sign Up"}

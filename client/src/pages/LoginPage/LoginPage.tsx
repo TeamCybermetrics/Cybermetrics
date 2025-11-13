@@ -1,10 +1,9 @@
 import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
 import logo from "@/assets/brand_badge.jpg";
 import styles from "./LoginPage.module.css";
-
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -57,6 +56,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
 
@@ -69,6 +69,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
 
@@ -81,7 +82,7 @@ export default function LoginPage() {
         </form>
 
         <p className={styles.footer}>
-          Don’t have an account? <a href={ROUTES.SIGNUP}>Sign up</a>
+          Don't have an account? <Link to={ROUTES.SIGNUP}>Sign up</Link>
         </p>
       </div>
     </div>
