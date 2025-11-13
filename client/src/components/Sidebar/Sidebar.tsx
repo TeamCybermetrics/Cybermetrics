@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { ROUTES } from "@/config";
 import {
   TeamBuilderIcon,
@@ -34,6 +34,15 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <Link
+        to={ROUTES.OUR_ALGORITHM}
+        aria-label="Learn about our algorithm"
+        title="Our Algorithm"
+        className={styles.helpFab}
+      >
+        ?
+      </Link>
     </aside>
   );
 }

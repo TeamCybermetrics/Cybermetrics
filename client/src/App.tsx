@@ -4,6 +4,7 @@ import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import TeamBuilderPage from "@/pages/TeamBuilderPage";
 import TeamAnalysisPage from "@/pages/TeamAnalysisPage";
+import OurAlgorithmPage from "@/pages/OurAlgorithmPage";
 import AppLayout from "@/pages/layouts/AppLayout";
 import { ROUTES } from "@/config";
 
@@ -27,6 +28,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path={ROUTES.TEAM_BUILDER} element={<TeamBuilderPage />} />
           <Route path={ROUTES.TEAM_ANALYSIS} element={<TeamAnalysisPage />} />
+          <Route path={ROUTES.OUR_ALGORITHM} element={<OurAlgorithmPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to={ROUTES.LANDING} replace />} />
