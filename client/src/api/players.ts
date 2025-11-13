@@ -13,7 +13,7 @@ export interface SavedPlayer {
   name: string;
   image_url?: string;
   years_active?: string;
-  position?: string | null;
+  [key: string]: any; // Allow additional fields
 }
 
 export interface SeasonStats {
@@ -116,15 +116,6 @@ export const playersApi = {
 
   addSaved: async (player: { id: number; name: string; image_url?: string; years_active?: string }): Promise<AddPlayerResponse> => {
     return apiClient.post<AddPlayerResponse>("/api/players/saved", player);
-  },
-
-  updateSavedPosition: async (
-    playerId: number,
-    position: string | null
-  ): Promise<SavedPlayer> => {
-    return apiClient.patch<SavedPlayer>(`/api/players/saved/${playerId}/position`, {
-      position,
-    });
   },
 
   deleteSaved: async (playerId: number): Promise<DeletePlayerResponse> => {

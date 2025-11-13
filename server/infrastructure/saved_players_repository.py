@@ -1,7 +1,7 @@
 from repositories.saved_players_repository import SavedPlayersRepository
 from entities.players import SavedPlayer, AddPlayerResponse, DeletePlayerResponse
 from fastapi import HTTPException, status
-from typing import List, Optional
+from typing import List
 from anyio import to_thread
 import logging
 
@@ -137,53 +137,4 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
         """Gets a reference to Firebase doc and returns it"""
         ref = self.db.collection('users').document(user_id).collection('saved_players').document(player_id)
         return ref, ref.get()
-
-    def _update_position_blocking(
-        self,
-        user_id: str,
-        player_id: str,
-        position: Optional[str],
-    ) -> SavedPlayer:
-        collection = self.db.collection('users').document(user_id).collection('saved_players')
-        doc_ref = collection.document(player_id)
-        snapshot = doc_ref.get()
-        if not snapshot.exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Player with ID {player_id} not found",
-            )
-        doc_ref.update({"position": position})
-        updated_snapshot = doc_ref.get()
-        return SavedPlayer(**updated_snapshot.to_dict())
-
-    async def update_position(
-        self,
-        user_id: str,
-        player_id: str,
-        position: Optional[str],
-    ) -> SavedPlayer:
-        if not self.db:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Firebase is not configured",
-            )
-        try:
-            return await to_thread.run_sync(
-                self._update_position_blocking,
-                user_id,
-                player_id,
-                position,
-            )
-        except HTTPException:
-            raise
-        except Exception as exc:
-            self._logger.exception(
-                "Failed to update position for player %s (user %s)",
-                player_id,
-                user_id,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to update player position",
-            ) from exc
 
