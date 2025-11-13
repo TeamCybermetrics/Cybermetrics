@@ -1,10 +1,19 @@
 from fastapi import HTTPException, status
-from models.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
-from typing import List, Dict, Optional
-from repositories.roster_avg_repository import RosterRepository
+
 from domain.roster_domain import RosterDomain
+
+from entities.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
+
+from models.players import RosterAvgResponse, PlayerAvgStats, PlayerValueScore
+
 from repositories.player_repository import PlayerRepository
+from repositories.roster_avg_repository import RosterRepository
+
+from useCaseHelpers.roster_helper import RosterDomain
+from useCaseHelpers.errors import QueryError, UseCaseError
+
 import logging
+from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -95,10 +104,7 @@ class RosterAvgService:
         players_data = await self.roster_repository.get_players_seasons_data([player_id])
         seasons = players_data.get(player_id)
         if seasons is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Player {player_id} not found or has no season data",
-            )
+            raise QueryError(f"Player {player_id} not found or has no season data")
 
         latest_war = self.roster_domain.calculate_player_latest_war(seasons)
         latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
@@ -136,15 +142,14 @@ class RosterAvgService:
                         value_score=vs.get("value_score", 0.0),
                     )
                 )
-            except HTTPException as e:
-                if e.status_code < 500:
+            except Exception as e:
+                # Skip known use case errors silently; log unexpected ones.
+                if isinstance(e, UseCaseError):
+                    logger.debug("Skipping player %s due to use-case error: %s", pid, e)
                     continue
-                else:
-                    raise
-            except Exception:
                 logger.exception("Unexpected error computing value score for player %s", pid)
-                # For any unexpected error with a single player, skip and continue
                 continue
+        
 
         return results
 

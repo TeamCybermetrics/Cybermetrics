@@ -70,4 +70,52 @@ export const playerActions = {
       };
     }
   },
+
+  updatePlayerPosition: async (playerId: number, position: string | null) => {
+    try {
+      const player = await playersApi.updateSavedPosition(playerId, position);
+      return { success: true, data: player };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to update player position",
+      };
+    }
+  },
+
+  getTeamWeakness: async (playerIds: number[]) => {
+    try {
+      const result = await playersApi.getTeamWeakness(playerIds);
+      return { success: true, data: result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to load team weaknesses",
+      };
+    }
+  },
+
+  getPlayerValueScores: async (playerIds: number[]) => {
+    try {
+      const result = await playersApi.getPlayerValueScores(playerIds);
+      return { success: true, data: result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to load player scores",
+      };
+    }
+  },
+
+  getRecommendations: async (playerIds: number[]) => {
+    try {
+      const response = await playersApi.getRecommendations(playerIds);
+      return { success: true, data: response };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to get recommendations",
+      };
+    }
+  },
 };

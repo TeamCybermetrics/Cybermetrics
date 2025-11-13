@@ -1,9 +1,8 @@
 from rapidfuzz import process, fuzz
-from fastapi import HTTPException, status
-from models.players import PlayerSearchResult, PlayerDetail, SeasonStats
+from entities.players import PlayerSearchResult, PlayerDetail, SeasonStats
 from typing import List, Dict
 from repositories.player_repository import PlayerRepository
-from domain.player_domain import PlayerDomain
+from useCaseHelpers.player_helper import PlayerDomain
 
 class PlayerSearchService:
     """Service for searching baseball players from Firebase database"""
@@ -21,7 +20,13 @@ class PlayerSearchService:
 
         searched_players = await self.player_repository.get_all_players()
 
-        return self.player_domain.fuzzy_search(searched_players, query, limit, score_cutoff)
+        return self.player_domain.fuzzy_search(
+            searched_players,
+            query,
+            limit,
+            score_cutoff,
+            self.player_repository.build_player_image_url,
+        )
     
     async def get_player_detail(self, player_id: int) -> PlayerDetail:
         """
@@ -32,5 +37,8 @@ class PlayerSearchService:
         
         player_data = await self.player_repository.get_player_by_id(player_id)
         
-        return self.player_domain.build_player_detail(player_data)
+        return self.player_domain.build_player_detail(
+            player_data,
+            self.player_repository.build_player_image_url,
+        )
 

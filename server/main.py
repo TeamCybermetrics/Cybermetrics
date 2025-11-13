@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
-from routes import auth_router, health_router, players_router
+from routes import auth_router, health_router, players_router, recommendations_router
 from middleware.rate_limit import RateLimitMiddleware, rate_limiter
 from contextlib import asynccontextmanager
 import asyncio
@@ -68,6 +68,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(players_router)
+app.include_router(recommendations_router)
 
 if __name__ == "__main__":
     import uvicorn

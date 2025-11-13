@@ -1,6 +1,6 @@
-from fastapi import HTTPException, status
-from models.players import PlayerAvgStats, RosterAvgResponse
+from entities.players import PlayerAvgStats, RosterAvgResponse
 from typing import Dict, List, Optional
+from .errors import InputValidationError
 
 
 class RosterDomain:
@@ -10,10 +10,7 @@ class RosterDomain:
     def validate_player_ids(self, player_ids: List[int]) -> None:
         """Validate player IDs input"""
         if not player_ids:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Player IDs list cannot be empty",
-            )
+            raise InputValidationError("Player IDs list cannot be empty")
 
     def calculate_player_averages(self, seasons: Dict) -> Optional[PlayerAvgStats]:
         """Calculate career averages for a single player"""
@@ -68,10 +65,7 @@ class RosterDomain:
         Raises HTTP 400 if the input list is empty.
         """
         if not players_stats:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No player statistics provided to average",
-            )
+            raise InputValidationError("No player statistics provided to average")
 
         total_k = 0.0
         total_bb = 0.0
@@ -91,10 +85,7 @@ class RosterDomain:
             count += 1
 
         if count == 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No valid player statistics to average",
-            )
+            raise InputValidationError("No valid player statistics to average")
 
         return {
             "strikeout_rate": round(total_k / count, 3),
@@ -184,6 +175,7 @@ class RosterDomain:
             "base_running": float(s.get("base_running", 0.0) or 0.0),
         }
 
+
     def compute_value_score(
         self,
         latest_war: float,
@@ -202,10 +194,39 @@ class RosterDomain:
         value_score = latest_war + adjustment_score
         """
         if latest_war is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No player WAR available to compute value score",
-            )
+            raise InputValidationError("No player WAR available to compute value score")
+        if not player_latest_stats:
+            player_latest_stats = {
+                "strikeout_rate": 0.0,
+                "walk_rate": 0.0,
+                "isolated_power": 0.0,
+                "on_base_percentage": 0.0,
+                "base_running": 0.0,
+            }
+
+        adjustment_sum, contributions = self.compute_adjustment_sum(
+            player_latest_stats=player_latest_stats,
+            league_avg=league_avg,
+            team_weakness=team_weakness,
+        )
+        value_score = round(float(latest_war) + adjustment_sum, 3)
+        return {
+            "latest_war": round(float(latest_war), 3),
+            "adjustment_score": adjustment_sum,
+            "value_score": value_score,
+            "contributions": contributions,
+        }
+
+    def compute_adjustment_sum(
+        self,
+        player_latest_stats: Dict[str, float],
+        league_avg: Dict[str, float],
+        team_weakness: Dict[str, float],
+    ) -> tuple[float, Dict[str, float]]:
+        """Compute the weighted adjustment sum and per-stat contributions.
+
+        Mirrors the contribution logic used in `compute_value_score` but omits WAR.
+        """
         if not player_latest_stats:
             player_latest_stats = {
                 "strikeout_rate": 0.0,
@@ -240,10 +261,4 @@ class RosterDomain:
             adjustment_sum += contrib
 
         adjustment_sum = round(adjustment_sum, 3)
-        value_score = round(float(latest_war) + adjustment_sum, 3)
-        return {
-            "latest_war": round(float(latest_war), 3),
-            "adjustment_score": adjustment_sum,
-            "value_score": value_score,
-            "contributions": contributions,
-        }
+        return adjustment_sum, contributions

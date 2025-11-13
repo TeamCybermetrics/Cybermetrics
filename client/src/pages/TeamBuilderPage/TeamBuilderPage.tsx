@@ -3,54 +3,104 @@ import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
 import styles from "./TeamBuilderPage.module.css";
+import {
+  DiamondPosition,
+  LineupState,
+  SavedTeam,
+  positionOrder,
+} from "@/components/TeamBuilder/constants";
+import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
+import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection/SavedPlayersSection";
+import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
+import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
+import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 
-type DiamondPosition = "LF" | "CF" | "RF" | "3B" | "SS" | "2B" | "1B" | "P" | "C" | "DH";
-
-const DEFAULT_PLAYER_IMAGE =
-  "https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/0/headshot/67/current";
-
-const positionOrder: DiamondPosition[] = ["LF", "CF", "RF", "3B", "SS", "2B", "1B", "P", "C", "DH"];
-
-const positionCoordinates: Record<DiamondPosition, { top: string; left: string }> = {
-  LF: { top: "16%", left: "13%" },
-  CF: { top: "8%", left: "50%" },
-  RF: { top: "16%", left: "87%" },
-  SS: { top: "38%", left: "32%" },
-  "2B": { top: "38%", left: "68%" },
-  "3B": { top: "56%", left: "18%" },
-  "1B": { top: "56%", left: "82%" },
-  P: { top: "48%", left: "50%" },
-  C: { top: "75%", left: "50%" },
-  DH: { top: "82%", left: "80%" }
-};
-
-type LineupState = Record<DiamondPosition, SavedPlayer | null>;
-
+/**
+ * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
+ *
+ * @returns The React element rendering the Team Builder page.
+ */
 export default function TeamBuilderPage() {
   const [lineup, setLineup] = useState<LineupState>(() =>
     positionOrder.reduce((acc, position) => ({ ...acc, [position]: null }), {} as LineupState)
   );
+  const lineupRef = useRef(lineup);
   const [activePosition, setActivePosition] = useState<DiamondPosition | null>("CF");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
-  const [error, setError] = useState("");
+  const [savedPlayersLoaded, setSavedPlayersLoaded] = useState(false);
   const searchControllerRef = useRef<AbortController | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [teamName] = useState("TeamName1");
+  const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
+  const [recommendedPlayers, setRecommendedPlayers] = useState<PlayerSearchResult[]>([]);
+  const [recommendationError, setRecommendationError] = useState("");
+  const [isRecommending, setIsRecommending] = useState(false);
+
+  const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
+  const [deletingPlayerIds, setDeletingPlayerIds] = useState<Set<number>>(() => new Set());
+  const [playerOperationError, setPlayerOperationError] = useState("");
 
   useEffect(() => {
+    lineupRef.current = lineup;
+  }, [lineup]);
+
+  // Load saved teams from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("savedTeams");
+    if (stored) {
+      try {
+        setSavedTeams(JSON.parse(stored));
+      } catch (e) {
+        console.error("Failed to load saved teams:", e);
+      }
+    }
+  }, []);
+
+  // Load saved players on mount
+  useEffect(() => {
     const fetchSaved = async () => {
+      try {
       const result = await playerActions.getSavedPlayers();
       if (result.success && result.data) {
         setSavedPlayers(result.data);
+        } else if (!result.success) {
+          setPlayerOperationError(result.error || "Failed to load saved players");
+        }
+      } finally {
+        setSavedPlayersLoaded(true);
       }
     };
 
     void fetchSaved();
   }, []);
+
+  const ensurePlayerIsSaved = useCallback(
+    async (player: SavedPlayer) => {
+      if (savedPlayers.some((saved) => saved.id === player.id)) {
+        return true;
+      }
+
+      const result = await playerActions.addPlayer({
+        id: player.id,
+        name: player.name,
+        image_url: player.image_url,
+        years_active: player.years_active
+      });
+
+      if (result.success) {
+        setSavedPlayers((prev) => [...prev, player]);
+        return true;
+      }
+
+      setPlayerOperationError(result.error || "Failed to save player");
+      return false;
+    },
+    [savedPlayers]
+  );
 
   const performSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
@@ -58,8 +108,6 @@ export default function TeamBuilderPage() {
       searchControllerRef.current?.abort();
       searchControllerRef.current = null;
       setSearchResults([]);
-      setIsSearching(false);
-      setError("");
       return;
     }
 
@@ -67,15 +115,11 @@ export default function TeamBuilderPage() {
     const controller = new AbortController();
     searchControllerRef.current = controller;
 
-    setIsSearching(true);
-    setError("");
     const result = await playerActions.searchPlayers(trimmed, controller.signal);
 
     if (searchControllerRef.current !== controller) {
       return;
     }
-
-    setIsSearching(false);
 
     if (result.success && result.data) {
       setSearchResults(result.data);
@@ -89,7 +133,6 @@ export default function TeamBuilderPage() {
     }
 
     setSearchResults([]);
-    setError(result.error || "Search failed");
     searchControllerRef.current = null;
   }, []);
 
@@ -107,20 +150,79 @@ export default function TeamBuilderPage() {
     };
   }, []);
 
-  const availablePlayers = useMemo(() => {
-    if (searchTerm.trim()) {
+  const buildLineupFromSavedPlayers = useCallback((players: SavedPlayer[]) => {
+    return positionOrder.reduce((acc, position) => {
+      const playerForSlot = players.find((saved) => saved.position === position) || null;
+      acc[position] = playerForSlot;
+      return acc;
+    }, {} as LineupState);
+  }, []);
+
+  useEffect(() => {
+    if (!savedPlayersLoaded) {
+      return;
+    }
+
+    const nextLineup = buildLineupFromSavedPlayers(savedPlayers);
+    setLineup((prev) => {
+      const hasChanges = positionOrder.some(
+        (position) => (prev[position]?.id ?? null) !== (nextLineup[position]?.id ?? null)
+      );
+      return hasChanges ? nextLineup : prev;
+    });
+  }, [savedPlayers, savedPlayersLoaded, buildLineupFromSavedPlayers]);
+
+  const trimmedSearchTerm = searchTerm.trim();
+  const hasSearchTerm = trimmedSearchTerm.length > 0;
+
+  const searchResultPlayers = useMemo(() => {
+    if (!hasSearchTerm) {
+      return [];
+    }
       return searchResults.map((result) => ({
         id: result.id,
         name: result.name,
         image_url: result.image_url,
         years_active: result.years_active
       })) as SavedPlayer[];
-    }
+  }, [hasSearchTerm, searchResults]);
 
-    return savedPlayers;
-  }, [searchResults, searchTerm, savedPlayers]);
+  const savedPlayerIds = useMemo(
+    () =>
+      new Set(
+        savedPlayers
+          .map((player) => player.id)
+          .filter((id): id is number => typeof id === "number")
+      ),
+    [savedPlayers]
+  );
 
-  const assignPlayerToPosition = useCallback((player: SavedPlayer, position: DiamondPosition) => {
+  const persistPlayerPosition = useCallback(
+    async (playerId: number, position: DiamondPosition | null) => {
+      const result = await playerActions.updatePlayerPosition(playerId, position);
+      if (result.success && result.data) {
+        setPlayerOperationError("");
+        setSavedPlayers((prev) => {
+          const index = prev.findIndex((saved) => saved.id === playerId);
+          if (index === -1) {
+            return [...prev, result.data];
+          }
+          return prev.map((saved, idx) =>
+            idx === index ? { ...saved, ...result.data } : saved
+          );
+        });
+      } else if (!result.success) {
+        setPlayerOperationError(result.error || "Failed to update player position");
+      }
+    },
+    []
+  );
+
+  const assignPlayerToPosition = useCallback(
+    (player: SavedPlayer, position: DiamondPosition) => {
+      const currentLineup = lineupRef.current;
+      const replacedPlayer = currentLineup[position];
+
     setLineup((prev) => {
       const next: LineupState = { ...prev };
 
@@ -135,19 +237,131 @@ export default function TeamBuilderPage() {
     });
 
     setActivePosition(position);
-  }, []);
 
-  const handleAssign = (player: SavedPlayer) => {
-    const slot = activePosition;
-    if (!slot) return;
-    assignPlayerToPosition(player, slot);
-  };
+      setSavedPlayers((prev) => {
+        const updated = prev.map((saved) => {
+          if (saved.id === player.id) {
+            return { ...saved, position };
+          }
+          if (replacedPlayer && saved.id === replacedPlayer.id && replacedPlayer.id !== player.id) {
+            return { ...saved, position: null };
+          }
+          return saved;
+        });
+
+        if (!prev.some((saved) => saved.id === player.id)) {
+          updated.push({ ...player, position });
+        }
+
+        if (
+          replacedPlayer &&
+          replacedPlayer.id !== player.id &&
+          !prev.some((saved) => saved.id === replacedPlayer.id)
+        ) {
+          updated.push({ ...replacedPlayer, position: null });
+        }
+
+        return updated;
+      });
+
+      void persistPlayerPosition(player.id, position);
+      if (replacedPlayer && replacedPlayer.id !== player.id) {
+        void persistPlayerPosition(replacedPlayer.id, null);
+      }
+    },
+    [persistPlayerPosition]
+  );
+
+  const handleAddPlayer = useCallback(
+    async (player: SavedPlayer) => {
+      if (!activePosition) {
+        return;
+      }
+
+      setPlayerOperationError("");
+      setSavingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+
+      try {
+        const saved = await ensurePlayerIsSaved(player);
+        if (saved) {
+          assignPlayerToPosition(player, activePosition);
+        }
+      } finally {
+        setSavingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+          return next;
+        });
+      }
+    },
+    [activePosition, assignPlayerToPosition, ensurePlayerIsSaved]
+  );
+
+  const handleDeletePlayer = useCallback(
+    async (player: SavedPlayer) => {
+      setPlayerOperationError("");
+      setDeletingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+
+      try {
+        const result = await playerActions.deletePlayer(player.id);
+        if (!result.success) {
+          setPlayerOperationError(result.error || "Failed to delete player");
+          return;
+        }
+
+        setSavedPlayers((prev) => prev.filter((saved) => saved.id !== player.id));
+        setLineup((prev) => {
+          let updated = false;
+          const next: LineupState = { ...prev };
+          positionOrder.forEach((pos) => {
+            if (next[pos]?.id === player.id) {
+              next[pos] = null;
+              updated = true;
+            }
+          });
+          return updated ? next : prev;
+        });
+      } finally {
+        setDeletingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+          return next;
+        });
+      }
+    },
+    []
+  );
 
   const handleClearSlot = (position: DiamondPosition) => {
+    const player = lineupRef.current[position];
+    if (!player) {
+      return;
+    }
+
     setLineup((prev) => ({
       ...prev,
       [position]: null
     }));
+
+    setSavedPlayers((prev) => {
+      const found = prev.some((saved) => saved.id === player.id);
+      if (!found) {
+        return [...prev, { ...player, position: null }];
+      }
+      return prev.map((saved) =>
+        saved.id === player.id ? { ...saved, position: null } : saved
+      );
+    });
+
+    void persistPlayerPosition(player.id, null);
   };
 
   const assignedIds = useMemo(
@@ -160,9 +374,12 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
-  const allShownAssigned =
-    availablePlayers.length > 0 &&
-    availablePlayers.every((player) => assignedIds.has(player.id));
+  const incompletePositions = useMemo(
+    () => positionOrder.filter((position) => !lineup[position]),
+    [lineup]
+  );
+
+  const isRosterComplete = incompletePositions.length === 0;
 
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
@@ -178,7 +395,7 @@ export default function TeamBuilderPage() {
     setDraggingId(null);
   };
 
-  const handlePositionDrop = (event: DragEvent<HTMLDivElement>, position: DiamondPosition) => {
+  const handlePositionDrop = async (event: DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
     event.preventDefault();
     event.stopPropagation();
     const player = dragPlayerRef.current;
@@ -187,206 +404,200 @@ export default function TeamBuilderPage() {
       return;
     }
 
+    try {
+      setPlayerOperationError("");
+      const saved = await ensurePlayerIsSaved(player);
+      if (saved) {
     assignPlayerToPosition(player, position);
+      }
+    } finally {
     clearDragState();
+    }
+  };
+
+  const saveTeam = () => {
+    const newTeam: SavedTeam = {
+      id: Date.now().toString(),
+      name: teamName,
+      lineup: lineup,
+      savedAt: new Date().toISOString()
+    };
+
+    const updatedTeams = [...savedTeams, newTeam];
+    setSavedTeams(updatedTeams);
+    localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
+    alert(`Team "${teamName}" saved successfully!`);
+  };
+
+  const handleSavePlayerOnly = useCallback(
+    async (player: SavedPlayer) => {
+      setPlayerOperationError("");
+      setSavingPlayerIds((prev) => {
+      const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+
+      try {
+        const saved = await ensurePlayerIsSaved(player);
+        if (saved) {
+          setSavedPlayers((prev) => {
+            if (prev.some((existing) => existing.id === player.id)) {
+              return prev;
+            }
+            return [...prev, player];
+          });
+        }
+      } finally {
+        setSavingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+      return next;
+    });
+      }
+    },
+    [ensurePlayerIsSaved]
+  );
+
+  const handleGetRecommendations = async () => {
+    setRecommendationError("");
+
+    if (!isRosterComplete) {
+      const formatted = incompletePositions.join(", ");
+      setRecommendationError(
+        `Fill your lineup before requesting recommendations. Missing: ${formatted}`
+      );
+      return;
+    }
+
+    const playerIds = positionOrder
+      .map((pos) => lineup[pos]?.id)
+      .filter((id): id is number => typeof id === "number");
+
+    if (playerIds.length === 0) {
+      setRecommendationError("Select players to build your lineup first.");
+      return;
+    }
+
+    setIsRecommending(true);
+    setRecommendedPlayers([]);
+
+    const result = await playerActions.getRecommendations(playerIds);
+
+    setIsRecommending(false);
+
+    if (result.success && result.data) {
+      if (result.data.length === 0) {
+        setRecommendationError("No recommendations available. Try adjusting your lineup.");
+        return;
+      }
+      setRecommendedPlayers(result.data);
+      return;
+    }
+
+    setRecommendationError(result.error || "Failed to fetch recommendations.");
   };
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <p className={styles.kicker}>Interactive lineup designer</p>
-          <h1 className={styles.title}>Team Builder</h1>
-        </div>
-
-        <div className={styles.searchBar}>
-          <span className={styles.searchIcon} aria-hidden="true">⌕</span>
-          <input
-            type="text"
-            placeholder="Search players by name..."
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-          />
-          <span className={styles.searchStatus}>
-            {isSearching ? "Searching…" : `${availablePlayers.length} players`}
-          </span>
-        </div>
+        <div className={styles.kicker}>Team Builder</div>
       </header>
 
-      <section className={styles.builderShell}>
-        <div className={styles.diamondPanel}>
-          <header className={styles.panelHeader}>
-            <h2>Current Lineup</h2>
-            <p>Select a position to assign players.</p>
-          </header>
+      <div className={styles.builderShell}>
+        {/* LEFT COLUMN */}
+        <div className={styles.leftColumn}>
+          {/* Search section with Load a team and Filters */}
+          <section className={styles.searchSection}>
+            <SearchBar
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              statusText={
+                hasSearchTerm
+                  ? `${searchResultPlayers.length} results`
+                  : `${savedPlayers.length} saved players`
+              }
+              errorMessage={playerOperationError}
+            />
+          </section>
+          
+          {hasSearchTerm && (
+            <SearchResultsSection
+              players={searchResultPlayers}
+              savedPlayerIds={savedPlayerIds}
+              assignedIds={assignedIds}
+              draggingId={draggingId}
+              savingPlayerIds={savingPlayerIds}
+              onPrepareDrag={prepareDragPlayer}
+              onClearDrag={clearDragState}
+              onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+            />
+          )}
 
-          <div className={styles.diamond}>
-            <svg className={styles.diamondLines} viewBox="0 0 400 400">
-              <path d="M200 40 L360 200 L200 360 L40 200 Z" />
-              <path d="M200 110 L290 200 L200 290 L110 200 Z" />
-              <circle cx="200" cy="200" r="10" />
-            </svg>
-
-            {positionOrder.map((position) => {
-              const assigned = lineup[position];
-              const isActive = activePosition === position;
-              const isDropTarget = dropTarget === position && dragPlayerRef.current;
-
-              return (
-                <div
-                  key={position}
-                  className={`${styles.positionNode} ${isActive ? styles.active : ""} ${
-                    assigned ? styles.filled : ""
-                  } ${isDropTarget ? styles.droppable : ""}`}
-                  style={positionCoordinates[position]}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    if (dragPlayerRef.current) {
-                      setDropTarget(position);
-                    }
-                  }}
-                  onDragLeave={(event) => {
-                    event.preventDefault();
-                    if (dropTarget === position) {
-                      setDropTarget(null);
-                    }
-                  }}
-                  onDrop={(event) => handlePositionDrop(event, position)}
-                >
-                  <button
-                    type="button"
-                    className={styles.positionTrigger}
-                    onClick={() => setActivePosition(position)}
-                    aria-pressed={isActive}
-                    draggable={Boolean(assigned)}
-                    onDragStart={(event) => {
-                      if (assigned) {
-                        event.dataTransfer.setData("text/plain", String(assigned.id));
-                        event.dataTransfer.effectAllowed = "move";
-                        prepareDragPlayer(assigned, position);
-                      }
-                    }}
-                    onDragEnd={() => {
-                      clearDragState();
-                    }}
-                  >
-                    <span className={styles.positionLabel}>{position}</span>
-                    {assigned && (
-                      <span className={styles.positionPlayer}>
-                        <img
-                          src={assigned.image_url || DEFAULT_PLAYER_IMAGE}
-                          alt={assigned.name}
-                          onError={(e) => {
-                            e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                          }}
-                        />
-                        <span className={styles.positionName}>{assigned.name}</span>
-                      </span>
-                    )}
-                  </button>
-                  {assigned && (
-                    <button
-                      type="button"
-                      className={styles.clearSlot}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleClearSlot(position);
-                      }}
-                      aria-label={`Clear ${position} position`}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+          <SavedPlayersSection
+            players={savedPlayers}
+            assignedIds={assignedIds}
+            draggingId={draggingId}
+            savingPlayerIds={savingPlayerIds}
+            deletingPlayerIds={deletingPlayerIds}
+            activePosition={activePosition}
+            onPrepareDrag={prepareDragPlayer}
+            onClearDrag={clearDragState}
+            onAddPlayer={handleAddPlayer}
+            onDeletePlayer={handleDeletePlayer}
+          />
+          {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
+        <section className={styles.actionsCard}>
+          {/* <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button> */}
+          <div className={styles.recommendRow}>
+            <span className={styles.recommendCopy}>Click to get recommendations</span>
+            <button
+              className={styles.recommendBtn}
+              onClick={handleGetRecommendations}
+              disabled={isRecommending || !isRosterComplete}
+            >
+              {isRecommending ? "Loading..." : "Get Recommendations!"}
+            </button>
           </div>
+          {!isRosterComplete && (
+            <div className={styles.recommendHint}>
+              Select players for every position before requesting recommendations.
+            </div>
+          )}
+          {recommendationError && (
+            <div className={styles.recommendError}>{recommendationError}</div>
+          )}
+          {isRecommending && !recommendationError && (
+            <div className={styles.recommendLoading}>Calculating best fits…</div>
+          )}
+          <RecommendationsSection
+            players={recommendedPlayers}
+            savedPlayerIds={savedPlayerIds}
+            savingPlayerIds={savingPlayerIds}
+            onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+          />
+          
+        </section>
         </div>
 
-        <aside className={styles.availablePanel}>
-          <header className={styles.panelHeader}>
-            <div>
-              <h2>Available Players</h2>
-              <p>
-                {searchTerm
-                  ? "Search results are shown below."
-                  : "Using saved players. Add more from the dashboard to expand this list."}
-              </p>
-            </div>
-            <div className={styles.positionHint}>
-              {activePosition ? (
-                <span>Assigning to <strong>{activePosition}</strong></span>
-              ) : (
-                <span>Select a position to begin</span>
-              )}
-            </div>
-          </header>
+        <DiamondPanel
+          lineup={lineup}
+          activePosition={activePosition}
+          dropTarget={dropTarget}
+          dragPlayer={dragPlayerRef.current}
+          onSelectPosition={(position) => setActivePosition(position)}
+          onDragOverPosition={(position) => setDropTarget(position)}
+          onDragLeavePosition={() => setDropTarget(null)}
+          onDropOnPosition={handlePositionDrop}
+          onPrepareDrag={prepareDragPlayer}
+          onClearDragState={clearDragState}
+          onClearSlot={handleClearSlot}
+          onSaveTeam={saveTeam}
+        />
 
-          <div className={styles.playerScroller}>
-            {error && <p className={styles.errorMessage}>{error}</p>}
-
-            {availablePlayers.length === 0 && !error && (
-              <div className={styles.emptyState}>
-                <p>No players to show yet.</p>
-                <span>
-                  Save players from the dashboard or search above to scout new talent.
-                </span>
-              </div>
-            )}
-
-            {availablePlayers.map((player) => {
-              const alreadyAssigned = assignedIds.has(player.id);
-
-              return (
-                <div
-                  key={player.id}
-                  className={`${styles.playerRow} ${draggingId === player.id ? styles.dragging : ""}`}
-                  draggable
-                  onDragStart={(event) => {
-                    event.dataTransfer.setData("text/plain", String(player.id));
-                    event.dataTransfer.effectAllowed = "move";
-                    prepareDragPlayer(player);
-                  }}
-                  onDragEnd={clearDragState}
-                >
-                  <div className={styles.playerProfile}>
-                    <img
-                      src={player.image_url || DEFAULT_PLAYER_IMAGE}
-                      alt={player.name}
-                      onError={(e) => {
-                        e.currentTarget.src = DEFAULT_PLAYER_IMAGE;
-                      }}
-                    />
-                    <div>
-                      <p className={styles.playerName}>{player.name}</p>
-                      <span className={styles.playerMeta}>{player.years_active || "No years listed"}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.addButton}
-                    onClick={() => handleAssign(player)}
-                    disabled={!activePosition || alreadyAssigned}
-                  >
-                    {!activePosition
-                      ? "Select Position"
-                      : alreadyAssigned
-                      ? "Assigned"
-                      : `Add to ${activePosition}`}
-                  </button>
-                </div>
-              );
-            })}
-
-            {allShownAssigned && !error && (
-              <div className={styles.assignmentMessage}>
-                All listed players are already assigned. Add more prospects from the dashboard to
-                keep building your lineup.
-              </div>
-            )}
-          </div>
-        </aside>
-      </section>
+      </div>
     </div>
   );
 }
+
+
