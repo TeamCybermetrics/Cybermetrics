@@ -11,7 +11,6 @@ from entities.players import (
     ValueScoreRequest,
     ValueScoreResponse,
     PlayerValueScore,
-    UpdateSavedPlayerPositionRequest,
 )
 from middleware.auth import get_current_user
 from typing import List, Annotated
@@ -201,35 +200,6 @@ async def delete_saved_player(
     """Delete a player from the current user's saved players collection"""
     try:
         return await saved_players_service.delete_player(current_user, player_id)
-    except QueryError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
-    except DatabaseError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=e.message)
-    except UseCaseError as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.message)
-
-
-@router.patch(
-    "/saved/{player_id}/position",
-    response_model=SavedPlayer,
-    tags=["saved"],
-    status_code=status.HTTP_200_OK,
-)
-async def update_saved_player_position(
-    player_id: str,
-    request: UpdateSavedPlayerPositionRequest,
-    current_user: Annotated[str, Depends(get_current_user)],
-    saved_players_service: Annotated[SavedPlayersService, Depends(get_saved_players_service)],
-):
-    """Assign or clear a saved player's lineup position for the current user."""
-    try:
-        return await saved_players_service.update_player_position(
-            current_user,
-            player_id,
-            request.position,
-        )
-    except InputValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
     except QueryError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except DatabaseError as e:

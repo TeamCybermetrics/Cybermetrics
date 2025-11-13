@@ -24,15 +24,9 @@ class SavedPlayer(BaseModel):
     name: str
     image_url: Optional[str] = None
     years_active: Optional[str] = None
-    position: Optional[str] = None
     
     class Config:
         extra = "allow"  # Allow additional fields from Firestore
-
-
-class UpdateSavedPlayerPositionRequest(BaseModel):
-    """Payload for updating a saved player's lineup position."""
-    position: Optional[str] = None
 
 class SeasonStats(BaseModel):
     """Stats for a single season"""

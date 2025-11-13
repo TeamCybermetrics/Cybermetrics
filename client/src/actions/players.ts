@@ -71,18 +71,6 @@ export const playerActions = {
     }
   },
 
-  updatePlayerPosition: async (playerId: number, position: string | null) => {
-    try {
-      const player = await playersApi.updateSavedPosition(playerId, position);
-      return { success: true, data: player };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to update player position",
-      };
-    }
-  },
-
   getTeamWeakness: async (playerIds: number[]) => {
     try {
       const result = await playersApi.getTeamWeakness(playerIds);

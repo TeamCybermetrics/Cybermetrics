@@ -23,11 +23,6 @@ class SavedPlayersRepository(ABC):
         """Delete a player from user's saved players collection"""
         pass
 
-    @abstractmethod
-    async def update_position(self, user_id: str, player_id: str, position: str | None) -> SavedPlayer:
-        """Update the stored lineup position for a saved player"""
-        pass
-
 
 
 
