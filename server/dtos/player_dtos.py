@@ -7,7 +7,12 @@ from entities.players import SeasonStats
 # ============================================================================
 
 class PlayerSearchResult(BaseModel):
-    """DTO: Player search result from the index"""
+    """
+    Player search result from the index.
+    
+    Contains basic player information with a relevance score
+    for search ranking purposes.
+    """
     id: int
     name: str
     score: float
@@ -15,7 +20,12 @@ class PlayerSearchResult(BaseModel):
     years_active: str
 
 class PlayerDetail(BaseModel):
-    """DTO: Detailed player information with all seasons stats"""
+    """
+    Detailed player information with all seasons stats.
+    
+    Provides comprehensive player data including historical
+    season-by-season statistics.
+    """
     mlbam_id: int
     fangraphs_id: int
     name: str

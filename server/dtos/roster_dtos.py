@@ -6,13 +6,23 @@ from typing import Dict, List
 # ============================================================================
 
 class RosterAvgRequest(BaseModel):
-    """DTO: Request model for roster average stats"""
+    """
+    Request to calculate roster average statistics.
+    
+    Accepts a list of player IDs to compute aggregate
+    career statistics across the roster.
+    """
     player_ids: List[int] = Field(..., min_items=1, description="List of MLB player IDs (mlbam_id)")
 
 class ValueScoreRequest(BaseModel):
-    """DTO: Request body for computing a player's value score.
-
-    Accepts root-level per-stat weakness weights, e.g.:
+    """
+    Request to compute a player's value score.
+    
+    Accepts per-stat weakness weights to calculate how well
+    a player addresses team weaknesses. Each weight represents
+    the importance of improving that particular stat.
+    
+    Example:
     {
         "strikeout_rate": 0.0,
         "walk_rate": 0.0,
@@ -33,7 +43,12 @@ class ValueScoreRequest(BaseModel):
 # ============================================================================
 
 class PlayerAvgStats(BaseModel):
-    """DTO: Average statistics for a single player"""
+    """
+    Average career statistics for a single player.
+    
+    Contains key offensive metrics averaged across
+    the player's career.
+    """
     strikeout_rate: float = Field(..., description="Career average strikeout rate (K%)")
     walk_rate: float = Field(..., description="Career average walk rate (BB%)")
     isolated_power: float = Field(..., description="Career average isolated power (ISO)")
@@ -41,12 +56,22 @@ class PlayerAvgStats(BaseModel):
     base_running: float = Field(..., description="Career average base running value (BsR)")
 
 class RosterAvgResponse(BaseModel):
-    """DTO: Response model for roster average stats"""
+    """
+    Response containing roster average statistics.
+    
+    Maps each player ID to their average career stats,
+    allowing for roster-wide analysis.
+    """
     stats: Dict[int, PlayerAvgStats] = Field(..., description="Dictionary mapping player_id to their average stats")
     total_players: int = Field(..., description="Total number of players with stats returned")
 
 class TeamWeaknessResponse(BaseModel):
-    """DTO: Normalized weakness scores per stat (higher = more weakness vs league)"""
+    """
+    Normalized team weakness scores per stat.
+    
+    Higher values indicate greater weakness relative to
+    league average. Used to identify areas for improvement.
+    """
     strikeout_rate: float
     walk_rate: float
     isolated_power: float
@@ -54,14 +79,24 @@ class TeamWeaknessResponse(BaseModel):
     base_running: float
 
 class ValueScoreResponse(BaseModel):
-    """DTO: Response for player value score calculation"""
+    """
+    Response containing a player's value score calculation.
+    
+    Combines the player's WAR with an adjustment score based
+    on how well they address team weaknesses.
+    """
     latest_war: float
     adjustment_score: float
     value_score: float
     contributions: Dict[str, float]
 
 class PlayerValueScore(BaseModel):
-    """DTO: Minimal view for team value-score listing"""
+    """
+    Minimal player value score view for listings.
+    
+    Provides essential information for displaying players
+    ranked by their value to the team.
+    """
     id: int
     name: str
     adjustment_score: float

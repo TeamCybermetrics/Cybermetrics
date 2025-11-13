@@ -6,7 +6,12 @@ from typing import Optional
 # ============================================================================
 
 class UpdateSavedPlayerPositionRequest(BaseModel):
-    """DTO: Payload for updating a saved player's lineup position"""
+    """
+    Request to update a saved player's lineup position.
+    
+    Allows users to organize their saved players by
+    assigning them to specific lineup positions.
+    """
     position: Optional[str] = None
 
 
@@ -15,10 +20,18 @@ class UpdateSavedPlayerPositionRequest(BaseModel):
 # ============================================================================
 
 class AddPlayerResponse(BaseModel):
-    """DTO: Response after adding a player"""
+    """
+    Response returned after successfully adding a player.
+    
+    Confirms the player was added and provides the player ID.
+    """
     message: str
     player_id: str
 
 class DeletePlayerResponse(BaseModel):
-    """DTO: Response after deleting a player"""
+    """
+    Response returned after successfully deleting a player.
+    
+    Confirms the player was removed from saved players.
+    """
     message: str
