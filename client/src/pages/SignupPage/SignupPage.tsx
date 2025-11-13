@@ -107,7 +107,11 @@ const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         </form>
 
         <p className={styles.footer}>
-          Already have an account? <a href={ROUTES.LOGIN}>Log in</a>
+import { Link } from "react-router-dom";
+
+// ... other code ...
+
+          Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
         </p>
       </div>
     </div>
