@@ -4,6 +4,9 @@ from datetime import datetime
 
 from repositories.player_repository import PlayerRepository
 from services.roster_avg_service import RosterAvgService
+from services.league_stats_service import LeagueStatsService
+from useCaseHelpers.league_stats_helper import LeagueStatsDomain
+from entities.league_stats import TeamAggregate
 from utils.logger import setup_logger  # or get_logger if that's what you use
 
 logger = setup_logger(__name__)
@@ -72,7 +75,7 @@ async def compute_team_roster_average(team_id: str, teams_repo: PlayerRepository
 async def main(teams_repo: PlayerRepository, roster_service: RosterAvgService) -> None:
     """Compute per-team roster averages and league aggregates; write via TeamsRepository."""
     # Per-team averages
-    team_averages: List[Dict[str, Any]] = []
+    team_aggregates: List[TeamAggregate] = []
     for team_id in teams_repo.list_team_ids():
         try:
             logger.info(f"Processing team {team_id}...")
@@ -83,48 +86,21 @@ async def main(teams_repo: PlayerRepository, roster_service: RosterAvgService) -
                     logger.info(f"Saved roster_average for team {team_id}: {avg}")
                 except Exception as e:
                     logger.exception(f"Failed to save roster_average for team {team_id}: {e}")
-                team_averages.append({"team_id": team_id, "avg": avg, "player_count": player_count})
+                team_aggregates.append(TeamAggregate(team_id=team_id, avg=avg, player_count=player_count))
             else:
                 logger.info(f"No roster_average computed for team {team_id}")
         except Exception:
             logger.exception(f"Team processing failed: {team_id}")
 
-    # League aggregates
+    if not team_aggregates:
+        logger.info("No team aggregates available to compute league averages.")
+        return
+    league_service = LeagueStatsService(player_repository=teams_repo, domain=LeagueStatsDomain())
     try:
-        included = [t for t in team_averages if t.get("avg")]
-        num_teams = len(included)
-        total_players = sum(t.get("player_count", 0) for t in included)
-
-        if num_teams == 0:
-            logger.info("No team averages available to compute league averages.")
-            return
-
-        stat_keys = list(included[0]["avg"].keys())
-
-        unweighted = {}
-        for k in stat_keys:
-            s = sum(t["avg"].get(k, 0.0) for t in included)
-            unweighted[k] = round(s / num_teams, 4)
-
-        if total_players > 0:
-            weighted = {}
-            for k in stat_keys:
-                s = sum(t["avg"].get(k, 0.0) * t.get("player_count", 0) for t in included)
-                weighted[k] = round(s / total_players, 4)
-        else:
-            weighted = dict(unweighted)
-
-        league_doc = {
-            "unweighted": unweighted,
-            "weighted_by_player_count": weighted,
-            "teams_counted": num_teams,
-            "players_counted": total_players,
-            "updated_at": datetime.utcnow().isoformat() + "Z",
-        }
-
-        teams_repo.set_league_averages(league_doc)
-        logger.info(f"Wrote league averages: teams={num_teams}, players={total_players}")
-
+        league_agg = league_service.compute_and_persist(team_aggregates)
+        logger.info(
+            "Wrote league averages: teams=%s players=%s", league_agg.teams_counted, league_agg.players_counted
+        )
     except Exception as e:
         logger.exception(f"Failed to compute/write league averages: {e}")
 
