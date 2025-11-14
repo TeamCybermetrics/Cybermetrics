@@ -96,14 +96,16 @@ class RosterDomain:
         }
 
     def compute_team_weakness_scores(
-        self, team_avg: Dict[str, float], league_avg: Dict[str, float]
-    ) -> Dict[str, float]:
+        self, team_avg: Dict[str, float], league_avg: Dict[str, float], league_std: Dict[str, float]
+        ) -> Dict[str, float]:
         """Compute normalized weakness scores per stat vs league average.
 
-        Definition (hitter context): higher score = more weakness (worse vs league).
-        - For K% (lower is better): weakness_raw = max(0, team - league)
-        - For BB%, ISO, OBP, BsR (higher is better): weakness_raw = max(0, league - team)
-        Normalization: weakness_norm = weakness_raw / max(league, 1e-9)
+        Definition: higher score = less weakness (league is 0).
+        - For K% (lower is better): weakness_raw = team - league
+        - For BB%, ISO, OBP, BsR (higher is better): league - team
+        Normalization: weakness_norm = weakness_raw / league_std (10**5 if std = 0)
+
+        Each vector tells you how many standard deviations away you are from the league average.
         """
         keys_higher_better = {
             "walk_rate",
@@ -117,13 +119,14 @@ class RosterDomain:
         for key in keys_lower_better.union(keys_higher_better):
             team = float(team_avg.get(key, 0.0) or 0.0)
             league = float(league_avg.get(key, 0.0) or 0.0)
+            std = float(league_std.get(key, 0.0) or 0.0)
 
             if key in keys_lower_better:
-                raw = max(0.0, team - league)
+                raw = team - league
             else:  # higher is better
-                raw = max(0.0, league - team)
+                raw = league - team
 
-            denom = league if league != 0 else 1e-9
+            denom = std if std != 0 else 10*5
             scores[key] = round(raw / denom, 3)
 
         return scores
