@@ -15,24 +15,45 @@ type WeaknessViewProps = {
   onRetry: () => void;
 };
 
-const STAT_LABELS: { key: keyof TeamWeaknessResponse; label: string }[] = [
+type AxisLabelPosition = {
+  offsetMultiplier?: number;
+  xOffset?: number;
+  yOffset?: number;
+  anchor?: "start" | "middle" | "end";
+};
+
+type AxisLabelConfig = {
+  key: keyof TeamWeaknessResponse;
+  label: string;
+  position?: AxisLabelPosition;
+};
+
+const STAT_LABELS: AxisLabelConfig[] = [
   { key: "strikeout_rate", label: "Strikeout Rate" },
-  { key: "walk_rate", label: "Walk Rate" },
+  {
+    key: "walk_rate",
+    label: "Walk Rate",
+    position: { xOffset: -20, yOffset: 4, anchor: "start" }
+  },
   { key: "isolated_power", label: "Iso Power" },
   { key: "on_base_percentage", label: "On Base %" },
-  { key: "base_running", label: "Base Running" }
+  {
+    key: "base_running",
+    label: "Base Running",
+    position: { xOffset: 6, yOffset: 6, anchor: "end", offsetMultiplier: 1.22 }
+  }
 ];
 
-const RING_FRACTIONS = [0.25, 0.5, 0.75, 1];
+const RING_FRACTIONS = [0.2, 0.4, 0.6, 0.8, 1];
+const BASELINE_PERCENTILE = 0.5;
+const BASELINE_RING = BASELINE_PERCENTILE;
+const RING_LABEL_VALUES = Array.from(new Set([...RING_FRACTIONS, BASELINE_RING])).sort(
+  (a, b) => a - b
+);
 const RADAR_SIZE = 320;
 const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
 const RADAR_RADIUS = 120;
 const AXIS_LABEL_OFFSET = 1.32;
-const LEFT_AXIS_PADDING = 14;
-const RIGHT_AXIS_PADDING = 22;
-const BASE_AXIS_VERTICAL_OFFSET = 6;
-
-const formatPercent = (value: number) => `${Math.round(value * 100)}%`;
 
 export default function WeaknessView({
   weakness,
@@ -63,19 +84,30 @@ export default function WeaknessView({
     return <div className={styles.stateMessage}>Unable to compute weaknesses.</div>;
   }
 
+  const percentileFractions = getPercentileFractions(weakness);
+  const rankedAxes = percentileFractions
+    .map((value, idx) => ({ value, idx }))
+    .sort((a, b) => b.value - a.value);
+  const worstAxisIndex = rankedAxes[0]?.idx ?? null;
+  const secondWorstAxisIndex = rankedAxes[1]?.idx ?? null;
+  const leagueBaselinePolygon = Array(STAT_LABELS.length).fill(BASELINE_PERCENTILE);
+
   return (
     <div className={styles.container}>
       <div className={styles.statsBubble}>
         <div className={styles.statsHeader}>Team Weakness</div>
         <div className={styles.statsRow}>
-          {STAT_LABELS.map(({ key, label }) => (
-            <div key={key} className={styles.statBlock}>
-              <div className={styles.statLabel}>{label}</div>
-              <div className={styles.statValue}>
-                {formatPercent(Math.max(0, weakness[key]))}
+          {STAT_LABELS.map(({ key, label }) => {
+            const percentile = weaknessToPercentile(weakness[key]);
+            return (
+              <div key={key} className={styles.statBlock}>
+                <div className={styles.statLabel}>{label}</div>
+                <div className={styles.statValue}>
+                  {formatScoreLabel(percentile)}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -142,42 +174,87 @@ export default function WeaknessView({
                     />
                   );
                 })}
+                {/* league average polygon */}
+                {renderRadarPolygon(leagueBaselinePolygon, {
+                  fill: "rgba(255, 173, 74, 0.18)",
+                  stroke: "rgba(255, 198, 124, 0.9)",
+                  strokeWidth: 1.5,
+                  className: styles.leaguePolygon
+                })}
+                {/* team polygon */}
+                {renderRadarPolygon(percentileFractions, {
+                  fill: "rgba(109,123,255,0.3)",
+                  stroke: "#6d7bff",
+                  strokeWidth: 2,
+                  className: styles.teamPolygon
+                })}
+                {/* baseline (50th percentile) ring */}
+                <polygon
+                  points={buildRingPolygon(BASELINE_RING)}
+                  fill="none"
+                  stroke="rgba(255,255,255,0.35)"
+                  strokeWidth="1"
+                  strokeDasharray="6 4"
+                />
                 {/* ring labels */}
-                {RING_FRACTIONS.map((fraction, idx) => (
-                  <text
-                    key={`label-${fraction}`}
-                    x={RADAR_CENTER.x}
-                    y={RADAR_CENTER.y - RADAR_RADIUS * fraction - (idx === RING_FRACTIONS.length - 1 ? 12 : 6)}
-                    textAnchor="middle"
-                    className={styles.ringLabel}
-                  >
-                    {formatPercent(fraction)}
-                  </text>
-                ))}
+                {RING_LABEL_VALUES.map((fraction) => {
+                  const isAverage = Math.abs(fraction - BASELINE_PERCENTILE) < 0.0001;
+                  let offset: number;
+                  if (fraction === 1) {
+                    offset = -8;
+                  } else if (isAverage) {
+                    offset = 6;
+                  } else if (fraction === 0.4) {
+                    offset = 10;
+                  } else if (fraction === 0.2) {
+                    offset = 14;
+                  } else {
+                    offset = -6;
+                  }
+                  const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + offset;
+                  return (
+                    <text
+                      key={`label-${fraction}`}
+                      x={RADAR_CENTER.x}
+                      y={y}
+                      textAnchor="middle"
+                      className={`${styles.ringLabel} ${isAverage ? styles.ringLabelAverage : ""}`}
+                    >
+                      {formatScoreTick(fraction)}
+                      {isAverage ? " (avg)" : ""}
+                    </text>
+                  );
+                })}
                 {/* axis labels */}
                 {STAT_LABELS.map((axis, idx) => {
-                  let { x, y } = getPointForFraction(AXIS_LABEL_OFFSET, idx, false);
+                  const { position } = axis;
+                  const offsetMultiplier = position?.offsetMultiplier ?? AXIS_LABEL_OFFSET;
+                  let { x, y } = getPointForFraction(offsetMultiplier, idx, false);
+                  x += position?.xOffset ?? 0;
+                  y += position?.yOffset ?? 0;
                   let anchor: "start" | "end" | "middle";
                   const cosine = Math.cos(getAngle(idx));
-                  if (axis.key === "base_running") {
-                    x -= LEFT_AXIS_PADDING;
-                    y += BASE_AXIS_VERTICAL_OFFSET;
-                    anchor = "end";
-                  } else if (axis.key === "walk_rate") {
-                    x -= RIGHT_AXIS_PADDING;
-                    anchor = "start";
+                  if (position?.anchor) {
+                    anchor = position.anchor;
                   } else if (Math.abs(cosine) < 0.15) {
                     anchor = "middle";
                   } else {
                     anchor = cosine > 0 ? "start" : "end";
                   }
                   const axisValue = weakness[axis.key];
-                  const labelClass =
-                    axisValue >= 0.75
-                      ? styles.axisLabelSevere
-                      : axisValue >= 0.5
-                      ? styles.axisLabelWarn
-                      : styles.axisLabel;
+                  const percentileValue = percentileFractions[idx];
+                  let labelClass = styles.axisLabel;
+                  if (idx === worstAxisIndex) {
+                    labelClass = styles.axisLabelSevere;
+                  } else if (idx === secondWorstAxisIndex) {
+                    labelClass = styles.axisLabelWarn;
+                  }
+                  const scoreText = formatScoreLabel(percentileValue);
+                  const deficitDescription = describeWeakness(axisValue);
+                  const strikeoutNote =
+                    axis.key === "strikeout_rate"
+                      ? "Lower strikeout rate plots farther out."
+                      : null;
 
                   return (
                     <text
@@ -188,16 +265,25 @@ export default function WeaknessView({
                       className={labelClass}
                     >
                       {axis.label}
-                      <title>{`${axis.label}: ${formatPercent(axisValue)} weakness`}</title>
+                      <title>
+                        {[
+                          `${axis.label}: ${scoreText}`,
+                          deficitDescription,
+                          strikeoutNote
+                        ]
+                          .filter(Boolean)
+                          .join(" • ")}
+                      </title>
                     </text>
                   );
                 })}
-                {renderRadarPolygon(weakness)}
               </svg>
             </div>
             <ul className={styles.radarLegend}>
-              <li>0% = on par with the league</li>
-              <li>100% = largest deficit observed</li>
+              <li>Weakness score: 0 = strongest area, 100 = largest deficit</li>
+              <li>Dashed ring marks score 50 (league average baseline)</li>
+              <li>Orange fill = league composite, blue = your lineup</li>
+              <li>Only the two weakest axes highlight in color</li>
             </ul>
           </div>
         </div>
@@ -206,19 +292,25 @@ export default function WeaknessView({
   );
 }
 
-function renderRadarPolygon(weakness: TeamWeaknessResponse) {
-  const fractions = STAT_LABELS.map(({ key }) =>
-    Math.min(Math.max(weakness[key], 0), 1)
-  );
+type PolygonStyle = {
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  className?: string;
+  strokeDasharray?: string;
+};
 
+function renderRadarPolygon(fractions: number[], style?: PolygonStyle) {
   const points = buildPolygonPoints(fractions);
 
   return (
     <polygon
       points={points}
-      fill="rgba(109,123,255,0.25)"
-      stroke="#6d7bff"
-      strokeWidth="2"
+      fill={style?.fill ?? "none"}
+      stroke={style?.stroke ?? "#6d7bff"}
+      strokeWidth={style?.strokeWidth ?? 2}
+      strokeDasharray={style?.strokeDasharray}
+      className={style?.className}
     />
   );
 }
@@ -248,4 +340,44 @@ function buildPolygonPoints(fractions: number[]) {
 
 function buildRingPolygon(fraction: number) {
   return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction));
+}
+
+function weaknessToPercentile(value: number) {
+  if (!Number.isFinite(value)) {
+    return BASELINE_PERCENTILE;
+  }
+  const percentile = BASELINE_PERCENTILE - 0.5 * value;
+  return Math.max(0, Math.min(1, percentile));
+}
+
+function getPercentileFractions(weakness: TeamWeaknessResponse) {
+  return STAT_LABELS.map(({ key }) => weaknessToPercentile(weakness[key]));
+}
+
+function describeWeakness(value: number) {
+  if (!Number.isFinite(value)) {
+    return "Difference vs league unavailable";
+  }
+
+  const points = Math.abs(value * 100);
+  if (points < 0.5) {
+    return "On par with league average";
+  }
+
+  const direction = value >= 0 ? "below league average" : "above league average";
+  const rounded =
+    points >= 10 ? Math.round(points).toString() : points.toFixed(1).replace(/\.0$/, "");
+  return `${rounded} pts ${direction}`;
+}
+
+function formatScoreLabel(value: number) {
+  return `Score ${formatScoreNumber(value)}`;
+}
+
+function formatScoreTick(value: number) {
+  return `${formatScoreNumber(value)}`;
+}
+
+function formatScoreNumber(value: number) {
+  return Math.round(value * 100);
 }

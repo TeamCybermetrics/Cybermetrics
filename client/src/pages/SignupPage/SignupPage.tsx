@@ -1,8 +1,8 @@
 import { useState, FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthCard, Input, Button, Alert, Link, ProtectedRoute } from "@/components";
+import { useNavigate, Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
+import logo from "@/assets/brand_badge.jpg";
 import styles from "./SignupPage.module.css";
 
 export default function SignupPage() {
@@ -39,56 +39,73 @@ export default function SignupPage() {
   };
 
   return (
-    <ProtectedRoute requireAuth={false}>
-      <AuthCard
-        title="Sign Up"
-        subtitle="Create your Cybermetrics account"
-        footer={
-          <p>
-            Already have an account? <Link href={ROUTES.LOGIN}>Login</Link>
-          </p>
-        }
-      >
+    <div className={styles.page}>
+      <div className={styles.stripeBottom}></div>
+      
+      <div className={styles.logo}>
+        <img src={logo} alt="Cybermetrics" />
+        <span>Cybermetrics</span>
+      </div>
+
+      <div className={styles.container}>
+        <h1 className={styles.title}>Sign Up</h1>
+        <p className={styles.subtitle}>Create your Cybermetrics account</p>
+
         <form onSubmit={handleSubmit} className={styles.form}>
-          <Input
-            label="Display Name (optional)"
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="John Doe"
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Display Name (optional)</label>
+            <input
+              type="text"
+              placeholder="John Doe"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              disabled={isLoading}
+              autoComplete="name"
+            />
+          </div>
 
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            disabled={isLoading}
-          />
+          <div className={styles.field}>
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+              autoComplete="email"
+            />
+          </div>
 
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            minLength={6}
-            disabled={isLoading}
-            hint="Minimum 6 characters"
-          />
+          <div className={styles.field}>
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginTop: "4px" }}>
+              Minimum 6 characters
+            </span>
+          </div>
 
-          {error && <Alert type="error">{error}</Alert>}
-          {success && <Alert type="success">{success}</Alert>}
+          {error && <div className={styles.error} role="alert" aria-live="polite">{error}</div>}
+          {success && <div className={styles.success} role="alert" aria-live="polite">{success}</div>}
 
-          <Button type="submit" disabled={isLoading}>
+          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
             {isLoading ? "Creating account..." : "Sign Up"}
-          </Button>
+          </button>
         </form>
-      </AuthCard>
-    </ProtectedRoute>
+
+        <p className={styles.footer}>
+          Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
+        </p>
+      </div>
+    </div>
   );
 }

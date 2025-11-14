@@ -1,0 +1,63 @@
+.chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.svg {
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.axisLabel {
+  fill: rgba(255, 255, 255, 0.85);
+  font-size: 10px;
+  pointer-events: auto;
+}
+
+.axisLabelWarn {
+  composes: axisLabel;
+  fill: #ffb347;
+}
+
+.axisLabelSevere {
+  composes: axisLabel;
+  fill: #ff6666;
+}
+
+.ringLabel {
+  fill: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.ringLabelAverage {
+  composes: ringLabel;
+  fill: #ffffff;
+  font-weight: 600;
+}
+
+.leaguePolygon {
+  fill: rgba(255, 173, 74, 0.18);
+  stroke: rgba(255, 198, 124, 0.9);
+}
+
+.teamPolygon {
+  fill: rgba(109, 123, 255, 0.3);
+  stroke: #6d7bff;
+}
+
+.legend {
+  list-style: disc;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 0 20px;
+}

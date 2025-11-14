@@ -44,7 +44,7 @@ export function RecommendationsSection({
             </div>
             <div className={styles.recommendActions}>
               <span className={styles.recommendScore}>
-                Impact Score: {player.score.toFixed(1)}
+                {/* Impact Score: {player.score.toFixed(1)} */}
               </span>
               <button
                 className={styles.addButton}
