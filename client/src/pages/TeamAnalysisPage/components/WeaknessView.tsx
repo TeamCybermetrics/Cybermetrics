@@ -343,6 +343,9 @@ function buildRingPolygon(fraction: number) {
 }
 
 function weaknessToPercentile(value: number) {
+  if (!Number.isFinite(value)) {
+    return BASELINE_PERCENTILE;
+  }
   const percentile = BASELINE_PERCENTILE - 0.5 * value;
   return Math.max(0, Math.min(1, percentile));
 }
