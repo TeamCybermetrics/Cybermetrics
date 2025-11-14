@@ -34,11 +34,11 @@ class RosterDomain:
                 season_count += 1
 
         if season_count > 0:
-            avg_strikeout_rate = round(total_strikeout_rate / season_count, 3)
-            avg_walk_rate = round(total_walk_rate / season_count, 3)
-            avg_isolated_power = round(total_isolated_power / season_count, 3)
-            avg_on_base_percentage = round(total_on_base_percentage / season_count, 3)
-            avg_base_running = round(total_base_running / season_count, 3)
+            avg_strikeout_rate = total_strikeout_rate / season_count
+            avg_walk_rate = total_walk_rate / season_count
+            avg_isolated_power = total_isolated_power / season_count
+            avg_on_base_percentage = total_on_base_percentage / season_count
+            avg_base_running = total_base_running / season_count
 
             return PlayerAvgStats(
                 strikeout_rate=avg_strikeout_rate,
@@ -88,11 +88,11 @@ class RosterDomain:
             raise InputValidationError("No valid player statistics to average")
 
         return {
-            "strikeout_rate": round(total_k / count, 3),
-            "walk_rate": round(total_bb / count, 3),
-            "isolated_power": round(total_iso / count, 3),
-            "on_base_percentage": round(total_obp / count, 3),
-            "base_running": round(total_bsr / count, 3),
+            "strikeout_rate": total_k / count,
+            "walk_rate": total_bb / count,
+            "isolated_power": total_iso / count,
+            "on_base_percentage": total_obp / count,
+            "base_running": total_bsr / count,
         }
 
     def compute_team_weakness_scores(
@@ -101,11 +101,12 @@ class RosterDomain:
         """Compute normalized weakness scores per stat vs league average.
 
         Definition: higher score = less weakness (league is 0).
-        - For K% (lower is better): weakness_raw = team - league
-        - For BB%, ISO, OBP, BsR (higher is better): league - team
+        - For K% (lower is better): weakness_raw = league - team
+        - For BB%, ISO, OBP, BsR (higher is better): team - league
         Normalization: weakness_norm = weakness_raw / league_std (10**5 if std = 0)
 
         Each vector tells you how many standard deviations away you are from the league average.
+        (z-score)
         """
         keys_higher_better = {
             "walk_rate",
@@ -122,12 +123,12 @@ class RosterDomain:
             std = float(league_std.get(key, 0.0) or 0.0)
 
             if key in keys_lower_better:
-                raw = team - league
-            else:  # higher is better
                 raw = league - team
+            else:  # higher is better
+                raw = team - league
 
             denom = std if std != 0 else 10*5
-            scores[key] = round(raw / denom, 3)
+            scores[key] = raw / denom
 
         return scores
 
