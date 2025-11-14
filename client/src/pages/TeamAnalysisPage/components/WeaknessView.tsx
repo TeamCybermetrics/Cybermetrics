@@ -87,7 +87,7 @@ export default function WeaknessView({
   const percentileFractions = getPercentileFractions(weakness);
   const rankedAxes = percentileFractions
     .map((value, idx) => ({ value, idx }))
-    .sort((a, b) => a.value - b.value);
+    .sort((a, b) => b.value - a.value);
   const worstAxisIndex = rankedAxes[0]?.idx ?? null;
   const secondWorstAxisIndex = rankedAxes[1]?.idx ?? null;
   const leagueBaselinePolygon = Array(STAT_LABELS.length).fill(BASELINE_PERCENTILE);
@@ -103,7 +103,7 @@ export default function WeaknessView({
               <div key={key} className={styles.statBlock}>
                 <div className={styles.statLabel}>{label}</div>
                 <div className={styles.statValue}>
-                  {formatPercentileLabel(percentile)}
+                  {formatScoreLabel(percentile)}
                 </div>
               </div>
             );
@@ -220,7 +220,7 @@ export default function WeaknessView({
                       textAnchor="middle"
                       className={`${styles.ringLabel} ${isAverage ? styles.ringLabelAverage : ""}`}
                     >
-                      {formatPercentileTick(fraction)}
+                      {formatScoreTick(fraction)}
                       {isAverage ? " (avg)" : ""}
                     </text>
                   );
@@ -249,7 +249,7 @@ export default function WeaknessView({
                   } else if (idx === secondWorstAxisIndex) {
                     labelClass = styles.axisLabelWarn;
                   }
-                  const percentileText = formatPercentileLabel(percentileValue);
+                  const scoreText = formatScoreLabel(percentileValue);
                   const deficitDescription = describeWeakness(axisValue);
                   const strikeoutNote =
                     axis.key === "strikeout_rate"
@@ -267,7 +267,7 @@ export default function WeaknessView({
                       {axis.label}
                       <title>
                         {[
-                          `${axis.label}: ${percentileText}`,
+                          `${axis.label}: ${scoreText}`,
                           deficitDescription,
                           strikeoutNote
                         ]
@@ -280,9 +280,9 @@ export default function WeaknessView({
               </svg>
             </div>
             <ul className={styles.radarLegend}>
-              <li>Percentile vs league (further out = stronger)</li>
+              <li>Weakness score: 0 = strongest area, 100 = largest deficit</li>
+              <li>Dashed ring marks score 50 (league average baseline)</li>
               <li>Orange fill = league composite, blue = your lineup</li>
-              <li>Dashed ring marks the 50th percentile (league average)</li>
               <li>Only the two weakest axes highlight in color</li>
             </ul>
           </div>
@@ -370,30 +370,14 @@ function describeWeakness(value: number) {
   return `${rounded} pts ${direction}`;
 }
 
-function formatPercentileLabel(value: number) {
-  const percentile = Math.round(value * 100);
-  return `${percentile}${getOrdinalSuffix(percentile)} percentile`;
+function formatScoreLabel(value: number) {
+  return `Score ${formatScoreNumber(value)}`;
 }
 
-function formatPercentileTick(value: number) {
-  const percentile = Math.round(value * 100);
-  return `${percentile}${getOrdinalSuffix(percentile)}`;
+function formatScoreTick(value: number) {
+  return `${formatScoreNumber(value)}`;
 }
 
-function getOrdinalSuffix(value: number) {
-  const mod100 = value % 100;
-  if (mod100 >= 11 && mod100 <= 13) {
-    return "th";
-  }
-
-  switch (value % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
+function formatScoreNumber(value: number) {
+  return Math.round(value * 100);
 }
