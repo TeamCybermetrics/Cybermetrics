@@ -6,7 +6,7 @@ import {
   positionCoordinates,
   positionOrder,
   staticSpots,
-} from "../constants";
+} from "@/components/TeamBuilder/constants";
 
 type DiamondPanelProps = {
   lineup: Record<DiamondPosition, SavedPlayer | null>;
