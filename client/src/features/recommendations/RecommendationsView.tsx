@@ -22,7 +22,7 @@ type Props = {
   // Players
   savedPlayers: SavedPlayer[];
   searchResultPlayers: SavedPlayer[];
-  recommendedPlayers: any[];
+  recommendedPlayers: PlayerSearchResult[];
   
   // Sets
   savedPlayerIds: Set<number>;
