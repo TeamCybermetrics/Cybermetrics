@@ -53,7 +53,7 @@ export function PlayerRow({
           <button
             className={styles.deletePlayerButton}
             disabled={deleteDisabled}
-            onClick={onDelete}
+            onClick={onDelete ?? (() => {})}
             title={deleteTitle}
           >
             {deleteLabel}
