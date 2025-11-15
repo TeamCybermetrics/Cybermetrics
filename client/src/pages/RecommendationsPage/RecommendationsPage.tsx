@@ -1,18 +1,15 @@
 import { ProtectedRoute } from "@/components";
+import { useRecommendations } from "@/features/recommendations/useRecommendations.ts";
+import { RecommendationsView } from "@/features/recommendations/RecommendationsView.tsx";
 import styles from "./RecommendationsPage.module.css";
 
 export default function RecommendationsPage() {
+  const vm = useRecommendations();
+
   return (
     <ProtectedRoute requireAuth>
       <div className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Recommendations</h1>
-          <p className={styles.subtitle}>Coming soon</p>
-        </header>
-
-        <div className={styles.content}>
-          {/* blank for now */}
-        </div>
+        <RecommendationsView {...vm} />
       </div>
     </ProtectedRoute>
   );
