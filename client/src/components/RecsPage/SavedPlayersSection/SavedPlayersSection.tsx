@@ -1,7 +1,7 @@
 import { SavedPlayer } from "@/api/players";
 import { PlayerRow } from "../PlayerRow/PlayerRow";
 import styles from "./SavedPlayersSection.module.css";
-import { DiamondPosition } from "../constants";
+import { DiamondPosition } from "@/components/TeamBuilder/constants";
 
 type SavedPlayersSectionProps = {
   players: SavedPlayer[];
