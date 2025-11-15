@@ -126,7 +126,7 @@ export function RecommendationsView({
             statusText={
               hasSearchTerm
                 ? `${searchResultPlayers.length} results`
-                : `${savedPlayers.length} saved players`
+                : ""
             }
             errorMessage={playerOperationError}
           />
