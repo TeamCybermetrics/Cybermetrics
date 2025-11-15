@@ -1,5 +1,5 @@
 import type { DragEvent } from "react";
-import type { SavedPlayer } from "@/api/players";
+import type { SavedPlayer, PlayerSearchResult } from "@/api/players";
 import type { DiamondPosition, LineupState } from "@/components/TeamBuilder/constants";
 import type { PanelMode } from "./useRecommendations";
 import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
