@@ -12,5 +12,6 @@ export const ROUTES = {
   SIGNUP: "/signup",
   TEAM_BUILDER: "/team-builder",
   TEAM_ANALYSIS: "/team-analysis",
+  RECOMMENDATIONS: "/recommendations",
   OUR_ALGORITHM: "/our-algorithm",
 } as const;

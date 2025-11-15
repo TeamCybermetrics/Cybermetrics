@@ -6,6 +6,7 @@ import TeamBuilderPage from "@/pages/TeamBuilderPage";
 import TeamAnalysisPage from "@/pages/TeamAnalysisPage";
 import OurAlgorithmPage from "@/pages/OurAlgorithmPage";
 import AppLayout from "@/pages/layouts/AppLayout";
+import RecommendationsPage from "@/pages/RecommendationsPage";
 import { ROUTES } from "@/config";
 
 /**
@@ -28,6 +29,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path={ROUTES.TEAM_BUILDER} element={<TeamBuilderPage />} />
           <Route path={ROUTES.TEAM_ANALYSIS} element={<TeamAnalysisPage />} />
+          <Route path={ROUTES.RECOMMENDATIONS} element={<RecommendationsPage />} />
           <Route path={ROUTES.OUR_ALGORITHM} element={<OurAlgorithmPage />} />
         </Route>
 
