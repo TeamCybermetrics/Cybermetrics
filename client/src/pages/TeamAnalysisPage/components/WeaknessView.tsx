@@ -106,7 +106,7 @@ export default function WeaknessView({
   return (
     <div className={styles.container}>
       <div className={styles.statsBubble}>
-        <div className={styles.statsHeader}>Team Weakness</div>
+        <div className={styles.statsHeader}>Team Stats</div>
         <div className={styles.statsRow}>
           {STAT_LABELS.map(({ key, label }) => {
             const rawValue = weakness[key];

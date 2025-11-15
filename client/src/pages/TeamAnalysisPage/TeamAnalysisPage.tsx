@@ -219,7 +219,7 @@ export default function TeamAnalysisPage() {
       {/* Header (single tab label) */}
       <main className={styles.mainContent}>
         <nav className={styles.tabNav}>
-          <div className={`${styles.tab} ${styles.tabActive}`}>Weakness</div>
+          <div className={`${styles.tab} ${styles.tabActive}`}>Analysis</div>
         </nav>
 
         <div className={styles.tabContent}>
