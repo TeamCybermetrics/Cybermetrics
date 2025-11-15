@@ -127,7 +127,7 @@ class RosterDomain:
             else:  # higher is better
                 raw = team - league
 
-            denom = std if std != 0 else 10*5
+            denom = std if std != 0 else 10**5
             scores[key] = raw / denom
 
         return scores
@@ -185,6 +185,7 @@ class RosterDomain:
         latest_war: float,
         player_latest_stats: Dict[str, float],
         league_avg: Dict[str, float],
+        league_std: Dict[str, float],
         team_weakness: Dict[str, float],
     ) -> Dict[str, float]:
         """Compute player value: latest WAR + team-weighted stat difference sum.
@@ -211,6 +212,7 @@ class RosterDomain:
         adjustment_sum, contributions = self.compute_adjustment_sum(
             player_latest_stats=player_latest_stats,
             league_avg=league_avg,
+            league_std=league_std,
             team_weakness=team_weakness,
         )
         value_score = round(float(latest_war) + adjustment_sum, 3)
@@ -225,6 +227,7 @@ class RosterDomain:
         self,
         player_latest_stats: Dict[str, float],
         league_avg: Dict[str, float],
+        league_std: Dict[str, float],
         team_weakness: Dict[str, float],
     ) -> tuple[float, Dict[str, float]]:
         """Compute the weighted adjustment sum and per-stat contributions.
@@ -253,16 +256,17 @@ class RosterDomain:
         for key in keys_lower_better.union(keys_higher_better):
             player_v = float(player_latest_stats.get(key, 0.0) or 0.0)
             league_v = float(league_avg.get(key, 0.0) or 0.0)
+            league_std_v = float(league_std.get(key, 10**5) or 10**5)
             weight = float(team_weakness.get(key, 0.0) or 0.0)
-            if weight <= 0:
-                continue  # ignore 0.0 weaknesses
+            if weight >= 999990:
+                continue 
             if key in keys_lower_better:
-                diff = league_v - player_v  # lower is better
+                diff = league_v - player_v 
             else:
-                diff = player_v - league_v  # higher is better
-            contrib = diff * weight
-            contributions[key] = round(contrib, 3)
+                diff = player_v - league_v
+            contrib = diff / league_std_v * abs(weight)
+            contributions[key] = contrib
             adjustment_sum += contrib
 
-        adjustment_sum = round(adjustment_sum, 3)
+        adjustment_sum = adjustment_sum
         return adjustment_sum, contributions
