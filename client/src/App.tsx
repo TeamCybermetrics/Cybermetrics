@@ -13,7 +13,7 @@ import { ROUTES } from "@/config";
  * Root application component that configures client-side routing and shared layout.
  *
  * Sets up top-level routes for landing, login, and signup pages, a nested route group
- * wrapped by the shared AppLayout for authenticated pages (sdashboard, team builder,
+ * wrapped by the shared AppLayout for authenticated pages (dashboard, team builder,
  * team analysis, MLB teams), and a catch-all redirect to the landing route.
  *
  * @returns A JSX element containing the application's router and route configuration.
