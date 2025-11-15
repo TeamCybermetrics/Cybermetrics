@@ -1,26 +1,86 @@
+import type { DragEvent } from "react";
+import type { SavedPlayer } from "@/api/players";
+import type { DiamondPosition, LineupState } from "@/components/TeamBuilder/constants";
 import type { PanelMode } from "./useRecommendations";
+import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
+import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
+import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
+import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 import styles from "./RecommendationsView.module.css";
 
 type Props = {
+  // Panel
   mode: PanelMode;
-  query: string;
-  onGetRecommendations: () => void;
-  onSearchChange: (value: string) => void;
-  onSaveLineup: () => void;
+  searchTerm: string;
+  
+  // Lineup
+  lineup: LineupState;
+  activePosition: DiamondPosition | null;
+  dropTarget: DiamondPosition | null;
+  draggingId: number | null;
+  
+  // Players
+  savedPlayers: SavedPlayer[];
+  searchResultPlayers: SavedPlayer[];
+  recommendedPlayers: any[];
+  
+  // Sets
+  savedPlayerIds: Set<number>;
+  assignedIds: Set<number>;
+  savingPlayerIds: Set<number>;
+  
+  // Status
+  hasSearchTerm: boolean;
+  isRecommending: boolean;
+  recommendationError: string;
+  playerOperationError: string;
+  
+  // Handlers
+  setSearchTerm: (value: string) => void;
+  setActivePosition: (pos: DiamondPosition) => void;
+  setDropTarget: (pos: DiamondPosition | null) => void;
+  handleSavePlayerOnly: (player: SavedPlayer) => void;
+  handleClearSlot: (pos: DiamondPosition) => void;
+  prepareDragPlayer: (player: SavedPlayer, fromPosition?: DiamondPosition) => void;
+  clearDragState: () => void;
+  handlePositionDrop: (e: DragEvent<HTMLButtonElement>, pos: DiamondPosition) => void;
+  saveTeam: () => void;
+  handleGetRecommendations: () => void;
 };
 
 export function RecommendationsView({
   mode,
-  query,
-  onGetRecommendations,
-  onSearchChange,
-  onSaveLineup,
+  searchTerm,
+  lineup,
+  activePosition,
+  dropTarget,
+  draggingId,
+  savedPlayers,
+  searchResultPlayers,
+  recommendedPlayers,
+  savedPlayerIds,
+  assignedIds,
+  savingPlayerIds,
+  hasSearchTerm,
+  isRecommending,
+  recommendationError,
+  playerOperationError,
+  setSearchTerm,
+  setActivePosition,
+  setDropTarget,
+  handleSavePlayerOnly,
+  handleClearSlot,
+  prepareDragPlayer,
+  clearDragState,
+  handlePositionDrop,
+  saveTeam,
+  handleGetRecommendations,
 }: Props) {
   return (
     <div className={styles.layout}>
-      {/* Left column */}
+      {/* LEFT COLUMN */}
       <div className={styles.leftCol}>
-        {/* Team Weakness box at top */}
+        {/* Team Weakness Card */}
         <div className={styles.weaknessCard}>
           <div className={styles.weaknessTitle}>Changes in Team Weakness</div>
           <div className={styles.weaknessGrid}>
@@ -43,73 +103,99 @@ export function RecommendationsView({
           </div>
         </div>
 
-        {/* Get Recommendations button */}
+        {/* Get Recommendations Button */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>Click to get recommendations</div>
-          <button className={styles.ctaBtn} onClick={onGetRecommendations}>
-            Get Recommendations!
+          <button
+            className={styles.ctaBtn}
+            onClick={handleGetRecommendations}
+            disabled={isRecommending}
+          >
+            {isRecommending ? "Loading..." : "Get Recommendations!"}
           </button>
+          {recommendationError && (
+            <div className={styles.recommendError}>{recommendationError}</div>
+          )}
         </div>
 
-        {/* Search bar */}
-        <div className={styles.card}>
-          <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="Search players by name, team, or position..."
-            aria-label="Search players by name, team, or position"
-            value={query}
-            onChange={(e) => onSearchChange(e.target.value)}
+        {/* Search Bar */}
+        <div className={styles.searchCard}>
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            statusText={
+              hasSearchTerm
+                ? `${searchResultPlayers.length} results`
+                : `${savedPlayers.length} saved players`
+            }
+            errorMessage={playerOperationError}
           />
-          <div className={styles.savedHint}>9 saved players</div>
         </div>
 
-        {/* Unified output panel for both search and recommendations */}
-        <div className={styles.displayPanel}>
-          {mode === "idle" && (
+        {/* Unified Output Panel */}
+        {mode === "search" && (
+          <SearchResultsSection
+            players={searchResultPlayers}
+            savedPlayerIds={savedPlayerIds}
+            assignedIds={assignedIds}
+            draggingId={draggingId}
+            savingPlayerIds={savingPlayerIds}
+            onPrepareDrag={prepareDragPlayer}
+            onClearDrag={clearDragState}
+            onSavePlayer={handleSavePlayerOnly}
+          />
+        )}
+
+        {mode === "recommendations" && (
+          <RecommendationsSection
+            players={recommendedPlayers}
+            savedPlayerIds={savedPlayerIds}
+            savingPlayerIds={savingPlayerIds}
+            onSavePlayer={handleSavePlayerOnly}
+          />
+        )}
+
+        {mode === "idle" && (
+          <div className={styles.displayPanel}>
             <div className={styles.placeholder}>
               Use the search bar or click "Get Recommendations!" to see results here.
             </div>
-          )}
-          {mode === "recommendations" && (
-            <div className={styles.placeholder}>
-              {/* TODO: <RecommendationsSection ... /> */}
-              Recommendations will appear here.
-            </div>
-          )}
-          {mode === "search" && (
-            <div className={styles.placeholder}>
-              {/* TODO: <SearchResultsSection query={query} ... /> */}
-              Results for "{query}" will appear here.
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Right column */}
+      {/* RIGHT COLUMN */}
       <div className={styles.rightCol}>
-        {/* Before/After Radar at top */}
+        {/* Radar Card */}
         <div className={styles.radarCard}>
           <div className={styles.radarHeader}>Before/After</div>
           <div className={styles.radarSubheader}>Weakness radar</div>
-          {/* TODO: <BeforeAfterRadar ... /> */}
           <div className={styles.radarPlaceholder} />
         </div>
 
-        {/* Diamond panel below radar */}
+        {/* Diamond Panel */}
         <div className={styles.diamondCard}>
           <div className={styles.diamondHeader}>
             <div>Your lineup</div>
-            <div className={styles.activeBadge}>ACTIVE: CF</div>
+            {activePosition && (
+              <div className={styles.activeBadge}>ACTIVE: {activePosition}</div>
+            )}
           </div>
           <div className={styles.diamondCanvas}>
-            {/* TODO: <DiamondPanel ... /> */}
-            <div className={styles.diamondPlaceholder}>Diamond UI</div>
-          </div>
-          <div className={styles.diamondFooter}>
-            <button className={styles.saveBtn} onClick={onSaveLineup}>
-              Save Lineup
-            </button>
+            <DiamondPanel
+              lineup={lineup}
+              activePosition={activePosition}
+              dropTarget={dropTarget}
+              dragPlayer={null}
+              onSelectPosition={setActivePosition}
+              onDragOverPosition={setDropTarget}
+              onDragLeavePosition={() => setDropTarget(null)}
+              onDropOnPosition={handlePositionDrop}
+              onPrepareDrag={prepareDragPlayer}
+              onClearDragState={clearDragState}
+              onClearSlot={handleClearSlot}
+              onSaveTeam={saveTeam}
+            />
           </div>
         </div>
       </div>

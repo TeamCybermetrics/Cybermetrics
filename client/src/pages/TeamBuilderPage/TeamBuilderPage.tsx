@@ -102,6 +102,7 @@ export default function TeamBuilderPage() {
     [savedPlayers]
   );
 
+  // search bar 
   const performSearch = useCallback(async (query: string) => {
     const trimmed = query.trim();
     if (!trimmed) {
@@ -150,6 +151,7 @@ export default function TeamBuilderPage() {
     };
   }, []);
 
+  // build lineup from saved players
   const buildLineupFromSavedPlayers = useCallback((players: SavedPlayer[]) => {
     return positionOrder.reduce((acc, position) => {
       const playerForSlot = players.find((saved) => saved.position === position) || null;
@@ -174,6 +176,8 @@ export default function TeamBuilderPage() {
 
   const trimmedSearchTerm = searchTerm.trim();
   const hasSearchTerm = trimmedSearchTerm.length > 0;
+
+  // search result players
 
   const searchResultPlayers = useMemo(() => {
     if (!hasSearchTerm) {
@@ -218,6 +222,7 @@ export default function TeamBuilderPage() {
     []
   );
 
+  // assign player to position
   const assignPlayerToPosition = useCallback(
     (player: SavedPlayer, position: DiamondPosition) => {
       const currentLineup = lineupRef.current;
@@ -272,6 +277,7 @@ export default function TeamBuilderPage() {
     [persistPlayerPosition]
   );
 
+  // handle add player
   const handleAddPlayer = useCallback(
     async (player: SavedPlayer) => {
       if (!activePosition) {
@@ -301,6 +307,7 @@ export default function TeamBuilderPage() {
     [activePosition, assignPlayerToPosition, ensurePlayerIsSaved]
   );
 
+  // handle delete player
   const handleDeletePlayer = useCallback(
     async (player: SavedPlayer) => {
       setPlayerOperationError("");
@@ -340,6 +347,7 @@ export default function TeamBuilderPage() {
     []
   );
 
+  // handle clear slot
   const handleClearSlot = (position: DiamondPosition) => {
     const player = lineupRef.current[position];
     if (!player) {
@@ -364,6 +372,7 @@ export default function TeamBuilderPage() {
     void persistPlayerPosition(player.id, null);
   };
 
+  // assigned player IDs
   const assignedIds = useMemo(
     () =>
       new Set(
@@ -415,6 +424,7 @@ export default function TeamBuilderPage() {
     }
   };
 
+  // SAVE TEAM //
   const saveTeam = () => {
     const newTeam: SavedTeam = {
       id: Date.now().toString(),
@@ -459,6 +469,7 @@ export default function TeamBuilderPage() {
     [ensurePlayerIsSaved]
   );
 
+  /* GET RECOMMENDATIONS */
   const handleGetRecommendations = async () => {
     setRecommendationError("");
 
