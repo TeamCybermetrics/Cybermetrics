@@ -36,7 +36,7 @@ export function RecommendationsSection({
         return (
           <li key={player.id} className={styles.recommendItem}>
             <div className={styles.recommendPlayerInfo}>
-              <img src={player.image_url} alt={player.name} />
+              <img src={player.image_url ?? "/placeholder-player.png"} alt={player.name} />
               <div>
                 <div className={styles.recommendName}>{player.name}</div>
                 <div className={styles.recommendMeta}>{player.years_active}</div>
