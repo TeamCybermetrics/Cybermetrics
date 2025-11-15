@@ -14,6 +14,7 @@ import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSectio
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
 import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
+import { SaveTeamPopUp } from "@/components/SaveTeamPopUp/SaveTeamPopUp";
 
 /**
  * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
@@ -36,6 +37,7 @@ export default function TeamBuilderPage() {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [teamName] = useState("TeamName1");
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const [recommendedPlayers, setRecommendedPlayers] = useState<PlayerSearchResult[]>([]);
   const [recommendationError, setRecommendationError] = useState("");
   const [isRecommending, setIsRecommending] = useState(false);
@@ -418,7 +420,7 @@ export default function TeamBuilderPage() {
   const saveTeam = () => {
     const newTeam: SavedTeam = {
       id: Date.now().toString(),
-      name: teamName,
+      name: `Team ${new Date().toLocaleDateString()}`,
       lineup: lineup,
       savedAt: new Date().toISOString()
     };
@@ -426,9 +428,10 @@ export default function TeamBuilderPage() {
     const updatedTeams = [...savedTeams, newTeam];
     setSavedTeams(updatedTeams);
     localStorage.setItem("savedTeams", JSON.stringify(updatedTeams));
-    alert(`Team "${teamName}" saved successfully!`);
+    
+    setShowSaveModal(true);
   };
-
+  
   const handleSavePlayerOnly = useCallback(
     async (player: SavedPlayer) => {
       setPlayerOperationError("");
@@ -579,7 +582,6 @@ export default function TeamBuilderPage() {
           
         </section>
         </div>
-
         <DiamondPanel
           lineup={lineup}
           activePosition={activePosition}
@@ -594,10 +596,12 @@ export default function TeamBuilderPage() {
           onClearSlot={handleClearSlot}
           onSaveTeam={saveTeam}
         />
-
       </div>
+
+      {/* Save team popup */}
+      <SaveTeamPopUp isOpen={showSaveModal} onClose={() => setShowSaveModal(false)}>
+        <h2>Team Lineup saved successfully!</h2>
+      </SaveTeamPopUp>
     </div>
   );
 }
-
-

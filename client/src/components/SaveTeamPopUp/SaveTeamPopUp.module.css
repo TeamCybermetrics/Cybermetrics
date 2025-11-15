@@ -1,0 +1,41 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-start; /* Changed from center to flex-start */
+  justify-content: center;
+  padding-top: 15vh; /* Pushes modal higher on screen */
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.modal {
+  background: #d7d6d6 100%;
+  border-radius: 12px; /* Smaller radius */
+  padding: 20px 32px; /* Reduced padding */
+  max-width: 400px; /* Smaller width */
+  width: 85%;
+  text-align: center;
+  cursor: default;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: 20px; /* Smaller font */
+  font-weight: 700;
+  color: #1a1a1a;
+}
