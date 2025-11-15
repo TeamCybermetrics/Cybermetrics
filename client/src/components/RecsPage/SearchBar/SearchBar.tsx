@@ -23,6 +23,7 @@ export function SearchBar({
         <input
           type="text"
           placeholder="Search players by name, team, or position…"
+          aria-label="Search players"
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
         />
