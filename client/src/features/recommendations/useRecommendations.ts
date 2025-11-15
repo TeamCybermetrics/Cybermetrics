@@ -99,6 +99,8 @@ export function useRecommendations() {
       return;
     }
     setSearchResults([]);
+    setPlayerOperationError(result.error || "Search failed");
+    setMode("idle");
     searchControllerRef.current = null;
   }, []);
 
