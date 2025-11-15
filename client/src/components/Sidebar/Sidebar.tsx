@@ -10,6 +10,7 @@ import styles from "./Sidebar.module.css";
 const navItems = [
   { label: "Team Builder", to: ROUTES.TEAM_BUILDER, icon: TeamBuilderIcon },
   { label: "Team Analysis", to: ROUTES.TEAM_ANALYSIS, icon: TeamAnalysisIcon },
+  { label: "Recommendations", to: ROUTES.RECOMMENDATIONS, icon: TeamAnalysisIcon }, // add
 ] as const;
 
 export default function Sidebar() {
