@@ -57,6 +57,7 @@ export function RecommendationsView({
             className={styles.searchInput}
             type="text"
             placeholder="Search players by name, team, or position..."
+            aria-label="Search players by name, team, or position"
             value={query}
             onChange={(e) => onSearchChange(e.target.value)}
           />
