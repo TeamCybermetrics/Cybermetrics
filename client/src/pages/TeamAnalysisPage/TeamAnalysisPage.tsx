@@ -6,7 +6,7 @@ import type { SavedPlayer } from "./types";
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
 
 export default function TeamAnalysisPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);
   const [playersError, setPlayersError] = useState<string | null>(null);
@@ -157,14 +157,14 @@ export default function TeamAnalysisPage() {
   return (
     <div className={styles.page}>
       {/* Sidebar toggle */}
-      <button
+      {/* <button
         className={`${styles.sidebarHandle} ${sidebarOpen ? styles.handleOpen : styles.handleClosed}`}
         onClick={() => setSidebarOpen(o => !o)}
         aria-label="Toggle team sidebar"
         title={sidebarOpen ? "Hide team sidebar" : "Show team sidebar"}
       >
         {sidebarOpen ? "◀" : "▶"}
-      </button>
+      </button> */}
 
       {/* Sidebar */}
       <div
