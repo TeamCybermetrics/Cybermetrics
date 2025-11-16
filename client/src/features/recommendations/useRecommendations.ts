@@ -22,6 +22,7 @@ export function useRecommendations() {
   const [weaknessError, setWeaknessError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<PanelMode>("idle");
+  const [query, setQuery] = useState("");
 
   // Search
   const [searchResults, setSearchResults] = useState<SavedPlayer[]>([]);
