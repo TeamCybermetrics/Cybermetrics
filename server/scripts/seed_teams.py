@@ -54,7 +54,7 @@ def get_player_stats(fangraphs_id: int, league_df) -> Optional[dict[str, float]]
     r = player_stat.iloc[0]
     try:
         return {
-            "strikeout_rate": 1.0 - float(r['K%']) / 100.0,
+            "strikeout_rate": float(r['K%']),
             "walk_rate": float(r['BB%']) / 100.0,
             "on_base_percentage": float(r['OBP']),
             "isolated_power": float(r['ISO']),
