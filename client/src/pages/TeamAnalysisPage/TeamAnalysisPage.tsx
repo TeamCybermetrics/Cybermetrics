@@ -6,7 +6,6 @@ import type { SavedPlayer } from "./types";
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
 
 export default function TeamAnalysisPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);
   const [playersError, setPlayersError] = useState<string | null>(null);
@@ -169,11 +168,11 @@ export default function TeamAnalysisPage() {
       {/* Sidebar */}
       <div
         className={`${styles.sidebarContainer} ${
-          sidebarOpen ? styles.sidebarContainerOpen : styles.sidebarContainerClosed
+          styles.sidebarContainerClosed
         }`}
       >
-        <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarHidden}`}>
-          {sidebarOpen && (
+        <aside className={`${styles.sidebar} ${styles.sidebarHidden}`}>
+          {(
             <>
               <div className={styles.sidebarHeader}>
                 <div className={styles.teamTitle}>Your Team</div>
