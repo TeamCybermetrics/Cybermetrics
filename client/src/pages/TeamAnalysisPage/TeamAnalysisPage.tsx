@@ -6,7 +6,6 @@ import type { SavedPlayer } from "./types";
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
 
 export default function TeamAnalysisPage() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);
   const [playersError, setPlayersError] = useState<string | null>(null);
@@ -156,24 +155,14 @@ export default function TeamAnalysisPage() {
 
   return (
     <div className={styles.page}>
-      {/* Sidebar toggle */}
-      <button
-        className={`${styles.sidebarHandle} ${sidebarOpen ? styles.handleOpen : styles.handleClosed}`}
-        onClick={() => setSidebarOpen(o => !o)}
-        aria-label="Toggle team sidebar"
-        title={sidebarOpen ? "Hide team sidebar" : "Show team sidebar"}
-      >
-        {sidebarOpen ? "◀" : "▶"}
-      </button>
-
       {/* Sidebar */}
       <div
         className={`${styles.sidebarContainer} ${
-          sidebarOpen ? styles.sidebarContainerOpen : styles.sidebarContainerClosed
+          styles.sidebarContainerClosed
         }`}
       >
-        <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarHidden}`}>
-          {sidebarOpen && (
+        <aside className={`${styles.sidebar} ${styles.sidebarHidden}`}>
+          {(
             <>
               <div className={styles.sidebarHeader}>
                 <div className={styles.teamTitle}>Your Team</div>
@@ -219,7 +208,7 @@ export default function TeamAnalysisPage() {
       {/* Header (single tab label) */}
       <main className={styles.mainContent}>
         <nav className={styles.tabNav}>
-          <div className={`${styles.tab} ${styles.tabActive}`}>Weakness</div>
+          <div className={`${styles.tab} ${styles.tabActive}`}>Analysis</div>
         </nav>
 
         <div className={styles.tabContent}>
