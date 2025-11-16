@@ -23,8 +23,7 @@ export default function OurAlgorithmPage() {
         <h1 className={styles.heading} style={{ marginTop: 30 }}>Team Weakness Vectors</h1>
         <p className={styles.description}>
           Team weakness vectors show how your lineup compares to MLB averages. 
-          For each stat, we calculate how far your team is below league average and express it as a percentage.
-          A value of 0% means you're at least average, and anything above 0% means your team is that much worse than the MLB norm in that category.
+          For each stat, we calculate how far your team is from league average and express it as a z-score.
         </p>
       </div>
        <div style={{ maxWidth: 720, width: "100%" }}>

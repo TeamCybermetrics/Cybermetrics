@@ -78,9 +78,10 @@ class RosterAvgService:
 
         # Fetch league unweighted average
         league_avg = await self.roster_repository.get_league_unweighted_average()
+        league_std = await self.roster_repository.get_league_unweighted_std()
 
         # Compute normalized weakness scores
-        return self.roster_domain.compute_team_weakness_scores(team_avg, league_avg)
+        return self.roster_domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
 
     async def get_value_score(self, player_id: int, team_weakness_scores: Dict[str, float]) -> Dict[str, float]:
         """Compute a value score: latest WAR adjusted by team-weighted stat differences.
@@ -100,11 +101,13 @@ class RosterAvgService:
         latest_war = self.roster_domain.calculate_player_latest_war(seasons)
         latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
         league_avg = await self.roster_repository.get_league_unweighted_average()
+        league_std = await self.roster_repository.get_league_unweighted_std()
 
         return self.roster_domain.compute_value_score(
             latest_war=latest_war,
             player_latest_stats=latest_stats,
             league_avg=league_avg,
+            league_std=league_std,
             team_weakness=team_weakness_scores,
         )
 

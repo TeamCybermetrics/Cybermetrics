@@ -13,6 +13,16 @@ class RosterRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_league_unweighted_std(self) -> Dict[str, float]:
+        """Fetch the league-wide unweighted standard deviations from Firebase (document: league/averages)."""
+        pass
+
+    @abstractmethod
+    async def get_league_weighted_std(self) -> Dict[str, float]:
+        """Fetch the league-wide weighted-by-player-count standard deviations from Firebase (document: league/averages)."""
+        pass
+
+    @abstractmethod
     def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, Any]:
         """Fetch active roster metadata for a given MLB team and season."""
         pass

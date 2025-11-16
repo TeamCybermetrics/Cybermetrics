@@ -34,11 +34,11 @@ class RosterDomain:
                 season_count += 1
 
         if season_count > 0:
-            avg_strikeout_rate = round(total_strikeout_rate / season_count, 3)
-            avg_walk_rate = round(total_walk_rate / season_count, 3)
-            avg_isolated_power = round(total_isolated_power / season_count, 3)
-            avg_on_base_percentage = round(total_on_base_percentage / season_count, 3)
-            avg_base_running = round(total_base_running / season_count, 3)
+            avg_strikeout_rate = total_strikeout_rate / season_count
+            avg_walk_rate = total_walk_rate / season_count
+            avg_isolated_power = total_isolated_power / season_count
+            avg_on_base_percentage = total_on_base_percentage / season_count
+            avg_base_running = total_base_running / season_count
 
             return PlayerAvgStats(
                 strikeout_rate=avg_strikeout_rate,
@@ -88,22 +88,25 @@ class RosterDomain:
             raise InputValidationError("No valid player statistics to average")
 
         return {
-            "strikeout_rate": round(total_k / count, 3),
-            "walk_rate": round(total_bb / count, 3),
-            "isolated_power": round(total_iso / count, 3),
-            "on_base_percentage": round(total_obp / count, 3),
-            "base_running": round(total_bsr / count, 3),
+            "strikeout_rate": total_k / count,
+            "walk_rate": total_bb / count,
+            "isolated_power": total_iso / count,
+            "on_base_percentage": total_obp / count,
+            "base_running": total_bsr / count,
         }
 
     def compute_team_weakness_scores(
-        self, team_avg: Dict[str, float], league_avg: Dict[str, float]
-    ) -> Dict[str, float]:
+        self, team_avg: Dict[str, float], league_avg: Dict[str, float], league_std: Dict[str, float]
+        ) -> Dict[str, float]:
         """Compute normalized weakness scores per stat vs league average.
 
-        Definition (hitter context): higher score = more weakness (worse vs league).
-        - For K% (lower is better): weakness_raw = max(0, team - league)
-        - For BB%, ISO, OBP, BsR (higher is better): weakness_raw = max(0, league - team)
-        Normalization: weakness_norm = weakness_raw / max(league, 1e-9)
+        Definition: higher score = less weakness (league is 0).
+        - For K% (lower is better): weakness_raw = league - team
+        - For BB%, ISO, OBP, BsR (higher is better): team - league
+        Normalization: weakness_norm = weakness_raw / league_std (10**5 if std = 0)
+
+        Each vector tells you how many standard deviations away you are from the league average.
+        (z-score)
         """
         keys_higher_better = {
             "walk_rate",
@@ -117,14 +120,15 @@ class RosterDomain:
         for key in keys_lower_better.union(keys_higher_better):
             team = float(team_avg.get(key, 0.0) or 0.0)
             league = float(league_avg.get(key, 0.0) or 0.0)
+            std = float(league_std.get(key, 0.0) or 0.0)
 
             if key in keys_lower_better:
-                raw = max(0.0, team - league)
+                raw = league - team
             else:  # higher is better
-                raw = max(0.0, league - team)
+                raw = team - league
 
-            denom = league if league != 0 else 1e-9
-            scores[key] = round(raw / denom, 3)
+            denom = std if std != 0 else 10**5
+            scores[key] = raw / denom
 
         return scores
 
@@ -181,6 +185,7 @@ class RosterDomain:
         latest_war: float,
         player_latest_stats: Dict[str, float],
         league_avg: Dict[str, float],
+        league_std: Dict[str, float],
         team_weakness: Dict[str, float],
     ) -> Dict[str, float]:
         """Compute player value: latest WAR + team-weighted stat difference sum.
@@ -207,6 +212,7 @@ class RosterDomain:
         adjustment_sum, contributions = self.compute_adjustment_sum(
             player_latest_stats=player_latest_stats,
             league_avg=league_avg,
+            league_std=league_std,
             team_weakness=team_weakness,
         )
         value_score = round(float(latest_war) + adjustment_sum, 3)
@@ -221,6 +227,7 @@ class RosterDomain:
         self,
         player_latest_stats: Dict[str, float],
         league_avg: Dict[str, float],
+        league_std: Dict[str, float],
         team_weakness: Dict[str, float],
     ) -> tuple[float, Dict[str, float]]:
         """Compute the weighted adjustment sum and per-stat contributions.
@@ -249,16 +256,14 @@ class RosterDomain:
         for key in keys_lower_better.union(keys_higher_better):
             player_v = float(player_latest_stats.get(key, 0.0) or 0.0)
             league_v = float(league_avg.get(key, 0.0) or 0.0)
+            league_std_v = float(league_std.get(key, 10**5) or 10**5)
             weight = float(team_weakness.get(key, 0.0) or 0.0)
-            if weight <= 0:
-                continue  # ignore 0.0 weaknesses
             if key in keys_lower_better:
-                diff = league_v - player_v  # lower is better
+                diff = league_v - player_v 
             else:
-                diff = player_v - league_v  # higher is better
-            contrib = diff * weight
-            contributions[key] = round(contrib, 3)
+                diff = player_v - league_v
+            contrib = diff / league_std_v * abs(weight)
+            contributions[key] = contrib
             adjustment_sum += contrib
 
-        adjustment_sum = round(adjustment_sum, 3)
         return adjustment_sum, contributions
