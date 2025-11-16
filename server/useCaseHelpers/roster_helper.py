@@ -258,8 +258,6 @@ class RosterDomain:
             league_v = float(league_avg.get(key, 0.0) or 0.0)
             league_std_v = float(league_std.get(key, 10**5) or 10**5)
             weight = float(team_weakness.get(key, 0.0) or 0.0)
-            if weight >= 999990:
-                continue 
             if key in keys_lower_better:
                 diff = league_v - player_v 
             else:
@@ -268,5 +266,4 @@ class RosterDomain:
             contributions[key] = contrib
             adjustment_sum += contrib
 
-        adjustment_sum = adjustment_sum
         return adjustment_sum, contributions

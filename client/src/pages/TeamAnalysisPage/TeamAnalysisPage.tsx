@@ -155,16 +155,6 @@ export default function TeamAnalysisPage() {
 
   return (
     <div className={styles.page}>
-      {/* Sidebar toggle */}
-      {/* <button
-        className={`${styles.sidebarHandle} ${sidebarOpen ? styles.handleOpen : styles.handleClosed}`}
-        onClick={() => setSidebarOpen(o => !o)}
-        aria-label="Toggle team sidebar"
-        title={sidebarOpen ? "Hide team sidebar" : "Show team sidebar"}
-      >
-        {sidebarOpen ? "◀" : "▶"}
-      </button> */}
-
       {/* Sidebar */}
       <div
         className={`${styles.sidebarContainer} ${

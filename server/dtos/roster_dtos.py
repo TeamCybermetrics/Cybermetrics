@@ -69,7 +69,7 @@ class TeamWeaknessResponse(BaseModel):
     """
     Normalized team weakness scores per stat.
     
-    Higher values indicate greater weakness relative to
+    Lower values indicate greater weakness relative to
     league average. Used to identify areas for improvement.
     """
     strikeout_rate: float
