@@ -22,6 +22,9 @@ export type PercentileRadarProps = {
   className?: string;
   showLegend?: boolean;
   legendItems?: string[];
+  ringFractions?: number[];
+  ringLabels?: string[];
+  showBaselineRing?: boolean;
 };
 
 const RING_FRACTIONS = [0.2, 0.4, 0.6, 0.8, 1];
@@ -45,7 +48,10 @@ export default function PercentileRadar({
   highlightOrder = [],
   className,
   showLegend = true,
-  legendItems
+  legendItems,
+  ringFractions,
+  ringLabels,
+  showBaselineRing = true
 }: PercentileRadarProps) {
   if (!axes.length) {
     return null;
@@ -57,9 +63,10 @@ export default function PercentileRadar({
       ? leaguePercentiles.map(clamp)
       : Array(axes.length).fill(baselinePercentile);
 
-  const ringLabelValues = Array.from(new Set([...RING_FRACTIONS, baselinePercentile])).sort(
-    (a, b) => a - b
-  );
+  const rings = ringFractions ?? RING_FRACTIONS;
+  const ringLabelValues = ringLabels
+    ? rings
+    : Array.from(new Set([...RING_FRACTIONS, baselinePercentile])).sort((a, b) => a - b);
   const [severeIndex, warnIndex] = highlightOrder;
 
   return (
@@ -70,9 +77,9 @@ export default function PercentileRadar({
         role="img"
         aria-label="Percentile radar comparison"
       >
-        {RING_FRACTIONS.map((fraction) => (
+        {rings.map((fraction, idx) => (
           <polygon
-            key={`ring-${fraction}`}
+            key={`ring-${idx}`}
             points={buildRingPolygon(fraction, axes.length)}
             fill="none"
             stroke="rgba(255,255,255,0.1)"
@@ -108,27 +115,30 @@ export default function PercentileRadar({
           className: styles.teamPolygon
         })}
 
-        <polygon
-          points={buildRingPolygon(baselinePercentile, axes.length)}
-          fill="none"
-          stroke="rgba(255,255,255,0.35)"
-          strokeWidth="1"
-          strokeDasharray="6 4"
-        />
+        {showBaselineRing && (
+          <polygon
+            points={buildRingPolygon(baselinePercentile, axes.length)}
+            fill="none"
+            stroke="rgba(255,255,255,0.35)"
+            strokeWidth="1"
+            strokeDasharray="6 4"
+          />
+        )}
 
-        {ringLabelValues.map((fraction) => {
+        {ringLabelValues.map((fraction, idx) => {
           const y =
             RADAR_CENTER.y - RADAR_RADIUS * fraction - (Math.abs(fraction - 1) < 0.0001 ? 12 : 4);
           const isAverage = Math.abs(fraction - baselinePercentile) < 0.0001;
+          const labelText = ringLabels ? ringLabels[idx] ?? "" : formatPercentileTick(fraction);
           return (
             <text
-              key={`tick-${fraction}`}
+              key={`tick-${idx}`}
               x={RADAR_CENTER.x}
               y={y}
               textAnchor="middle"
               className={`${styles.ringLabel} ${isAverage ? styles.ringLabelAverage : ""}`}
             >
-              {formatPercentileTick(fraction)}
+              {labelText}
               {isAverage ? " (avg)" : ""}
             </text>
           );

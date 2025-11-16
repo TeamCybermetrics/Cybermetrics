@@ -44,11 +44,13 @@
 .leaguePolygon {
   fill: rgba(255, 173, 74, 0.18);
   stroke: rgba(255, 198, 124, 0.9);
+  transition: all 0.25s ease;
 }
 
 .teamPolygon {
   fill: rgba(109, 123, 255, 0.3);
   stroke: #6d7bff;
+  transition: all 0.25s ease;
 }
 
 .legend {

@@ -4,12 +4,14 @@ import styles from "./SearchResultsSection.module.css";
 
 type SearchResultsSectionProps = {
   players: SavedPlayer[];
-  savedPlayerIds: Set<number>;
-  assignedIds: Set<number>;
-  draggingId: number | null;
-  savingPlayerIds: Set<number>;
-  onPrepareDrag: (player: SavedPlayer) => void;
-  onClearDrag: () => void;
+  savedPlayerIds?: Set<number>;
+  assignedIds?: Set<number>;
+  draggingId?: number | null;
+  savingPlayerIds?: Set<number>;
+  allowAddSaved?: boolean;
+  addLabel?: string;
+  onPrepareDrag?: (player: SavedPlayer) => void;
+  onClearDrag?: () => void;
   onSavePlayer: (player: SavedPlayer) => void | Promise<void>;
 };
 
@@ -19,6 +21,8 @@ export function SearchResultsSection({
   assignedIds,
   draggingId,
   savingPlayerIds,
+  allowAddSaved = false,
+  addLabel = "Add to lineup",
   onPrepareDrag,
   onClearDrag,
   onSavePlayer,
@@ -37,30 +41,25 @@ export function SearchResultsSection({
           </div>
         ) : (
           players.map((player) => {
-            const alreadyAssigned = assignedIds.has(player.id);
-            const alreadySaved = savedPlayerIds.has(player.id);
-            const isSaving = savingPlayerIds.has(player.id);
+            const alreadyAssigned = assignedIds?.has(player.id) ?? false;
+            const alreadySaved = savedPlayerIds?.has(player.id) ?? false;
+            const isSaving = savingPlayerIds?.has(player.id) ?? false;
+            const addDisabled = isSaving || (!allowAddSaved && alreadySaved);
 
             return (
               <PlayerRow
                 key={player.id}
                 player={player}
-                isDragging={draggingId === player.id}
-                draggable={!alreadyAssigned}
-                onDragStart={() => !alreadyAssigned && onPrepareDrag(player)}
+                isDragging={draggingId === undefined ? false : draggingId === player.id}
+                draggable={!!onPrepareDrag && !alreadyAssigned}
+                onDragStart={() => onPrepareDrag && !alreadyAssigned && onPrepareDrag(player)}
                 onDragEnd={onClearDrag}
                 showDelete={false}
-                addDisabled={alreadySaved || isSaving}
-                addLabel={
-                  alreadySaved ? "Already Saved" : isSaving ? "Saving..." : "Add to Saved"
-                }
-                addTitle={
-                  alreadySaved
-                    ? "Already in your saved players"
-                    : "Add this player to your saved players"
-                }
+                addDisabled={addDisabled}
+                addLabel={isSaving ? "Saving..." : addLabel}
+                addTitle={addDisabled ? "Already in your saved players" : "Add this player to your lineup"}
                 onAdd={() => {
-                  if (!alreadySaved && !isSaving) {
+                  if (!addDisabled) {
                     void onSavePlayer(player);
                   }
                 }}
@@ -72,4 +71,3 @@ export function SearchResultsSection({
     </section>
   );
 }
-
