@@ -55,7 +55,7 @@ export function RecommendationsView({
   activePosition,
   dropTarget,
   draggingId,
-  savedPlayers,
+  // savedPlayers, // removed: unused
   searchResultPlayers,
   recommendedPlayers,
   savedPlayerIds,
