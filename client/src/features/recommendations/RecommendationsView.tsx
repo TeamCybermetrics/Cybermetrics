@@ -11,7 +11,6 @@ import {
   formatZScore,
   RING_FRACTIONS,
   RING_LABELS,
-  RING_VALUES,
   valueToFraction,
   Z_SCORE_CONFIG
 } from "@/utils/zScoreRadar";
