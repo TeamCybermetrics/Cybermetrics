@@ -7,6 +7,14 @@ import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSect
 import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
 import PercentileRadar from "@/components/Radar/PercentileRadar";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
+import {
+  formatZScore,
+  RING_FRACTIONS,
+  RING_LABELS,
+  RING_VALUES,
+  valueToFraction,
+  Z_SCORE_CONFIG
+} from "@/utils/zScoreRadar";
 import styles from "./RecommendationsView.module.css";
 
 type Props = {
@@ -50,23 +58,9 @@ const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
   { key: "base_running", label: "Base Running" },
 ];
 
-const MIN_VALUE = -1;
-const MAX_VALUE = 1;
-const VALUE_SPAN = MAX_VALUE - MIN_VALUE;
-const VISUAL_BOOST = 1; // map -1..+1 directly to the outer ring bounds
-const RADAR_RADIUS = 120; // keep labels centered
+const RADAR_RADIUS = Z_SCORE_CONFIG.RADAR_RADIUS; // keep labels centered
 
-const valueToFraction = (value: number) => {
-  if (!Number.isFinite(value)) return 0.5;
-  const boosted = value * VISUAL_BOOST;
-  const normalized = (boosted - MIN_VALUE) / VALUE_SPAN;
-  return Math.min(Math.max(normalized, 0), 1);
-};
-
-const formatValueNumber = (value: number) => {
-  if (!Number.isFinite(value)) return "-";
-  return (value >= 0 ? "+" : "") + value.toFixed(3).replace(/\.000$/, "");
-};
+const formatValueNumber = (value: number) => formatZScore(value, 2);
 
 export function RecommendationsView({
   mode,
@@ -129,15 +123,6 @@ export function RecommendationsView({
         .slice(0, 2);
     }
   }
-
-  // Show the -1..+1 scale with no extra rings
-  const ringValues = [-1, -0.5, 0, 0.5, 1];
-  const ringFractions = ringValues.map(valueToFraction);
-  const ringLabels = ringValues.map((v) => {
-    const label = Math.abs(v) === 1 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, "");
-    if (v === 0) return "0";
-    return v > 0 ? `+${label}` : label;
-  });
 
   return (
     <div className={styles.layout}>
@@ -235,8 +220,8 @@ export function RecommendationsView({
               teamPercentiles={currentFractions}
               leaguePercentiles={baselineFractions.length ? baselineFractions : undefined}
               highlightOrder={highlightOrder}
-              ringFractions={ringFractions}
-              ringLabels={ringLabels}
+              ringFractions={RING_FRACTIONS}
+              ringLabels={RING_LABELS}
               baselinePercentile={0.5}
               showBaselineRing
               ringLabelOffsetY={RADAR_RADIUS * 0.5}

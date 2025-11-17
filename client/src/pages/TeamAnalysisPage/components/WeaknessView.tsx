@@ -1,4 +1,12 @@
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
+import {
+  formatZScore,
+  RING_FRACTIONS,
+  RING_LABELS,
+  RING_VALUES,
+  valueToFraction,
+  Z_SCORE_CONFIG
+} from "@/utils/zScoreRadar";
 import styles from "./WeaknessView.module.css";
 
 type PlayerScoreCard = PlayerValueScore & {
@@ -44,23 +52,10 @@ const STAT_LABELS: AxisLabelConfig[] = [
   }
 ];
 
-// Alec z-scale (match rec page visuals)
-const MIN_VALUE = -1;
-const MAX_VALUE = 1;
-const VALUE_SPAN = MAX_VALUE - MIN_VALUE;
-const VISUAL_BOOST = 1;
-// -1..+1 scale with no extra rings
-const RING_VALUES = [-1, -0.5, 0, 0.5, 1];
-const RING_FRACTIONS = RING_VALUES.map(valueToFraction);
-const RING_LABELS = RING_VALUES.map((v) => {
-  const label = Math.abs(v) === 1 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, "");
-  if (v === 0) return "0";
-  return v > 0 ? `+${label}` : label;
-});
 const BASELINE_RING = valueToFraction(0); // league average ring
 const RADAR_SIZE = 320;
 const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
-const RADAR_RADIUS = 120;
+const RADAR_RADIUS = Z_SCORE_CONFIG.RADAR_RADIUS;
 const AXIS_LABEL_OFFSET = 1.32;
 const RING_LABEL_OFFSET_Y = RADAR_RADIUS * 0.4;
 
@@ -326,15 +321,6 @@ function buildRingPolygon(fraction: number) {
   return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction));
 }
 
-function valueToFraction(value: number) {
-  if (!Number.isFinite(value)) {
-    return 0.5;
-  }
-  const boosted = value * VISUAL_BOOST;
-  const normalized = (boosted - MIN_VALUE) / VALUE_SPAN;
-  return Math.min(Math.max(normalized, 0), 1);
-}
-
 function getZFractions(weakness: TeamWeaknessResponse) {
   return STAT_LABELS.map(({ key }) => valueToFraction(weakness[key]));
 }
@@ -349,6 +335,5 @@ function describeWeakness(value: number) {
 }
 
 function formatScoreLabel(value: number) {
-  if (!Number.isFinite(value)) return "-";
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2).replace(/\.00$/, "")}`;
+  return formatZScore(value, 2);
 }

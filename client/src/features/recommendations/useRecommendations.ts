@@ -141,20 +141,26 @@ export function useRecommendations() {
   const ensurePlayerSaved = useCallback(
     async (player: SavedPlayer) => {
       if (savedPlayers.some((p) => p.id === player.id)) return true;
-      const res = await playerActions.addPlayer({
-        id: player.id,
-        name: player.name,
-        image_url: player.image_url,
-        years_active: player.years_active,
-      });
-      if (res.success) {
-        setSavedPlayers((prev) => (prev.some((p) => p.id === player.id) ? prev : [...prev, player]));
-        return true;
+      savingPlayerIds.add(player.id);
+      setPlayerOperationError("");
+      try {
+        const res = await playerActions.addPlayer({
+          id: player.id,
+          name: player.name,
+          image_url: player.image_url,
+          years_active: player.years_active,
+        });
+        if (res.success) {
+          setSavedPlayers((prev) => (prev.some((p) => p.id === player.id) ? prev : [...prev, player]));
+          return true;
+        }
+        setPlayerOperationError(res.error || "Failed to save player");
+        return false;
+      } finally {
+        savingPlayerIds.delete(player.id);
       }
-      setPlayerOperationError(res.error || "Failed to save player");
-      return false;
     },
-    [savedPlayers]
+    [savedPlayers, savingPlayerIds]
   );
 
   const assignPlayerToLineup = useCallback(
