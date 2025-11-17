@@ -29,6 +29,7 @@ export function useRecommendations() {
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [playerOperationError, setPlayerOperationError] = useState("");
   const savingPlayerIds = useRef<Set<number>>(new Set()).current;
+  const latestWeaknessRequest = useRef<symbol | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
@@ -53,6 +54,9 @@ export function useRecommendations() {
 
   const refreshWeakness = useCallback(
     async (workingOverride?: LineupState, baselineOverride?: LineupState) => {
+      const requestId = Symbol("weakness");
+      latestWeaknessRequest.current = requestId;
+
       const working = workingOverride ?? lineup;
       const baseline = baselineOverride ?? baselineLineup;
       const hasAny =
@@ -60,6 +64,7 @@ export function useRecommendations() {
       if (!hasAny) {
         setBaselineWeakness(null);
         setCurrentWeakness(null);
+        latestWeaknessRequest.current = null;
         return;
       }
       setWeaknessLoading(true);
@@ -69,12 +74,20 @@ export function useRecommendations() {
           fetchWeaknessFor(baseline),
           fetchWeaknessFor(working),
         ]);
+        if (latestWeaknessRequest.current !== requestId) {
+          return;
+        }
         setBaselineWeakness(base);
         setCurrentWeakness(curr);
       } catch (e) {
-        setWeaknessError(e instanceof Error ? e.message : "Failed to load weaknesses");
+        if (latestWeaknessRequest.current === requestId) {
+          setWeaknessError(e instanceof Error ? e.message : "Failed to load weaknesses");
+        }
       } finally {
-        setWeaknessLoading(false);
+        if (latestWeaknessRequest.current === requestId) {
+          latestWeaknessRequest.current = null;
+          setWeaknessLoading(false);
+        }
       }
     },
     [baselineLineup, lineup, fetchWeaknessFor, getPlayerIdsFromLineup]
