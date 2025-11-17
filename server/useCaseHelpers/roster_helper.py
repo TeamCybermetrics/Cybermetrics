@@ -96,17 +96,13 @@ class RosterDomain:
         }
 
     def compute_team_weakness_scores(
-        self, team_avg: Dict[str, float], league_avg: Dict[str, float], league_std: Dict[str, float]
-        ) -> Dict[str, float]:
-        """Compute normalized weakness scores per stat vs league average.
+        self, team_avg: Dict[str, float], league_avg: Dict[str, float]
+    ) -> Dict[str, float]:
+        """Compute signed strength/weakness per stat vs league average (Alec-style, no clamp).
 
-        Definition: higher score = less weakness (league is 0).
-        - For K% (lower is better): weakness_raw = league - team
-        - For BB%, ISO, OBP, BsR (higher is better): team - league
-        Normalization: weakness_norm = weakness_raw / league_std (10**5 if std = 0)
-
-        Each vector tells you how many standard deviations away you are from the league average.
-        (z-score)
+        Positive = stronger than league, negative = weaker than league.
+        - For K% (lower is better): diff = (league - team) / max(|league|, 1e-9)
+        - For BB%, ISO, OBP, BsR (higher is better): diff = (team - league) / max(|league|, 1e-9)
         """
         keys_higher_better = {
             "walk_rate",
@@ -120,15 +116,14 @@ class RosterDomain:
         for key in keys_lower_better.union(keys_higher_better):
             team = float(team_avg.get(key, 0.0) or 0.0)
             league = float(league_avg.get(key, 0.0) or 0.0)
-            std = float(league_std.get(key, 0.0) or 0.0)
 
             if key in keys_lower_better:
-                raw = league - team
+                raw = league - team  # lower K is better -> positive if team < league
             else:  # higher is better
-                raw = team - league
+                raw = team - league  # positive if team > league
 
-            denom = std if std != 0 else 10**5
-            scores[key] = raw / denom
+            denom = abs(league) if league != 0 else 1e-9
+            scores[key] = round(raw / denom, 3)
 
         return scores
 
@@ -266,4 +261,5 @@ class RosterDomain:
             contributions[key] = contrib
             adjustment_sum += contrib
 
+        adjustment_sum = round(adjustment_sum, 3)
         return adjustment_sum, contributions

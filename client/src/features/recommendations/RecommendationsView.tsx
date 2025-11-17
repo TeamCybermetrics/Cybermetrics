@@ -11,34 +11,35 @@ import styles from "./RecommendationsView.module.css";
 
 type Props = {
   mode: PanelMode;
-  query: string;
+  searchTerm: string;
   lineup: LineupState;
   activePosition: DiamondPosition;
   dropTarget: DiamondPosition | null;
+  draggingId: number | null;
   searchResults: SavedPlayer[];
-  searchLoading: boolean;
-  searchError: string | null;
   recommendedPlayers: SavedPlayer[];
-  recommendationLoading: boolean;
-  recommendationError: string | null;
+  savedPlayerIds: Set<number>;
+  assignedIds: Set<number>;
+  savingPlayerIds: Set<number>;
+  hasSearchTerm: boolean;
+  isRecommending: boolean;
+  recommendationError: string;
+  playerOperationError: string;
   baselineWeakness: TeamWeaknessResponse | null;
   currentWeakness: TeamWeaknessResponse | null;
   weaknessLoading: boolean;
   weaknessError: string | null;
-  onGetRecommendations: () => void;
-  onSearchChange: (value: string) => void;
-  onAddFromSearch: (player: SavedPlayer) => void;
-  onAddFromRecommendation: (player: SavedPlayer) => void;
-  onSelectPosition: (pos: DiamondPosition) => void;
-  onDragOverPosition: (pos: DiamondPosition) => void;
-  onDragLeavePosition: () => void;
-  onDropOnPosition: (e: DragEvent<HTMLButtonElement>, pos: DiamondPosition) => void;
+  setSearchTerm: (v: string) => void;
+  setActivePosition: (pos: DiamondPosition) => void;
+  setDropTarget: (pos: DiamondPosition | null) => void;
+  onClearSlot: (pos: DiamondPosition) => void;
   onPrepareDrag: (player: SavedPlayer, fromPosition?: DiamondPosition) => void;
   onClearDrag: () => void;
-  onClearSlot: (pos: DiamondPosition) => void;
-  onSaveLineup: () => void;
-  savingLineup: boolean;
-  playerOperationError: string | null;
+  onPositionDrop: (e: DragEvent<HTMLButtonElement>, pos: DiamondPosition) => void;
+  onSaveTeam: () => void;
+  onGetRecommendations: () => void;
+  onAddFromSearch: (player: SavedPlayer) => void;
+  onAddFromRecommendation: (player: SavedPlayer) => void;
 };
 
 const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
@@ -49,52 +50,55 @@ const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
   { key: "base_running", label: "Base Running" },
 ];
 
-// Value (z-score) scale from TeamAnalysis
-const MIN_VALUE = -3;
-const MAX_VALUE = 2;
+const MIN_VALUE = -1;
+const MAX_VALUE = 1;
 const VALUE_SPAN = MAX_VALUE - MIN_VALUE;
+const VISUAL_BOOST = 1; // map -1..+1 directly to the outer ring bounds
+const RADAR_RADIUS = 120; // keep labels centered
 
 const valueToFraction = (value: number) => {
   if (!Number.isFinite(value)) return 0.5;
-  const fraction = (value - MIN_VALUE) / VALUE_SPAN;
-  return Math.min(Math.max(fraction, 0), 1);
+  const boosted = value * VISUAL_BOOST;
+  const normalized = (boosted - MIN_VALUE) / VALUE_SPAN;
+  return Math.min(Math.max(normalized, 0), 1);
 };
 
 const formatValueNumber = (value: number) => {
   if (!Number.isFinite(value)) return "-";
-  return (value >= 0 ? "+" : "") + value.toFixed(2).replace(/\.00$/, "");
+  return (value >= 0 ? "+" : "") + value.toFixed(3).replace(/\.000$/, "");
 };
 
 export function RecommendationsView({
   mode,
-  query,
+  searchTerm,
+  lineup,
   activePosition,
   dropTarget,
-  lineup,
+  draggingId,
   searchResults,
-  searchLoading,
-  searchError,
   recommendedPlayers,
-  recommendationLoading,
+  savedPlayerIds,
+  assignedIds,
+  savingPlayerIds,
+  hasSearchTerm,
+  isRecommending,
   recommendationError,
+  playerOperationError,
   baselineWeakness,
   currentWeakness,
   weaknessLoading,
   weaknessError,
-  onGetRecommendations,
-  onSearchChange,
-  onAddFromSearch,
-  onAddFromRecommendation,
-  onSelectPosition,
-  onDragOverPosition,
-  onDragLeavePosition,
-  onDropOnPosition,
+  setSearchTerm,
+  setActivePosition,
+  setDropTarget,
+  onClearSlot,
   onPrepareDrag,
   onClearDrag,
-  onClearSlot,
-  onSaveLineup,
-  savingLineup,
-  playerOperationError,
+  onPositionDrop,
+  onSaveTeam,
+  onGetRecommendations,
+  onAddFromSearch,
+  onAddFromRecommendation,
 }: Props) {
   const toFractions = (weakness: TeamWeaknessResponse | null) =>
     weakness ? STAT_KEYS.map(({ key }) => valueToFraction(weakness[key])) : [];
@@ -102,50 +106,51 @@ export function RecommendationsView({
   const baselineFractions = toFractions(baselineWeakness);
   const currentFractions = toFractions(currentWeakness);
 
+  const EPS = 1e-3;
   let highlightOrder: number[] = [];
   if (baselineWeakness && currentWeakness) {
-    // Highlight the biggest drops vs. baseline (most negative deltas = got worse)
-    highlightOrder = STAT_KEYS.map(({ key }, idx) => ({
-      delta: currentWeakness[key] - baselineWeakness[key],
-      idx
-    }))
-      .sort((a, b) => a.delta - b.delta)
-      .map((entry) => entry.idx)
-      .slice(0, 2);
+    const deltas = STAT_KEYS.map(({ key }) => currentWeakness[key] - baselineWeakness[key]);
+    const hasMeaningfulDelta = deltas.some((d) => Math.abs(d) > EPS);
+    if (hasMeaningfulDelta) {
+      highlightOrder = deltas
+        .map((delta, idx) => ({ delta, idx }))
+        .sort((a, b) => a.delta - b.delta)
+        .map((entry) => entry.idx)
+        .slice(0, 2);
+    }
   } else if (currentWeakness) {
-    // Fallback: highlight lowest absolute scores
-    highlightOrder = STAT_KEYS.map(({ key }, idx) => ({ value: currentWeakness[key], idx }))
-      .sort((a, b) => a.value - b.value)
-      .map((entry) => entry.idx)
-      .slice(0, 2);
+    const values = STAT_KEYS.map(({ key }) => currentWeakness[key]);
+    const hasVariation = values.some((v) => Math.abs(v) > EPS);
+    if (hasVariation) {
+      highlightOrder = values
+        .map((value, idx) => ({ value, idx }))
+        .sort((a, b) => a.value - b.value)
+        .map((entry) => entry.idx)
+        .slice(0, 2);
+    }
   }
 
-  const ringValues = [-3, -2, -1, 0, 1, 2];
+  // Show the -1..+1 scale with no extra rings
+  const ringValues = [-1, -0.5, 0, 0.5, 1];
   const ringFractions = ringValues.map(valueToFraction);
-  const ringLabels = ringValues.map((v) => (v >= 0 ? `+${v.toFixed(0)}` : v.toFixed(0)));
+  const ringLabels = ringValues.map((v) => {
+    const label = Math.abs(v) === 1 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, "");
+    if (v === 0) return "0";
+    return v > 0 ? `+${label}` : label;
+  });
 
   return (
     <div className={styles.layout}>
       {/* Left column */}
       <div className={styles.leftCol}>
-        {/* Before/After deltas */}
+        {/* Deltas */}
         <div className={styles.weaknessCard}>
           <div className={styles.weaknessTitle}>Changes in Team Weakness</div>
           {weaknessLoading && <div className={styles.placeholder}>Calculating…</div>}
           {weaknessError && <div className={styles.recommendError}>{weaknessError}</div>}
           {!weaknessLoading && !weaknessError && baselineWeakness && currentWeakness ? (
             <div className={styles.weaknessGrid}>
-              {STAT_KEYS.slice(0, 3).map(({ key, label }) => {
-                const delta = currentWeakness[key] - baselineWeakness[key];
-                const cls = delta >= 0 ? styles.weakScoreGreen : styles.weakScoreRed;
-                return (
-                  <div key={label}>
-                    <div className={styles.weakLabel}>{label}</div>
-                    <div className={cls}>{delta >= 0 ? "+" : ""}{formatValueNumber(delta)}</div>
-                  </div>
-                );
-              })}
-              {STAT_KEYS.slice(3).map(({ key, label }) => {
+              {STAT_KEYS.map(({ key, label }) => {
                 const delta = currentWeakness[key] - baselineWeakness[key];
                 const cls = delta >= 0 ? styles.weakScoreGreen : styles.weakScoreRed;
                 return (
@@ -157,20 +162,15 @@ export function RecommendationsView({
               })}
             </div>
           ) : (
-            !weaknessLoading &&
-            !weaknessError && <div className={styles.placeholder}>Add players to see changes.</div>
+            !weaknessLoading && !weaknessError && <div className={styles.placeholder}>Add players to see changes.</div>
           )}
         </div>
 
         {/* Get Recommendations button */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>Click to get recommendations</div>
-          <button
-            className={styles.ctaBtn}
-            onClick={onGetRecommendations}
-            disabled={recommendationLoading}
-          >
-            {recommendationLoading ? "Loading..." : "Get Recommendations!"}
+          <button className={styles.ctaBtn} onClick={onGetRecommendations} disabled={isRecommending}>
+            {isRecommending ? "Loading..." : "Get Recommendations!"}
           </button>
           {recommendationError && <div className={styles.recommendError}>{recommendationError}</div>}
         </div>
@@ -178,42 +178,45 @@ export function RecommendationsView({
         {/* Search bar */}
         <div className={styles.searchCard}>
           <SearchBar
-            searchTerm={query}
-            onSearchTermChange={onSearchChange}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
             statusText={
-              query.trim()
-                ? searchLoading
-                  ? "Searching..."
-                  : `${searchResults.length} results`
+              hasSearchTerm
+                ? `${searchResults.length} results`
                 : ""
             }
-            errorMessage={searchError || undefined}
+            errorMessage={playerOperationError || undefined}
           />
         </div>
 
-        {/* Results / Recommendations */}
         {mode === "search" && (
           <SearchResultsSection
             players={searchResults}
+            savedPlayerIds={savedPlayerIds}
+            assignedIds={assignedIds}
+            draggingId={draggingId}
+            savingPlayerIds={savingPlayerIds}
+            onPrepareDrag={onPrepareDrag}
+            onClearDrag={onClearDrag}
             onSavePlayer={onAddFromSearch}
-            allowAddSaved
-            addLabel={`Add to ${activePosition}`}
           />
         )}
 
         {mode === "recommendations" && (
           <RecommendationsSection
             players={recommendedPlayers}
-            onSavePlayer={onAddFromRecommendation}
+            savedPlayerIds={savedPlayerIds}
+            savingPlayerIds={savingPlayerIds}
             allowAddSaved
             addLabel={`Add to ${activePosition}`}
+            onSavePlayer={onAddFromRecommendation}
           />
         )}
 
         {mode === "idle" && (
           <div className={styles.displayPanel}>
             <div className={styles.placeholder}>
-              Search or click “Get Recommendations!” to see players.
+              Use the search bar or click “Get Recommendations!” to see players.
             </div>
           </div>
         )}
@@ -221,7 +224,6 @@ export function RecommendationsView({
 
       {/* Right column */}
       <div className={styles.rightCol}>
-        {/* Radar */}
         <div className={styles.radarCard}>
           <div className={styles.radarHeader}>Before/After</div>
           <div className={styles.radarSubheader}>Weakness radar</div>
@@ -235,11 +237,13 @@ export function RecommendationsView({
               highlightOrder={highlightOrder}
               ringFractions={ringFractions}
               ringLabels={ringLabels}
-              showBaselineRing={false}
+              baselinePercentile={0.5}
+              showBaselineRing
+              ringLabelOffsetY={RADAR_RADIUS * 0.5}
               legendItems={[
                 "Blue = current lineup",
                 baselineFractions.length ? "Orange = baseline lineup" : "Orange baseline unavailable",
-                "0 baseline = league average; positive = above average (stronger)"
+                "0 = league average; positive = above average (stronger)"
               ]}
             />
           ) : (
@@ -248,7 +252,6 @@ export function RecommendationsView({
           )}
         </div>
 
-        {/* Lineup placeholder */}
         <div className={styles.diamondCard}>
           <div className={styles.diamondHeader}>
             <div>Your lineup</div>
@@ -260,21 +263,18 @@ export function RecommendationsView({
               activePosition={activePosition}
               dropTarget={dropTarget}
               dragPlayer={null}
-              onSelectPosition={onSelectPosition}
-              onDragOverPosition={onDragOverPosition}
-              onDragLeavePosition={onDragLeavePosition}
-              onDropOnPosition={onDropOnPosition}
+              onSelectPosition={setActivePosition}
+              onDragOverPosition={setDropTarget}
+              onDragLeavePosition={() => setDropTarget(null)}
+              onDropOnPosition={onPositionDrop}
               onPrepareDrag={onPrepareDrag}
               onClearDragState={onClearDrag}
               onClearSlot={onClearSlot}
             />
           </div>
           <div className={styles.diamondFooter}>
-            {playerOperationError && (
-              <div className={styles.recommendError}>{playerOperationError}</div>
-            )}
-            <button className={styles.saveBtn} onClick={onSaveLineup} disabled={savingLineup}>
-              {savingLineup ? "Saving..." : "Save Lineup"}
+            <button className={styles.saveBtn} onClick={onSaveTeam}>
+              Save Lineup as baseline
             </button>
           </div>
         </div>

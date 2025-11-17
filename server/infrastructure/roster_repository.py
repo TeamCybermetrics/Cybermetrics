@@ -57,21 +57,18 @@ class RosterRepositoryFirebase(RosterRepository):
                 detail="League averages document not found",
             )
         data = doc.to_dict() or {}
+        # Support both legacy nested "unweighted" and top-level fields
         unweighted = data.get("unweighted")
-        if not isinstance(unweighted, dict):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="League unweighted averages missing or malformed",
-            )
-        
+        source = unweighted if isinstance(unweighted, dict) else data
+
         required = {"strikeout_rate", "walk_rate", "isolated_power", "on_base_percentage", "base_running"}
         result: Dict[str, float] = {}
         missing_or_bad = []
         for k in required:
-            v = unweighted.get(k)
+            v = source.get(k)
             try:
                 result[k] = float(v)
-            except(TypeError, ValueError):
+            except (TypeError, ValueError):
                 missing_or_bad.append(k)
         if missing_or_bad:
             raise HTTPException(

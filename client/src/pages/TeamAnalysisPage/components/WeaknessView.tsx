@@ -44,27 +44,25 @@ const STAT_LABELS: AxisLabelConfig[] = [
   }
 ];
 
-
-const MIN_VALUE = -3;
-const MAX_VALUE = 2;
+// Alec z-scale (match rec page visuals)
+const MIN_VALUE = -1;
+const MAX_VALUE = 1;
 const VALUE_SPAN = MAX_VALUE - MIN_VALUE;
-
-const BASELINE_VALUE = 0;
-
-function valueToFraction(value: number) {
-  if (!Number.isFinite(value)) return 0.5; 
-  const fraction = (value - MIN_VALUE) / VALUE_SPAN; 
-  return Math.min(Math.max(fraction, 0), 1);
-}
-
-const RING_VALUES = [MIN_VALUE, -2, -1, 0, 1, MAX_VALUE];
-const RING_FRACTIONS = RING_VALUES.map(v => valueToFraction(v));
-const BASELINE_FRACTION = valueToFraction(BASELINE_VALUE);
-const RING_LABEL_VALUES = Array.from(new Set([...RING_VALUES, BASELINE_VALUE])).sort((a, b) => a - b);
+const VISUAL_BOOST = 1;
+// -1..+1 scale with no extra rings
+const RING_VALUES = [-1, -0.5, 0, 0.5, 1];
+const RING_FRACTIONS = RING_VALUES.map(valueToFraction);
+const RING_LABELS = RING_VALUES.map((v) => {
+  const label = Math.abs(v) === 1 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, "");
+  if (v === 0) return "0";
+  return v > 0 ? `+${label}` : label;
+});
+const BASELINE_RING = valueToFraction(0); // league average ring
 const RADAR_SIZE = 320;
 const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
 const RADAR_RADIUS = 120;
 const AXIS_LABEL_OFFSET = 1.32;
+const RING_LABEL_OFFSET_Y = RADAR_RADIUS * 0.4;
 
 export default function WeaknessView({
   weakness,
@@ -95,25 +93,25 @@ export default function WeaknessView({
     return <div className={styles.stateMessage}>Unable to compute weaknesses.</div>;
   }
 
-  const percentileFractions = getValueFractions(weakness);
+  const percentileFractions = getZFractions(weakness);
   const rankedAxes = percentileFractions
     .map((value, idx) => ({ value, idx }))
     .sort((a, b) => a.value - b.value);
   const worstAxisIndex = rankedAxes[0]?.idx ?? null;
   const secondWorstAxisIndex = rankedAxes[1]?.idx ?? null;
-  const leagueBaselinePolygon = Array(STAT_LABELS.length).fill(BASELINE_FRACTION);
+  const leagueBaselinePolygon = Array(STAT_LABELS.length).fill(BASELINE_RING);
 
   return (
     <div className={styles.container}>
       <div className={styles.statsBubble}>
-        <div className={styles.statsHeader}>Team Stats</div>
+        <div className={styles.statsHeader}>Team Weakness</div>
         <div className={styles.statsRow}>
           {STAT_LABELS.map(({ key, label }) => {
-            const rawValue = weakness[key];
+            const z = weakness[key];
             return (
               <div key={key} className={styles.statBlock}>
                 <div className={styles.statLabel}>{label}</div>
-                <div className={styles.statValue}>{formatValueLabel(rawValue)}</div>
+                <div className={styles.statValue}>{formatScoreLabel(z)}</div>
               </div>
             );
           })}
@@ -197,29 +195,30 @@ export default function WeaknessView({
                   strokeWidth: 2,
                   className: styles.teamPolygon
                 })}
-                {/* baseline (midpoint) ring */}
+                {/* baseline (league average) ring */}
                 <polygon
-                  points={buildRingPolygon(BASELINE_FRACTION)}
+                  points={buildRingPolygon(BASELINE_RING)}
                   fill="none"
                   stroke="rgba(255,255,255,0.35)"
                   strokeWidth="1"
                   strokeDasharray="6 4"
                 />
                 {/* ring labels */}
-                {RING_LABEL_VALUES.map((value) => {
-                  const fraction = valueToFraction(value);
-                  const isBaseline = Math.abs(value - BASELINE_VALUE) < 1e-6;
-                  const offset = isBaseline ? 6 : value === MAX_VALUE ? -10 : value === MIN_VALUE ? 14 : -4;
-                  const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + offset;
+                {RING_VALUES.map((value, idx) => {
+                  const fraction = RING_FRACTIONS[idx];
+                  const label = RING_LABELS[idx];
+                  const isAverage = value === 0;
+                  const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + RING_LABEL_OFFSET_Y + (isAverage ? 10 : 8);
                   return (
                     <text
-                      key={`ring-label-${value}`}
+                      key={`label-${value}-${idx}`}
                       x={RADAR_CENTER.x}
                       y={y}
                       textAnchor="middle"
-                      className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""}`}
+                      className={`${styles.ringLabel} ${isAverage ? styles.ringLabelAverage : ""}`}
                     >
-                      {formatValueTick(value)}{isBaseline ? " (avg)" : ""}
+                      {label}
+                      {isAverage ? " (avg)" : ""}
                     </text>
                   );
                 })}
@@ -232,11 +231,21 @@ export default function WeaknessView({
                   y += position?.yOffset ?? 0;
                   let anchor: "start" | "end" | "middle";
                   const cosine = Math.cos(getAngle(idx));
-                  if (position?.anchor) anchor = position.anchor; else if (Math.abs(cosine) < 0.15) anchor = "middle"; else anchor = cosine > 0 ? "start" : "end";
+                  if (position?.anchor) {
+                    anchor = position.anchor;
+                  } else if (Math.abs(cosine) < 0.15) {
+                    anchor = "middle";
+                  } else {
+                    anchor = cosine > 0 ? "start" : "end";
+                  }
                   const rawValue = weakness[axis.key];
                   let labelClass = styles.axisLabel;
-                  if (idx === worstAxisIndex) labelClass = styles.axisLabelSevere; else if (idx === secondWorstAxisIndex) labelClass = styles.axisLabelWarn;
-                  const scoreText = formatValueLabel(rawValue);
+                  if (idx === worstAxisIndex) {
+                    labelClass = styles.axisLabelSevere;
+                  } else if (idx === secondWorstAxisIndex) {
+                    labelClass = styles.axisLabelWarn;
+                  }
+                  const scoreText = formatScoreLabel(rawValue);
                   const deficitDescription = describeWeakness(rawValue);
                   const strikeoutNote = axis.key === "strikeout_rate" ? "Lower strikeout rate plots farther out." : null;
                   return (
@@ -255,10 +264,10 @@ export default function WeaknessView({
               </svg>
             </div>
             <ul className={styles.radarLegend}>
-              <li>Score: Number of standard deviations above or below the mean</li>
-              <li>Dashed ring marks score 0 (league average baseline)</li>
-              <li>Orange fill = league composite, blue = your lineup</li>
-              <li>Only the two weakest axes highlight in color</li>
+              <li>Z-score vs league: 0 = league average; positive = stronger</li>
+              <li>Dashed ring marks league average (0 z-score)</li>
+              <li>Orange = league composite, blue = your lineup</li>
+              <li>Two weakest axes highlight in color</li>
             </ul>
           </div>
         </div>
@@ -317,13 +326,17 @@ function buildRingPolygon(fraction: number) {
   return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction));
 }
 
-function weaknessToValue(value: number) {
-  if (!Number.isFinite(value)) return BASELINE_VALUE;
-  return Number(value.toPrecision(3));
+function valueToFraction(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0.5;
+  }
+  const boosted = value * VISUAL_BOOST;
+  const normalized = (boosted - MIN_VALUE) / VALUE_SPAN;
+  return Math.min(Math.max(normalized, 0), 1);
 }
 
-function getValueFractions(weakness: TeamWeaknessResponse) {
-  return STAT_LABELS.map(({ key }) => valueToFraction(weaknessToValue(weakness[key])));
+function getZFractions(weakness: TeamWeaknessResponse) {
+  return STAT_LABELS.map(({ key }) => valueToFraction(weakness[key]));
 }
 
 function describeWeakness(value: number) {
@@ -331,26 +344,11 @@ function describeWeakness(value: number) {
     return "Difference vs league unavailable";
   }
 
-  const points = Math.abs(value * 100);
-  if (points < 0.5) {
-    return "On par with league average";
-  }
-
-  const direction = value >= 0 ? "below league average" : "above league average";
-  const rounded =
-    points >= 10 ? Math.round(points).toString() : points.toFixed(1).replace(/\.0$/, "");
-  return `${rounded} pts ${direction}`;
+  const direction = value >= 0 ? "above league average" : "below league average";
+  return `${value.toFixed(2)} z ${direction}`;
 }
 
-function formatValueLabel(value: number) {
-  return `${formatValueNumber(value)}`;
-}
-
-function formatValueTick(value: number) {
-  return `${formatValueNumber(value)}`;
-}
-
-function formatValueNumber(value: number) {
+function formatScoreLabel(value: number) {
   if (!Number.isFinite(value)) return "-";
-  return (value >= 0 ? "+" : "") + value.toFixed(2).replace(/\.00$/, "");
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2).replace(/\.00$/, "")}`;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import type { SavedPlayer, TeamWeaknessResponse } from "@/api/players";
@@ -6,61 +6,33 @@ import { LineupState, positionOrder, type DiamondPosition } from "@/components/T
 
 export type PanelMode = "idle" | "recommendations" | "search";
 
-export function useRecommendations() {
-  // Lineups
-  const initialLineup: LineupState = useMemo(
-    () => positionOrder.reduce((acc, position) => ({ ...acc, [position]: null }), {} as LineupState),
-    []
-  );
-  const [lineup, setLineup] = useState<LineupState>(initialLineup);
-  const [baselineLineup, setBaselineLineup] = useState<LineupState>(initialLineup);
+const emptyLineup: LineupState = positionOrder.reduce(
+  (acc, pos) => ({ ...acc, [pos]: null }),
+  {} as LineupState
+);
 
-  // Weakness data
+export function useRecommendations() {
+  const [lineup, setLineup] = useState<LineupState>(emptyLineup);
+  const [baselineLineup, setBaselineLineup] = useState<LineupState>(emptyLineup);
   const [baselineWeakness, setBaselineWeakness] = useState<TeamWeaknessResponse | null>(null);
   const [currentWeakness, setCurrentWeakness] = useState<TeamWeaknessResponse | null>(null);
   const [weaknessLoading, setWeaknessLoading] = useState(false);
   const [weaknessError, setWeaknessError] = useState<string | null>(null);
 
   const [mode, setMode] = useState<PanelMode>("idle");
-  const [query, setQuery] = useState("");
-
-  // Search
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SavedPlayer[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-
-  // Recommendations
   const [recommendedPlayers, setRecommendedPlayers] = useState<SavedPlayer[]>([]);
-  const [recommendationLoading, setRecommendationLoading] = useState(false);
-  const [recommendationError, setRecommendationError] = useState<string | null>(null);
+  const [isRecommending, setIsRecommending] = useState(false);
+  const [recommendationError, setRecommendationError] = useState("");
 
-  const [activePosition, setActivePosition] = useState<DiamondPosition>("CF");
+  const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
+  const [playerOperationError, setPlayerOperationError] = useState("");
+  const savingPlayerIds = useRef<Set<number>>(new Set()).current;
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
-
-  // Saved players
-  const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
-  const [playerOperationError, setPlayerOperationError] = useState<string | null>(null);
-  const [savingLineup, setSavingLineup] = useState(false);
-
-  const buildLineupFromSaved = useCallback((players: SavedPlayer[]) => {
-    const next: LineupState = positionOrder.reduce(
-      (acc, pos) => ({ ...acc, [pos]: null }),
-      {} as LineupState
-    );
-    players.forEach((p) => {
-      if (p.position && positionOrder.includes(p.position as DiamondPosition)) {
-        next[p.position as DiamondPosition] = p;
-      }
-    });
-    return next;
-  }, []);
-
-  const onSearchChange = (value: string) => {
-    setQuery(value);
-    setMode(value ? "search" : "idle");
-  };
+  const [activePosition, setActivePosition] = useState<DiamondPosition>("CF");
 
   const getPlayerIdsFromLineup = useCallback((state: LineupState) => {
     return positionOrder
@@ -68,112 +40,118 @@ export function useRecommendations() {
       .filter((id): id is number => typeof id === "number");
   }, []);
 
-  const fetchWeaknessFor = useCallback(async (state: LineupState) => {
-    const ids = getPlayerIdsFromLineup(state);
-    if (ids.length === 0) return null;
-    const result = await playerActions.getTeamWeakness(ids);
-    if (result.success && result.data) return result.data;
-    throw new Error(result.error || "Failed to load team weaknesses");
-  }, [getPlayerIdsFromLineup]);
+  const fetchWeaknessFor = useCallback(
+    async (state: LineupState) => {
+      const ids = getPlayerIdsFromLineup(state);
+      if (ids.length === 0) return null;
+      const result = await playerActions.getTeamWeakness(ids);
+      if (result.success && result.data) return result.data;
+      throw new Error(result.error || "Failed to load weaknesses");
+    },
+    [getPlayerIdsFromLineup]
+  );
 
   const refreshWeakness = useCallback(
     async (workingOverride?: LineupState, baselineOverride?: LineupState) => {
       const working = workingOverride ?? lineup;
       const baseline = baselineOverride ?? baselineLineup;
-      const hasAnyPlayers =
+      const hasAny =
         getPlayerIdsFromLineup(working).length > 0 || getPlayerIdsFromLineup(baseline).length > 0;
-    if (!hasAnyPlayers) {
-      setBaselineWeakness(null);
-      setCurrentWeakness(null);
-      return;
-    }
-    setWeaknessLoading(true);
-    setWeaknessError(null);
-    try {
-      const [base, current] = await Promise.all([
-        fetchWeaknessFor(baseline),
-        fetchWeaknessFor(working),
-      ]);
-      setBaselineWeakness(base);
-      setCurrentWeakness(current);
-    } catch (e) {
-      setWeaknessError(e instanceof Error ? e.message : "Failed to load weaknesses");
-    } finally {
-      setWeaknessLoading(false);
-    }
+      if (!hasAny) {
+        setBaselineWeakness(null);
+        setCurrentWeakness(null);
+        return;
+      }
+      setWeaknessLoading(true);
+      setWeaknessError(null);
+      try {
+        const [base, curr] = await Promise.all([
+          fetchWeaknessFor(baseline),
+          fetchWeaknessFor(working),
+        ]);
+        setBaselineWeakness(base);
+        setCurrentWeakness(curr);
+      } catch (e) {
+        setWeaknessError(e instanceof Error ? e.message : "Failed to load weaknesses");
+      } finally {
+        setWeaknessLoading(false);
+      }
     },
     [baselineLineup, lineup, fetchWeaknessFor, getPlayerIdsFromLineup]
   );
 
-  // Keep weakness in sync with working/baseline lineups
+  useEffect(() => {
+    const loadSaved = async () => {
+      const res = await playerActions.getSavedPlayers();
+      if (res.success && res.data) {
+        setSavedPlayers(res.data);
+        const next: LineupState = positionOrder.reduce(
+          (acc, pos) => ({ ...acc, [pos]: null }),
+          {} as LineupState
+        );
+        res.data.forEach((p) => {
+          if (p.position && positionOrder.includes(p.position as DiamondPosition)) {
+            next[p.position as DiamondPosition] = p;
+          }
+        });
+        setLineup(next);
+        setBaselineLineup(next);
+      } else if (!res.success) {
+        setPlayerOperationError(res.error || "Failed to load saved players");
+      }
+    };
+    void loadSaved();
+  }, []);
+
   useEffect(() => {
     void refreshWeakness();
   }, [refreshWeakness]);
 
-  // Load saved players once
-  useEffect(() => {
-    const loadSaved = async () => {
-      const result = await playerActions.getSavedPlayers();
-      if (result.success && result.data) {
-        setSavedPlayers(result.data);
-        const nextLineup = buildLineupFromSaved(result.data);
-        setLineup(nextLineup);
-        setBaselineLineup(nextLineup);
-      } else if (!result.success) {
-        setPlayerOperationError(result.error || "Failed to load saved players");
-      }
-    };
-    void loadSaved();
-  }, [buildLineupFromSaved]);
+  const onSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    setMode(value ? "search" : "idle");
+  }, []);
 
-  // Search pipeline with debounce
   useEffect(() => {
-    if (!query.trim()) {
+    if (!searchTerm.trim()) {
       setSearchResults([]);
-      setSearchError(null);
-      setSearchLoading(false);
       setMode("idle");
       return;
     }
-    setSearchLoading(true);
-    setSearchError(null);
     const timer = setTimeout(async () => {
-      const result = await playerActions.searchPlayers(query.trim());
-      setSearchLoading(false);
-      if (result.success && result.data) {
-        const mapped: SavedPlayer[] = result.data.map((p) => ({
-          id: p.id,
-          name: p.name,
-          image_url: p.image_url,
-          years_active: p.years_active
-        }));
-        setSearchResults(mapped);
+      const res = await playerActions.searchPlayers(searchTerm.trim());
+      if (res.success && res.data) {
+        setSearchResults(
+          res.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            image_url: p.image_url,
+            years_active: p.years_active,
+          }))
+        );
         setMode("search");
-      } else if (result.aborted) {
-        // do nothing
-      } else {
+      } else if (!res.aborted) {
         setSearchResults([]);
-        setSearchError(result.error || "Search failed");
         setMode("idle");
       }
-    }, 250);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [searchTerm]);
 
   const ensurePlayerSaved = useCallback(
     async (player: SavedPlayer) => {
       if (savedPlayers.some((p) => p.id === player.id)) return true;
-      const result = await playerActions.addPlayer({
+      const res = await playerActions.addPlayer({
         id: player.id,
         name: player.name,
         image_url: player.image_url,
         years_active: player.years_active,
       });
-      if (result.success) {
+      if (res.success) {
         setSavedPlayers((prev) => (prev.some((p) => p.id === player.id) ? prev : [...prev, player]));
         return true;
       }
-      setPlayerOperationError(result.error || "Failed to save player");
+      setPlayerOperationError(res.error || "Failed to save player");
       return false;
     },
     [savedPlayers]
@@ -185,9 +163,7 @@ export function useRecommendations() {
       setLineup((prev) => {
         const next: LineupState = { ...prev };
         positionOrder.forEach((pos) => {
-          if (next[pos]?.id === player.id) {
-            next[pos] = null;
-          }
+          if (next[pos]?.id === player.id) next[pos] = null;
         });
         next[target] = player;
         void refreshWeakness(next, baselineLineup);
@@ -205,7 +181,7 @@ export function useRecommendations() {
         if (ok) {
           assignPlayerToLineup(player);
           setMode("idle");
-          setQuery("");
+          setSearchTerm("");
         }
       })();
     },
@@ -226,29 +202,27 @@ export function useRecommendations() {
   );
 
   const handleGetRecommendations = useCallback(async () => {
-    setRecommendationError(null);
-    const playerIds = getPlayerIdsFromLineup(lineup);
-    if (playerIds.length === 0) {
+    setRecommendationError("");
+    const ids = getPlayerIdsFromLineup(lineup);
+    if (ids.length === 0) {
       setRecommendationError("Select players to build your lineup first.");
-      setRecommendedPlayers([]);
-      setMode("idle");
       return;
     }
-    setRecommendationLoading(true);
-    const result = await playerActions.getRecommendations(playerIds);
-    setRecommendationLoading(false);
-    if (result.success && result.data) {
-      const mapped: SavedPlayer[] = result.data.map((p) => ({
-        id: p.id,
-        name: p.name,
-        image_url: p.image_url,
-        years_active: p.years_active
-      }));
-      setRecommendedPlayers(mapped);
+    setIsRecommending(true);
+    const res = await playerActions.getRecommendations(ids);
+    setIsRecommending(false);
+    if (res.success && res.data) {
+      setRecommendedPlayers(
+        res.data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          image_url: p.image_url,
+          years_active: p.years_active,
+        }))
+      );
       setMode("recommendations");
     } else {
-      setRecommendedPlayers([]);
-      setRecommendationError(result.error || "Failed to fetch recommendations");
+      setRecommendationError(res.error || "Failed to fetch recommendations");
       setMode("idle");
     }
   }, [getPlayerIdsFromLineup, lineup]);
@@ -267,9 +241,7 @@ export function useRecommendations() {
   const prepareDragPlayer = useCallback((player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = player;
     setDraggingId(player.id);
-    if (fromPosition) {
-      setActivePosition(fromPosition);
-    }
+    if (fromPosition) setActivePosition(fromPosition);
   }, []);
 
   const clearDragState = useCallback(() => {
@@ -293,87 +265,40 @@ export function useRecommendations() {
     [assignPlayerToLineup, clearDragState]
   );
 
-  const persistPositions = useCallback(async () => {
-    const ops: Promise<unknown>[] = [];
-    const assignedIds = new Set<number>();
-    positionOrder.forEach((pos) => {
-      const p = lineup[pos];
-      if (p?.id) {
-        assignedIds.add(p.id);
-        const newPos = pos;
-        const existing = savedPlayers.find((sp) => sp.id === p.id);
-        if (!existing || existing.position !== newPos) {
-          ops.push(playerActions.updatePlayerPosition(p.id, newPos));
-        }
-      }
-    });
-    // Clear positions for saved players not in lineup
-    savedPlayers.forEach((sp) => {
-      if (!sp.id) return;
-      if (!assignedIds.has(sp.id) && sp.position) {
-        ops.push(playerActions.updatePlayerPosition(sp.id, null));
-      }
-    });
-    await Promise.all(ops);
-    // update local savedPlayers positions to match lineup
-    setSavedPlayers((prev) =>
-      prev.map((sp) => {
-        if (!sp.id) return sp;
-        const pos = positionOrder.find((slot) => lineup[slot]?.id === sp.id) || null;
-        return { ...sp, position: pos };
-      })
-    );
-  }, [lineup, savedPlayers]);
-
-  const onSaveLineup = useCallback(async () => {
-    setSavingLineup(true);
-    setPlayerOperationError(null);
-    try {
-      await persistPositions();
-      setBaselineLineup(lineup);
-      if (currentWeakness) {
-        setBaselineWeakness(currentWeakness);
-      }
-    } catch (e) {
-      setPlayerOperationError(e instanceof Error ? e.message : "Failed to save lineup");
-    } finally {
-      setSavingLineup(false);
-    }
-  }, [persistPositions, lineup, currentWeakness]);
-
   return {
     mode,
-    query,
+    searchTerm,
     lineup,
     baselineLineup,
     baselineWeakness,
     currentWeakness,
     weaknessLoading,
     weaknessError,
-    searchResults,
-    searchLoading,
-    searchError,
-    recommendedPlayers,
-    recommendationLoading,
-    recommendationError,
     activePosition,
     dropTarget,
     draggingId,
+    searchResults,
+    recommendedPlayers,
+    savedPlayerIds: new Set(savedPlayers.map((p) => p.id)),
+    assignedIds: new Set(getPlayerIdsFromLineup(lineup)),
+    savingPlayerIds,
+    hasSearchTerm: !!searchTerm.trim(),
+    isRecommending,
+    recommendationError,
+    playerOperationError,
+    setSearchTerm: onSearchChange,
     setActivePosition,
     setDropTarget,
-    setLineup,
-    setBaselineLineup,
-    savedPlayers,
-    onGetRecommendations: handleGetRecommendations,
-    onSearchChange,
-    onAddFromSearch: handleAddFromSearch,
-    onAddFromRecommendation: handleAddFromRecommendation,
     onClearSlot: handleClearSlot,
     onPrepareDrag: prepareDragPlayer,
     onClearDrag: clearDragState,
     onPositionDrop: handlePositionDrop,
-    onSaveLineup,
-    savingLineup,
-    playerOperationError,
+    onSaveTeam: () => {
+      setBaselineLineup(lineup);
+      if (currentWeakness) setBaselineWeakness(currentWeakness);
+    },
+    onGetRecommendations: handleGetRecommendations,
+    onAddFromSearch: handleAddFromSearch,
+    onAddFromRecommendation: handleAddFromRecommendation,
   };
 }

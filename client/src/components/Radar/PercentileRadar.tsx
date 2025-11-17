@@ -25,6 +25,7 @@ export type PercentileRadarProps = {
   ringFractions?: number[];
   ringLabels?: string[];
   showBaselineRing?: boolean;
+  ringLabelOffsetY?: number;
 };
 
 const RING_FRACTIONS = [0.2, 0.4, 0.6, 0.8, 1];
@@ -51,7 +52,8 @@ export default function PercentileRadar({
   legendItems,
   ringFractions,
   ringLabels,
-  showBaselineRing = true
+  showBaselineRing = true,
+  ringLabelOffsetY = 0
 }: PercentileRadarProps) {
   if (!axes.length) {
     return null;
@@ -66,7 +68,7 @@ export default function PercentileRadar({
   const rings = ringFractions ?? RING_FRACTIONS;
   const ringLabelValues = ringLabels
     ? rings
-    : Array.from(new Set([...RING_FRACTIONS, baselinePercentile])).sort((a, b) => a - b);
+    : Array.from(new Set([...rings, baselinePercentile])).sort((a, b) => a - b);
   const [severeIndex, warnIndex] = highlightOrder;
 
   return (
@@ -126,10 +128,9 @@ export default function PercentileRadar({
         )}
 
         {ringLabelValues.map((fraction, idx) => {
-          const y =
-            RADAR_CENTER.y - RADAR_RADIUS * fraction - (Math.abs(fraction - 1) < 0.0001 ? 12 : 4);
           const isAverage = Math.abs(fraction - baselinePercentile) < 0.0001;
           const labelText = ringLabels ? ringLabels[idx] ?? "" : formatPercentileTick(fraction);
+          const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + ringLabelOffsetY + (isAverage ? 0 : 0);
           return (
             <text
               key={`tick-${idx}`}

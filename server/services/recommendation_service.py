@@ -65,8 +65,8 @@ class RecommendationService:
         league_avg = await self.roster_repository.get_league_unweighted_average()
         league_std = await self.roster_repository.get_league_unweighted_std()
 
-        # Compute normalized weakness scores
-        original_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
+        # Compute weakness scores (Alec-style, uses league averages only)
+        original_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg)
 
 
         # 2. find the player with lowest adjustment sore
@@ -167,7 +167,7 @@ class RecommendationService:
             team_avg = self.roster_domain.compute_unweighted_roster_average_dict(list(roster_response.stats.values()))
 
             # Compute normalized weakness scores
-            potential_team_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
+            potential_team_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg)
 
             # 5. Store the player id with the difference between the sum of old weakness vector - new weakness vector 
             player_contributions[candidate_player_id] = original_vector_sum - sum(potential_team_weakness_vector.values())
