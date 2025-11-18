@@ -8,8 +8,7 @@ import { RecommendationsSection } from "@/components/TeamBuilder/Recommendations
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 import {
   formatZScore,
-  valueToFraction,
-  Z_SCORE_CONFIG
+  valueToFraction
 } from "@/utils/zScoreRadar";
 import { WeaknessDeltasCard } from "@/components/Recommendations/WeaknessDeltasCard";
 import { RecommendationsRadarCard } from "@/components/Recommendations/RecommendationsRadarCard";

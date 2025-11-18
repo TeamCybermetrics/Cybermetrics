@@ -1,5 +1,5 @@
 import PercentileRadar from "@/components/Radar/PercentileRadar";
-import { RING_FRACTIONS, RING_LABELS, Z_SCORE_CONFIG } from "@/utils/zScoreRadar";
+import { RING_FRACTIONS, RING_LABELS } from "@/utils/zScoreRadar";
 import styles from "@/features/recommendations/RecommendationsView.module.css";
 
 type Axis = { label: string };
