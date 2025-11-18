@@ -70,10 +70,7 @@ export function useRecommendations() {
       setWeaknessLoading(true);
       setWeaknessError(null);
       try {
-        const [base, curr] = await Promise.all([
-          fetchWeaknessFor(baseline),
-          fetchWeaknessFor(working),
-        ]);
+        const [base, curr] = await Promise.all([fetchWeaknessFor(baseline), fetchWeaknessFor(working)]);
         if (latestWeaknessRequest.current !== requestId) {
           return;
         }

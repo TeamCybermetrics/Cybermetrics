@@ -57,7 +57,7 @@ const RADAR_SIZE = 320;
 const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
 const RADAR_RADIUS = Z_SCORE_CONFIG.RADAR_RADIUS;
 const AXIS_LABEL_OFFSET = 1.32;
-const RING_LABEL_OFFSET_Y = RADAR_RADIUS * 0.4;
+const RING_LABEL_OFFSET_Y = 0;
 
 export default function WeaknessView({
   weakness,

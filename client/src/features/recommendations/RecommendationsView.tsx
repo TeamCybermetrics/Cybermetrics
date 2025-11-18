@@ -5,15 +5,14 @@ import type { DragEvent } from "react";
 import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
 import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
-import PercentileRadar from "@/components/Radar/PercentileRadar";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 import {
   formatZScore,
-  RING_FRACTIONS,
-  RING_LABELS,
   valueToFraction,
   Z_SCORE_CONFIG
 } from "@/utils/zScoreRadar";
+import { WeaknessDeltasCard } from "@/components/Recommendations/WeaknessDeltasCard";
+import { RecommendationsRadarCard } from "@/components/Recommendations/RecommendationsRadarCard";
 import styles from "./RecommendationsView.module.css";
 
 type Props = {
@@ -56,8 +55,6 @@ const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
   { key: "on_base_percentage", label: "On Base %" },
   { key: "base_running", label: "Base Running" },
 ];
-
-const RADAR_RADIUS = Z_SCORE_CONFIG.RADAR_RADIUS; // keep labels centered
 
 const formatValueNumber = (value: number) => formatZScore(value, 2);
 
@@ -128,27 +125,14 @@ export function RecommendationsView({
       {/* Left column */}
       <div className={styles.leftCol}>
         {/* Deltas */}
-        <div className={styles.weaknessCard}>
-          <div className={styles.weaknessTitle}>Changes in Team Weakness</div>
-          {weaknessLoading && <div className={styles.placeholder}>Calculating…</div>}
-          {weaknessError && <div className={styles.recommendError}>{weaknessError}</div>}
-          {!weaknessLoading && !weaknessError && baselineWeakness && currentWeakness ? (
-            <div className={styles.weaknessGrid}>
-              {STAT_KEYS.map(({ key, label }) => {
-                const delta = currentWeakness[key] - baselineWeakness[key];
-                const cls = delta >= 0 ? styles.weakScoreGreen : styles.weakScoreRed;
-                return (
-                  <div key={label}>
-                    <div className={styles.weakLabel}>{label}</div>
-                    <div className={cls}>{delta >= 0 ? "+" : ""}{formatValueNumber(delta)}</div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            !weaknessLoading && !weaknessError && <div className={styles.placeholder}>Add players to see changes.</div>
-          )}
-        </div>
+        <WeaknessDeltasCard
+          statKeys={STAT_KEYS}
+          baselineWeakness={baselineWeakness}
+          currentWeakness={currentWeakness}
+          loading={weaknessLoading}
+          error={weaknessError}
+          formatValue={formatValueNumber}
+        />
 
         {/* Get Recommendations button */}
         <div className={styles.card}>
@@ -208,39 +192,16 @@ export function RecommendationsView({
 
       {/* Right column */}
       <div className={styles.rightCol}>
-        <div className={styles.radarCard}>
-          <div className={styles.radarHeader}>Before/After</div>
-          <div className={styles.radarSubheader}>Weakness radar</div>
-          {weaknessLoading && <div className={styles.radarPlaceholder}>Calculating…</div>}
-          {weaknessError && <div className={styles.radarPlaceholder}>{weaknessError}</div>}
-          {!weaknessLoading && !weaknessError && currentFractions.length > 0 ? (
-            <PercentileRadar
-              axes={STAT_KEYS.map(({ label }) => ({ label }))}
-              teamPercentiles={currentFractions}
-              leaguePercentiles={baselineFractions.length ? baselineFractions : undefined}
-              highlightOrder={highlightOrder}
-              ringFractions={RING_FRACTIONS}
-              ringLabels={RING_LABELS}
-              baselinePercentile={0.5}
-              showBaselineRing
-              ringLabelOffsetY={RADAR_RADIUS * 0.5}
-              legendItems={[
-                "Blue = current lineup",
-                baselineFractions.length ? "Orange = baseline lineup" : "Orange baseline unavailable",
-                "0 = league average; positive = above average (stronger)"
-              ]}
-            />
-          ) : (
-            !weaknessLoading &&
-            !weaknessError && <div className={styles.radarPlaceholder}>Add players to view radar.</div>
-          )}
-        </div>
+        <RecommendationsRadarCard
+          axes={STAT_KEYS.map(({ label }) => ({ label }))}
+          baselineFractions={baselineFractions}
+          currentFractions={currentFractions}
+          highlightOrder={highlightOrder}
+          loading={weaknessLoading}
+          error={weaknessError}
+        />
 
         <div className={styles.diamondCard}>
-          <div className={styles.diamondHeader}>
-            <div>Your lineup</div>
-            <div className={styles.activeBadge}>ACTIVE: {activePosition}</div>
-          </div>
           <div className={styles.diamondCanvas}>
             <DiamondPanel
               lineup={lineup}
@@ -256,11 +217,11 @@ export function RecommendationsView({
               onClearSlot={onClearSlot}
             />
           </div>
-          <div className={styles.diamondFooter}>
-            <button className={styles.saveBtn} onClick={onSaveTeam}>
-              Save Lineup as baseline
-            </button>
-          </div>
+        </div>
+        <div className={styles.diamondFooter}>
+          <button className={styles.saveBtn} onClick={onSaveTeam}>
+            Save Lineup as baseline
+          </button>
         </div>
       </div>
     </div>
