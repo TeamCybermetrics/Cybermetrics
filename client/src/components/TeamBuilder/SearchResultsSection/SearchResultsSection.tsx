@@ -45,6 +45,11 @@ export function SearchResultsSection({
             const alreadySaved = savedPlayerIds?.has(player.id) ?? false;
             const isSaving = savingPlayerIds?.has(player.id) ?? false;
             const addDisabled = isSaving || (!allowAddSaved && alreadySaved);
+            const addTitle = isSaving
+              ? "Saving player..."
+              : !allowAddSaved && alreadySaved
+              ? "Already in your saved players"
+              : "Add this player to your lineup";
 
             return (
               <PlayerRow
@@ -57,7 +62,7 @@ export function SearchResultsSection({
                 showDelete={false}
                 addDisabled={addDisabled}
                 addLabel={isSaving ? "Saving..." : addLabel}
-                addTitle={addDisabled ? "Already in your saved players" : "Add this player to your lineup"}
+                addTitle={addTitle}
                 onAdd={() => {
                   if (!addDisabled) {
                     void onSavePlayer(player);

@@ -1,5 +1,5 @@
 import PercentileRadar from "@/components/Radar/PercentileRadar";
-import { RING_FRACTIONS, RING_LABELS } from "@/utils/zScoreRadar";
+import { RING_FRACTIONS, RING_LABELS, valueToFraction } from "@/utils/zScoreRadar";
 import styles from "@/features/recommendations/RecommendationsView.module.css";
 
 type Axis = { label: string };
@@ -37,7 +37,7 @@ export function RecommendationsRadarCard({
           highlightOrder={highlightOrder}
           ringFractions={RING_FRACTIONS}
           ringLabels={RING_LABELS}
-          baselinePercentile={0.5}
+          baselinePercentile={valueToFraction(0)}
           showBaselineRing
           ringLabelOffsetY={0}
           legendItems={

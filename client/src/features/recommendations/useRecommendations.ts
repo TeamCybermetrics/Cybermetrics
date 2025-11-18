@@ -64,6 +64,8 @@ export function useRecommendations() {
       if (!hasAny) {
         setBaselineWeakness(null);
         setCurrentWeakness(null);
+        setWeaknessError(null);
+        setWeaknessLoading(false);
         latestWeaknessRequest.current = null;
         return;
       }
