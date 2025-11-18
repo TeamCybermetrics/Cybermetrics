@@ -108,12 +108,13 @@ export function useRecommendations() {
         });
         setLineup(next);
         setBaselineLineup(next);
+        void refreshWeakness(next, next);
       } else if (!res.success) {
         setPlayerOperationError(res.error || "Failed to load saved players");
       }
     };
     void loadSaved();
-  }, []);
+  }, [refreshWeakness]);
 
   const onSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
