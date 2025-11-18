@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import type { SavedPlayer, TeamWeaknessResponse } from "@/api/players";
@@ -115,39 +115,46 @@ export function useRecommendations() {
     void loadSaved();
   }, []);
 
-  useEffect(() => {
-    void refreshWeakness();
-  }, [refreshWeakness]);
-
   const onSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
     setMode(value ? "search" : "idle");
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     if (!searchTerm.trim()) {
       setSearchResults([]);
       setMode("idle");
+      controller.abort();
       return;
     }
     const timer = setTimeout(async () => {
-      const res = await playerActions.searchPlayers(searchTerm.trim());
-      if (res.success && res.data) {
-        setSearchResults(
-          res.data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            image_url: p.image_url,
-            years_active: p.years_active,
-          }))
-        );
-        setMode("search");
-      } else if (!res.aborted) {
+      try {
+        const res = await playerActions.searchPlayers(searchTerm.trim(), controller.signal);
+        if (res.success && res.data) {
+          setSearchResults(
+            res.data.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              image_url: p.image_url,
+              years_active: p.years_active,
+            }))
+          );
+          setMode("search");
+        } else if (!res.aborted) {
+          setSearchResults([]);
+          setMode("idle");
+        }
+      } catch (err) {
+        if (controller.signal.aborted) return;
         setSearchResults([]);
         setMode("idle");
       }
     }, 300);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [searchTerm]);
 
   const ensurePlayerSaved = useCallback(
@@ -178,15 +185,19 @@ export function useRecommendations() {
   const assignPlayerToLineup = useCallback(
     (player: SavedPlayer, position?: DiamondPosition) => {
       const target = position ?? activePosition;
+      let nextLineup: LineupState | null = null;
       setLineup((prev) => {
         const next: LineupState = { ...prev };
         positionOrder.forEach((pos) => {
           if (next[pos]?.id === player.id) next[pos] = null;
         });
         next[target] = player;
-        void refreshWeakness(next, baselineLineup);
+        nextLineup = next;
         return next;
       });
+      if (nextLineup) {
+        void refreshWeakness(nextLineup, baselineLineup);
+      }
       setActivePosition(target);
     },
     [activePosition, baselineLineup, refreshWeakness]
@@ -247,13 +258,26 @@ export function useRecommendations() {
 
   const handleClearSlot = useCallback(
     (position: DiamondPosition) => {
+      let nextLineup: LineupState | null = null;
       setLineup((prev) => {
         const next = { ...prev, [position]: null };
-        void refreshWeakness(next, baselineLineup);
+        nextLineup = next;
         return next;
       });
+      if (nextLineup) {
+        void refreshWeakness(nextLineup, baselineLineup);
+      }
     },
-    [baselineLineup, refreshWeakness]
+    [baselineLineup, lineup, refreshWeakness]
+  );
+
+  const savedPlayerIds = useMemo(
+    () => new Set(savedPlayers.map((p) => p.id)),
+    [savedPlayers]
+  );
+  const assignedIds = useMemo(
+    () => new Set(getPlayerIdsFromLineup(lineup)),
+    [lineup, getPlayerIdsFromLineup]
   );
 
   const prepareDragPlayer = useCallback((player: SavedPlayer, fromPosition?: DiamondPosition) => {
@@ -297,8 +321,8 @@ export function useRecommendations() {
     draggingId,
     searchResults,
     recommendedPlayers,
-    savedPlayerIds: new Set(savedPlayers.map((p) => p.id)),
-    assignedIds: new Set(getPlayerIdsFromLineup(lineup)),
+    savedPlayerIds,
+    assignedIds,
     savingPlayerIds,
     hasSearchTerm: !!searchTerm.trim(),
     isRecommending,
