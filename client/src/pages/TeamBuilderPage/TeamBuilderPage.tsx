@@ -12,7 +12,6 @@ import {
 import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
 import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection/SavedPlayersSection";
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
-import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 
 /**
