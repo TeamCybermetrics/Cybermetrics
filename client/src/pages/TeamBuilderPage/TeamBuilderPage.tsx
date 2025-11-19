@@ -633,19 +633,19 @@ export default function TeamBuilderPage() {
       </div>
 
       {searchModalOpen && (
-        <div onClick={handleCloseSearchModal}>
-          <div onClick={(event) => event.stopPropagation()}>
-            <div>
+        <div className={styles.searchModalBackdrop} onClick={handleCloseSearchModal}>
+          <div className={styles.searchModal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.searchModalHeader}>
               <div>
-                <p>Search players</p>
-                <h3>Add players to your lineup</h3>
+                <p className={styles.searchModalKicker}>Search players</p>
+                <h3 className={styles.searchModalTitle}>Add players to your lineup</h3>
               </div>
-              <button onClick={handleCloseSearchModal}>
+              <button className={styles.searchModalClose} onClick={handleCloseSearchModal}>
                 ✕
               </button>
             </div>
 
-            <div>
+            <div className={styles.searchModalInput}>
               <SearchBar
                 searchTerm={searchTerm}
                 onSearchTermChange={handleSearchTermChange}
@@ -659,7 +659,7 @@ export default function TeamBuilderPage() {
               />
             </div>
 
-            <div>
+            <div className={styles.searchModalResults}>
               {hasSearchTerm ? (
                 <SearchResultsSection
                   players={searchResultPlayers}
@@ -672,7 +672,7 @@ export default function TeamBuilderPage() {
                   onSavePlayer={(player) => void handleSavePlayerOnly(player)}
                 />
               ) : (
-                <div>Type to see search results.</div>
+                <div className={styles.searchModalEmpty}>Start typing to see the results</div>
               )}
             </div>
           </div>
