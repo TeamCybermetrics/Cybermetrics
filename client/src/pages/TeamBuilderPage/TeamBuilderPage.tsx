@@ -632,8 +632,52 @@ export default function TeamBuilderPage() {
 
       </div>
 
+      {searchModalOpen && (
+        <div onClick={handleCloseSearchModal}>
+          <div onClick={(event) => event.stopPropagation()}>
+            <div>
+              <div>
+                <p>Search players</p>
+                <h3>Add players to your lineup</h3>
+              </div>
+              <button onClick={handleCloseSearchModal}>
+                ✕
+              </button>
+            </div>
+
+            <div>
+              <SearchBar
+                searchTerm={searchTerm}
+                onSearchTermChange={handleSearchTermChange}
+                statusText={
+                  hasSearchTerm
+                    ? `${searchResultPlayers.length} results`
+                    : "Type a player name to begin searching"
+                }
+                errorMessage={playerOperationError}
+                autoFocus
+              />
+            </div>
+
+            <div>
+              {hasSearchTerm ? (
+                <SearchResultsSection
+                  players={searchResultPlayers}
+                  savedPlayerIds={savedPlayerIds}
+                  assignedIds={assignedIds}
+                  draggingId={draggingId}
+                  savingPlayerIds={savingPlayerIds}
+                  onPrepareDrag={prepareDragPlayer}
+                  onClearDrag={clearDragState}
+                  onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+                />
+              ) : (
+                <div>Type to see search results.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-
