@@ -9,6 +9,9 @@ export const authActions = {
       localStorage.setItem("auth_token", response.token);
       localStorage.setItem("user_id", response.user_id);
       localStorage.setItem("user_email", response.email);
+      if (response.display_name) {
+        localStorage.setItem("user_display_name", response.display_name);
+      }
 
       return { success: true, data: response };
     } catch (error) {
@@ -27,6 +30,11 @@ export const authActions = {
         display_name: displayName || null,
       });
 
+      // Store display name if provided
+      if (displayName) {
+        localStorage.setItem("user_display_name", displayName);
+      }
+
       return { success: true, data: response };
     } catch (error) {
       return {
@@ -40,6 +48,7 @@ export const authActions = {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_id");
     localStorage.removeItem("user_email");
+    localStorage.removeItem("user_display_name");
     return { success: true };
   },
 

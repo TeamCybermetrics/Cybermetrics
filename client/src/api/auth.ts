@@ -10,6 +10,7 @@ export interface LoginResponse {
   user_id: string;
   email: string;
   token: string;
+  display_name?: string;
 }
 
 export interface SignupRequest {
