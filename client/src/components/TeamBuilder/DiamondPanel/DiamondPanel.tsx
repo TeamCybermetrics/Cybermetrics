@@ -57,7 +57,6 @@ export function DiamondPanel({
           <line x1="10" y1="50" x2="50" y2="90" />
           <line x1="50" y1="90" x2="90" y2="50" />
           <circle cx="50" cy="12" r="2" />
-          <circle cx="50" cy="50" r="2" />
         </svg>
 
         {positionOrder.map((pos) => {
