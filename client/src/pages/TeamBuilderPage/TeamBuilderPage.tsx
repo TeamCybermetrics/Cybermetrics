@@ -520,7 +520,7 @@ export default function TeamBuilderPage() {
               errorMessage={playerOperationError}
             />
           </section>
-          
+
           {hasSearchTerm && (
             <SearchResultsSection
               players={searchResultPlayers}
@@ -596,6 +596,7 @@ export default function TeamBuilderPage() {
         />
 
       </div>
+
     </div>
   );
 }
