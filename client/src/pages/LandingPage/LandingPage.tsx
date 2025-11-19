@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
-import { Spinner } from "@/components";
+import { Spinner, Footer } from "@/components";
 import { ROUTES } from "@/config";
 import styles from "./LandingPage.module.css";
 import logo from "@/assets/logo_bubble.svg";
 import demoImage from "@/assets/demo.png";
-import connector from "@/assets/svg/landingPageConnector.svg"; // Re-add this import
+import connector from "@/assets/svg/landingPageConnector.svg"; 
 
 export default function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -93,6 +93,8 @@ export default function LandingPage() {
           </div>
         </section>
       </div>
+
+      <Footer />
     </main>
   );
 }

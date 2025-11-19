@@ -1,14 +1,12 @@
 .main {
   display: block;
-  padding: 96px 0 120px;
+  padding: 96px 0 0;
   position: relative;
   min-height: 100vh; 
   background: linear-gradient(
     to bottom,
     #0D1728 0% 50%,
-    #E5E5E5 50% 90%,
-    #293241 90% 100%,
-    #E5E5E5 100% 100%  /* Placeholder for future extra features */
+    #E5E5E5 50% 100%
   );
   background-repeat: no-repeat;
 }
