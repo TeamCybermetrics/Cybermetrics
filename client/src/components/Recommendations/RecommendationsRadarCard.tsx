@@ -16,11 +16,12 @@ type Props = {
   error: string | null;
 };
 
-const RADAR_SIZE = 320;
+const RADAR_SIZE = 160;
 const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
-const RADAR_RADIUS = 120;
+const RADAR_RADIUS = 100;
 const DEFAULT_RING_COUNT = 5;
-const AXIS_LABEL_OFFSET = 1.32;
+const AXIS_LABEL_OFFSET = 1.25;
+const SVG_PADDING = 28;
 
 const LABEL_OVERRIDES: Partial<Record<
   keyof TeamWeaknessResponse,
@@ -94,8 +95,8 @@ export function RecommendationsRadarCard({
       <div className={styles.radarSubheader}>Weakness radar</div>
       <div className={styles.radarChart}>
         <svg
-          viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
-          style={{ width: "100%", height: "auto", overflow: "visible" }}
+          viewBox={`${-SVG_PADDING} ${-SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING}`}
+          style={{ width: "100%", maxWidth: "300px", height: "auto", overflow: "visible" }}
         >
           {ringFractions.map((fraction, i) => (
             <polygon
