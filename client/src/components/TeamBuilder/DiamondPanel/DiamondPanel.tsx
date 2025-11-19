@@ -51,13 +51,45 @@ export function DiamondPanel({
 
       <div className={styles.diamond}>
         <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
-          <rect x="5" y="5" width="90" height="90" rx="8" ry="8" />
-          <line x1="50" y1="10" x2="10" y2="50" />
-          <line x1="50" y1="10" x2="90" y2="50" />
-          <line x1="10" y1="50" x2="50" y2="90" />
-          <line x1="50" y1="90" x2="90" y2="50" />
-          <circle cx="50" cy="12" r="2" />
-          <circle cx="50" cy="50" r="2" />
+          {/* Continuous foul lines from home plate through bases to outfield arc */}
+          {/* <line x1="50" y1="95" x2="10" y2="38" stroke="currentColor" strokeWidth="0.5" /> */}
+          <line x1="50" y1="95" x2="1" y2="38" stroke="currentColor" strokeWidth="0.5" />
+          {/* <line x1="30" y1="70" x2="10" y2="38" stroke="currentColor" strokeWidth="0.5" /> */}
+          <line x1="50" y1="95" x2="99" y2="38" stroke="currentColor" strokeWidth="0.5" />
+          {/* <line x1="70" y1="70" x2="90" y2="38" stroke="currentColor" strokeWidth="0.5" /> */}
+          
+          {/* Outfield arc */}
+          <path
+            d="M 1 38 Q 50 -20 99 38"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.5"
+          />
+          
+          {/* Base paths connecting bases */}
+          <line x1="15" y1="54" x2="50" y2="27" stroke="currentColor" strokeWidth="0.5" />
+          <line x1="50" y1="27" x2="85" y2="54" stroke="currentColor" strokeWidth="0.5" />
+          
+          {/* Home plate (pentagon) - point at top touching base paths */}
+
+          {/* points="50,95 47,98 47,100 53,100 53,98" */}
+          <polygon
+            points="50,98 47,96 47,93 53,93 53,96"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeWidth="0.3"
+          />
+          
+          {/* First base (square) */}
+          <rect x="83" y="52" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+
+          {/* Second base (square) */}
+          {/* 53 */}
+          <rect x="48" y="26" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+
+          {/* Third base (square) */}
+          <rect x="13" y="52" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          
         </svg>
 
         {positionOrder.map((pos) => {

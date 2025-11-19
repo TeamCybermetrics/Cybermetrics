@@ -5,11 +5,18 @@ import styles from "./RecommendationsPage.module.css";
 
 export default function RecommendationsPage() {
   const vm = useRecommendations();
+  const { mode, searchTerm, onGetRecommendations, setSearchTerm, onSaveTeam } = vm;
 
   return (
     <ProtectedRoute requireAuth>
       <div className={styles.page}>
-        <RecommendationsView {...vm} />
+        <RecommendationsView
+          mode={mode}
+          query={searchTerm}
+          onGetRecommendations={onGetRecommendations}
+          onSearchChange={setSearchTerm}
+          onSaveLineup={onSaveTeam}
+        />
       </div>
     </ProtectedRoute>
   );
