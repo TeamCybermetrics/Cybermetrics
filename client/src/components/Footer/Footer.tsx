@@ -29,17 +29,14 @@ export default function Footer() {
             <Link to={ROUTES.RECOMMENDATIONS} className={styles.link}>
               Recommendations
             </Link>
-            <Link to={ROUTES.OUR_ALGORITHM} className={styles.link}>
-              Our Algorithm
-            </Link>
           </nav>
         </div>
 
         <div className={styles.section}>
           <h3 className={styles.heading}>Company</h3>
           <nav className={styles.links}>
-            <Link to={ROUTES.LANDING} className={styles.link}>
-              About
+            <Link to={ROUTES.OUR_ALGORITHM} className={styles.link}>
+              Our Algorithm
             </Link>
           </nav>
         </div>
