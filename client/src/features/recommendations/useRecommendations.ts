@@ -92,6 +92,11 @@ export function useRecommendations() {
     [baselineLineup, lineup, fetchWeaknessFor, getPlayerIdsFromLineup]
   );
 
+  const refreshWeaknessRef = useRef(refreshWeakness);
+  useEffect(() => {
+    refreshWeaknessRef.current = refreshWeakness;
+  }, [refreshWeakness]);
+
   useEffect(() => {
     const loadSaved = async () => {
       const res = await playerActions.getSavedPlayers();
@@ -108,13 +113,14 @@ export function useRecommendations() {
         });
         setLineup(next);
         setBaselineLineup(next);
-        void refreshWeakness(next, next);
+        void refreshWeaknessRef.current(next, next);
       } else if (!res.success) {
         setPlayerOperationError(res.error || "Failed to load saved players");
       }
     };
     void loadSaved();
-  }, [refreshWeakness]);
+    // refreshWeakness captured via ref to avoid dependency loop
+  }, []);
 
   const onSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
