@@ -26,6 +26,7 @@ class LoginResponse(BaseModel):
     user_id: str
     email: str
     token: str
+    display_name: str | None = None
 
 class SignupResponse(BaseModel):
     """Response returned after successful user registration"""
