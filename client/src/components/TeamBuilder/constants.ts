@@ -46,6 +46,5 @@ export const positionCoordinates: Record<
   C: { top: "75%", left: "50%" },
   DH: { top: "82%", left: "80%" },
 };
-
 export const staticSpots: Array<{ label: string; top: string; left: string }> = [];
 
