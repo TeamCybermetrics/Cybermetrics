@@ -65,7 +65,7 @@ async def run_all():
         log("Firebase not configured; aborting.")
         return
     player_repo = PlayerRepositoryFirebase(firebase_service.db)
-    roster_repo = RosterRepositoryFirebase(firebase_service.db)
+    roster_repo = RosterRepositoryFirebase(firebase_service.db, player_repo)
     run_seed_teams(player_repo, roster_repo)
     run_refresh_players(player_repo, roster_repo)
     await run_league(player_repo, roster_repo)
