@@ -373,12 +373,6 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
-  const incompletePositions = useMemo(
-    () => positionOrder.filter((position) => !lineup[position]),
-    [lineup]
-  );
-
-
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
     setDraggingId(player.id);
