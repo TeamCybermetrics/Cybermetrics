@@ -47,11 +47,5 @@ export const positionCoordinates: Record<
   DH: { top: "82%", left: "80%" },
 };
 
-export const staticSpots = [
-  {
-    label: "P",
-    top: "48%",
-    left: "50%",
-  },
-];
+export const staticSpots: Array<{ label: string; top: string; left: string }> = [];
 
