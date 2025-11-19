@@ -54,7 +54,8 @@ def get_player_search_service():
 # roster avg related
 def get_roster_repository():
     """Create Firebase roster repository instance"""
-    return RosterRepositoryFirebase(firebase_service.db)
+    player_repo = get_player_repository()
+    return RosterRepositoryFirebase(firebase_service.db, player_repo)
 
 def get_roster_domain() -> RosterDomain:
     """Create roster domain instance"""

@@ -1,4 +1,5 @@
 from repositories.roster_avg_repository import RosterRepository
+from repositories.player_repository import PlayerRepository
 from typing import Dict, Optional, List, Any
 from fastapi import HTTPException, status
 from anyio import to_thread, Lock
@@ -6,27 +7,19 @@ import logging
 import requests
 
 class RosterRepositoryFirebase(RosterRepository):
-    def __init__(self, db):
-        self.db = db 
+    def __init__(self, db, player_repository: PlayerRepository):
+        self.db = db
+        self.player_repository = player_repository
         self._logger = logging.getLogger(__name__)
         self._free_agents_cache: List[Dict[str, Any]] = []
         self._free_agents_loaded = False
         self._free_agents_lock = Lock()
     
-    def _get_player_seasons_blocking(self, player_id: int) -> Optional[Dict]:
-        """Blocking version: Get seasons data for a single player"""
-        player_doc = self.db.collection('players').document(str(player_id)).get()
-        
-        if not player_doc.exists:
-            return None
-        
-        player_data = player_doc.to_dict()
-        seasons = player_data.get("seasons", {})
-        
-        return seasons if seasons else None
-    
     async def get_players_seasons_data(self, player_ids: List[int]) -> Dict[int, Dict]:
-        """Gets a dictionary of mlb ids with a dictionary of there seasons stats"""
+        """Gets a dictionary of mlb ids with a dictionary of their seasons stats.
+        
+        Uses the PlayerRepository cache to avoid redundant Firestore reads.
+        """
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -34,18 +27,35 @@ class RosterRepositoryFirebase(RosterRepository):
             )
     
         try:
+            # Ensure player cache is loaded (only hits Firestore once per process)
+            await self.player_repository._ensure_cache_loaded()
+            
             players_data: Dict[int, Dict] = {}
             for player_id in player_ids:
-                seasons = await to_thread.run_sync(self._get_player_seasons_blocking, player_id)
-                if seasons is not None:
-                    players_data[player_id] = seasons
+                # Get from cache instead of Firestore
+                player_data = self.player_repository._players_cache_by_id.get(player_id)
+                if player_data:
+                    seasons = player_data.get("seasons", {})
+                    if seasons:
+                        players_data[player_id] = seasons
+                else:
+                    # Fallback: player not in cache, fetch directly
+                    self._logger.warning(
+                        "Player %s not found in cache, fetching from Firestore", 
+                        player_id
+                    )
+                    player_data = await self.player_repository.get_player_by_id(player_id)
+                    if player_data:
+                        seasons = player_data.get("seasons", {})
+                        if seasons:
+                            players_data[player_id] = seasons
             
             return players_data
         except Exception as e:
-            self._logger.exception("Failed to calculate roster averages")
+            self._logger.exception("Failed to get players seasons data")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to calculate roster averages"
+                detail="Failed to get players seasons data"
             ) from e
 
     def _get_league_unweighted_blocking(self) -> Dict[str, float]:
