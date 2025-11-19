@@ -2,6 +2,7 @@ import { useState, FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
+import { AuthCard, Input, Button, Alert } from "@/components";
 import logo from "@/assets/brand_badge.jpg";
 import styles from "./SignupPage.module.css";
 
@@ -40,72 +41,71 @@ export default function SignupPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.stripeBottom}></div>
-      
       <div className={styles.logo}>
         <img src={logo} alt="Cybermetrics" />
         <span>Cybermetrics</span>
       </div>
 
-      <div className={styles.container}>
-        <h1 className={styles.title}>Sign Up</h1>
-        <p className={styles.subtitle}>Create your Cybermetrics account</p>
-
+      <AuthCard
+        title="Sign Up"
+        subtitle="Create your Cybermetrics account"
+        footer={
+          <p>
+            Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
+          </p>
+        }
+      >
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.field}>
-            <label>Display Name (optional)</label>
-            <input
-              type="text"
-              placeholder="John Doe"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              disabled={isLoading}
-              autoComplete="name"
-            />
-          </div>
+          <Input
+            label="Display Name (optional)"
+            type="text"
+            placeholder="John Doe"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            disabled={isLoading}
+            autoComplete="name"
+          />
 
-          <div className={styles.field}>
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="email"
-            />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isLoading}
+            autoComplete="email"
+          />
 
-          <div className={styles.field}>
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              disabled={isLoading}
-              autoComplete="new-password"
-            />
-            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginTop: "4px" }}>
-              Minimum 6 characters
-            </span>
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            disabled={isLoading}
+            autoComplete="new-password"
+            hint="Minimum 6 characters"
+          />
 
-          {error && <div className={styles.error} role="alert" aria-live="polite">{error}</div>}
-          {success && <div className={styles.success} role="alert" aria-live="polite">{success}</div>}
+          {error && (
+            <Alert type="error">
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert type="success">
+              {success}
+            </Alert>
+          )}
 
-          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Sign Up"}
-          </button>
+          </Button>
         </form>
-
-        <p className={styles.footer}>
-          Already have an account? <Link to={ROUTES.LOGIN}>Log in</Link>
-        </p>
-      </div>
+      </AuthCard>
     </div>
   );
 }

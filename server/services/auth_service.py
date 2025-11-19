@@ -1,7 +1,8 @@
+from fastapi import HTTPException
 from useCaseHelpers.auth_helper import AuthDomain
 from repositories.auth_repository import AuthRepository
 from dtos.auth_dtos import LoginRequest, LoginResponse, SignupRequest, SignupResponse
-from useCaseHelpers.errors import InputValidationError, AuthError, DatabaseError, DependencyUnavailableError
+from useCaseHelpers.errors import InputValidationError, AuthError, DatabaseError, DependencyUnavailableError, ConflictError
 
 
 class AuthService:
@@ -35,6 +36,14 @@ class AuthService:
             result = await self.auth_repository.create_user(signup_data)
         except InputValidationError:
             raise
+        except HTTPException as e:
+            # Re-raise HTTPException from repository with appropriate error type
+            if e.status_code == 400 and "already exists" in e.detail.lower():
+                raise ConflictError(e.detail)
+            elif e.status_code == 503:
+                raise DependencyUnavailableError(e.detail)
+            else:
+                raise DatabaseError(e.detail) from e
         except Exception as e:
             raise DatabaseError("Failed to create user") from e
         
@@ -74,6 +83,14 @@ class AuthService:
             raise
         except AuthError:
             raise
+        except HTTPException as e:
+            # Re-raise HTTPException from repository as AuthError to maintain service layer abstraction
+            if e.status_code == 401:
+                raise AuthError(e.detail)
+            elif e.status_code == 503:
+                raise DependencyUnavailableError(e.detail)
+            else:
+                raise DatabaseError(e.detail) from e
         except KeyError:
             raise DependencyUnavailableError("Firebase API key not configured")
         except Exception as e:
