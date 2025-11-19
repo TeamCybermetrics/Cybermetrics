@@ -9,3 +9,4 @@ export { default as PlayerCard } from './PlayerCard';
 export { default as Sidebar } from './Sidebar/Sidebar';
 export { default as UserBadge } from './UserBadge/UserBadge';
 export { default as PercentileRadar } from './Radar/PercentileRadar';
+export { default as Footer } from './Footer';
