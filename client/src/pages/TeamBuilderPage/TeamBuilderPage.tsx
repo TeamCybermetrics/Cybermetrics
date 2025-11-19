@@ -12,7 +12,6 @@ import {
 import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
 import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection/SavedPlayersSection";
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
-import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 
 /**
@@ -36,10 +35,6 @@ export default function TeamBuilderPage() {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [teamName] = useState("TeamName1");
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
-  const [recommendedPlayers, setRecommendedPlayers] = useState<PlayerSearchResult[]>([]);
-  const [recommendationError, setRecommendationError] = useState("");
-  const [isRecommending, setIsRecommending] = useState(false);
-
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
   const [deletingPlayerIds, setDeletingPlayerIds] = useState<Set<number>>(() => new Set());
   const [playerOperationError, setPlayerOperationError] = useState("");
@@ -459,45 +454,6 @@ export default function TeamBuilderPage() {
     [ensurePlayerIsSaved]
   );
 
-  const handleGetRecommendations = async () => {
-    setRecommendationError("");
-
-    if (!isRosterComplete) {
-      const formatted = incompletePositions.join(", ");
-      setRecommendationError(
-        `Fill your lineup before requesting recommendations. Missing: ${formatted}`
-      );
-      return;
-    }
-
-    const playerIds = positionOrder
-      .map((pos) => lineup[pos]?.id)
-      .filter((id): id is number => typeof id === "number");
-
-    if (playerIds.length === 0) {
-      setRecommendationError("Select players to build your lineup first.");
-      return;
-    }
-
-    setIsRecommending(true);
-    setRecommendedPlayers([]);
-
-    const result = await playerActions.getRecommendations(playerIds);
-
-    setIsRecommending(false);
-
-    if (result.success && result.data) {
-      if (result.data.length === 0) {
-        setRecommendationError("No recommendations available. Try adjusting your lineup.");
-        return;
-      }
-      setRecommendedPlayers(result.data);
-      return;
-    }
-
-    setRecommendationError(result.error || "Failed to fetch recommendations.");
-  };
-
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -567,4 +523,3 @@ export default function TeamBuilderPage() {
     </div>
   );
 }
-
