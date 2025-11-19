@@ -30,6 +30,7 @@ export function useRecommendations() {
   const [playerOperationError, setPlayerOperationError] = useState("");
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(new Set());
   const latestWeaknessRequest = useRef<symbol | null>(null);
+  const lastWeaknessKeysRef = useRef<{ baseline: string; working: string }>({ baseline: "", working: "" });
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
@@ -72,6 +73,19 @@ export function useRecommendations() {
         latestWeaknessRequest.current = null;
         return;
       }
+      const workingIds = getPlayerIdsFromLineup(working);
+      const baselineIds = getPlayerIdsFromLineup(baseline);
+      const workingKey = workingIds.join(",");
+      const baselineKey = baselineIds.join(",");
+      if (
+        lastWeaknessKeysRef.current.working === workingKey &&
+        lastWeaknessKeysRef.current.baseline === baselineKey &&
+        !workingOverride &&
+        !baselineOverride
+      ) {
+        return;
+      }
+      lastWeaknessKeysRef.current = { working: workingKey, baseline: baselineKey };
       setWeaknessLoading(true);
       setWeaknessError(null);
       try {
