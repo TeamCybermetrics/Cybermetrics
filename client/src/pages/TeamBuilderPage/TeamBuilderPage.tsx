@@ -37,8 +37,6 @@ export default function TeamBuilderPage() {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [teamName] = useState("TeamName1");
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
-  const recommendedPlayers: PlayerSearchResult[] = [];
-  const recommendationError = "";
 
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
   const [deletingPlayerIds, setDeletingPlayerIds] = useState<Set<number>>(() => new Set());
@@ -534,22 +532,6 @@ export default function TeamBuilderPage() {
             onAddPlayer={handleAddPlayer}
             onDeletePlayer={handleDeletePlayer}
           />
-        {/* Recommendations list appears only when there's content */}
-        {(recommendationError || recommendedPlayers.length > 0) && (
-          <section className={styles.actionsCard}>
-            {recommendationError && (
-              <div className={styles.recommendError}>{recommendationError}</div>
-            )}
-            {recommendedPlayers.length > 0 && (
-              <RecommendationsSection
-                players={recommendedPlayers}
-                savedPlayerIds={savedPlayerIds}
-                savingPlayerIds={savingPlayerIds}
-                onSavePlayer={(player) => void handleSavePlayerOnly(player)}
-              />
-            )}
-          </section>
-        )}
         </div>
 
         <DiamondPanel

@@ -58,9 +58,6 @@ export function useRecommendations() {
 
   const refreshWeakness = useCallback(
     async (workingOverride?: LineupState, baselineOverride?: LineupState) => {
-      const requestId = Symbol("weakness");
-      latestWeaknessRequest.current = requestId;
-
       const working = workingOverride ?? lineupRef.current;
       const baseline = baselineOverride ?? baselineLineupRef.current;
       const hasAny =
@@ -77,22 +74,25 @@ export function useRecommendations() {
       const baselineIds = getPlayerIdsFromLineup(baseline);
       const workingKey = workingIds.join(",");
       const baselineKey = baselineIds.join(",");
-      if (
+      const unchanged =
         lastWeaknessKeysRef.current.working === workingKey &&
         lastWeaknessKeysRef.current.baseline === baselineKey &&
         !workingOverride &&
-        !baselineOverride
-      ) {
-        return;
+        !baselineOverride;
+      if (unchanged) {
+        return; 
       }
+      const requestId = Symbol("weakness");
+      latestWeaknessRequest.current = requestId;
       lastWeaknessKeysRef.current = { working: workingKey, baseline: baselineKey };
       setWeaknessLoading(true);
       setWeaknessError(null);
       try {
-        const [base, curr] = await Promise.all([fetchWeaknessFor(baseline), fetchWeaknessFor(working)]);
-        if (latestWeaknessRequest.current !== requestId) {
-          return;
-        }
+        const [base, curr] = await Promise.all([
+          fetchWeaknessFor(baseline),
+          fetchWeaknessFor(working)
+        ]);
+        if (latestWeaknessRequest.current !== requestId) return;
         setBaselineWeakness(base);
         setCurrentWeakness(curr);
       } catch (e) {
