@@ -7,6 +7,8 @@ type SearchBarProps = {
   statusText: string;
   errorMessage?: string;
   actions?: ReactNode;
+  onFocus?: () => void;
+  autoFocus?: boolean;
 };
 
 export function SearchBar({
@@ -15,6 +17,8 @@ export function SearchBar({
   statusText,
   errorMessage,
   actions,
+  onFocus,
+  autoFocus,
 }: SearchBarProps) {
   return (
     <>
@@ -25,6 +29,8 @@ export function SearchBar({
           placeholder="Search players by name, team, or position…"
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
+          onFocus={onFocus}
+          autoFocus={autoFocus}
         />
       </div>
 
