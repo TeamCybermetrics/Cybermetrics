@@ -36,14 +36,15 @@ export const positionCoordinates: Record<
   DiamondPosition,
   { top: string; left: string }
 > = {
-  LF: { top: "22%", left: "13%" },
-  CF: { top: "12%", left: "50%" },
-  RF: { top: "22%", left: "87%" },
-  SS: { top: "38%", left: "34%" },
-  "2B": { top: "38%", left: "68%" },
-  "3B": { top: "48%", left: "12%" },
-  "1B": { top: "48%", left: "88%" },
-  C: { top: "75%", left: "50%" },
+  // LF: { top: "16.25%", left: "25.5%" }
+  LF: { top: "21%", left: "20%" },
+  CF: { top: "9%", left: "50%" },
+  RF: { top: "21%", left: "80%" },
+  SS: { top: "41%", left: "32.5%" },
+  "2B": { top: "41%", left: "67.5%" },
+  "3B": { top: "54%", left: "15%" },
+  "1B": { top: "54%", left: "85%" },
+  C: { top: "85%", left: "50%" },
   DH: { top: "82%", left: "80%" },
 };
 export const staticSpots: Array<{ label: string; top: string; left: string }> = [];
