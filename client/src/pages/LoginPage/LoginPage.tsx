@@ -2,6 +2,7 @@ import { useState, FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
+import { AuthCard, Input, Button, Alert } from "@/components";
 import logo from "@/assets/brand_badge.jpg";
 import styles from "./LoginPage.module.css";
 
@@ -35,56 +36,59 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.stripeBottom}></div>
-      
       <div className={styles.logo}>
         <img src={logo} alt="Cybermetrics" />
         <span>Cybermetrics</span>
       </div>
 
-      <div className={styles.container}>
-        <h1 className={styles.title}>Login</h1>
-        <p className={styles.subtitle}>Welcome back to Cybermetrics</p>
-
+      <AuthCard
+        title="Login"
+        subtitle="Welcome back to Cybermetrics"
+        footer={
+          <p>
+            Don't have an account? <Link to={ROUTES.SIGNUP}>Sign up</Link>
+          </p>
+        }
+      >
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.field}>
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="email"
-            />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={isLoading}
+            autoComplete="email"
+          />
 
-          <div className={styles.field}>
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="current-password"
-            />
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={isLoading}
+            autoComplete="current-password"
+          />
 
-          {error && <div className={styles.error} role="alert" aria-live="polite">{error}</div>}
-          {success && <div className={styles.success} role="alert" aria-live="polite">{success}</div>}
+          {error && (
+            <Alert type="error">
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert type="success">
+              {success}
+            </Alert>
+          )}
 
-          <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? "Logging in..." : "Login"}
-          </button>
+          </Button>
         </form>
-
-        <p className={styles.footer}>
-          Don't have an account? <Link to={ROUTES.SIGNUP}>Sign up</Link>
-        </p>
-      </div>
+      </AuthCard>
     </div>
   );
 }
