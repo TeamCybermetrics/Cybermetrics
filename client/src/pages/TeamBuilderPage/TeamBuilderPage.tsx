@@ -374,8 +374,6 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
-  const isRosterComplete = incompletePositions.length === 0;
-
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
     setDraggingId(player.id);
