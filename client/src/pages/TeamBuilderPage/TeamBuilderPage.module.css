@@ -103,12 +103,6 @@
   box-shadow: none;
 }
 
-.recommendHint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.58);
-}
-
 .recommendError {
   margin-top: 12px;
   padding: 10px 14px;

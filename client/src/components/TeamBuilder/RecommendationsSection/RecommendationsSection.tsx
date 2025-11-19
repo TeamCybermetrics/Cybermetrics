@@ -1,11 +1,15 @@
-import { PlayerSearchResult, SavedPlayer } from "@/api/players";
+import { SavedPlayer } from "@/api/players";
+import type { DiamondPosition } from "@/components/TeamBuilder/constants";
 import styles from "./RecommendationsSection.module.css";
 
 type RecommendationsSectionProps = {
-  players: PlayerSearchResult[];
-  savedPlayerIds: Set<number>;
-  savingPlayerIds: Set<number>;
-  onSavePlayer: (player: SavedPlayer) => void | Promise<void>;
+  players: SavedPlayer[];
+  savedPlayerIds?: Set<number>;
+  savingPlayerIds?: Set<number>;
+  onSavePlayer: (player: SavedPlayer, position?: DiamondPosition) => void | Promise<void>;
+  allowAddSaved?: boolean;
+  addLabel?: string;
+  targetPosition?: DiamondPosition;
 };
 
 export function RecommendationsSection({
@@ -13,6 +17,9 @@ export function RecommendationsSection({
   savedPlayerIds,
   savingPlayerIds,
   onSavePlayer,
+  allowAddSaved = false,
+  addLabel = "Add to lineup",
+  targetPosition,
 }: RecommendationsSectionProps) {
   if (players.length === 0) {
     return null;
@@ -21,10 +28,10 @@ export function RecommendationsSection({
   return (
     <ul className={styles.recommendList}>
       {players.map((player) => {
-        const alreadySaved = savedPlayerIds.has(player.id);
-        const isSaving = savingPlayerIds.has(player.id);
-        const disabled = alreadySaved || isSaving;
-        const label = alreadySaved ? "Already Saved" : isSaving ? "Saving..." : "Add to Saved";
+        const alreadySaved = savedPlayerIds?.has(player.id) ?? false;
+        const isSaving = savingPlayerIds?.has(player.id) ?? false;
+        const disabled = isSaving || (!allowAddSaved && alreadySaved);
+        const label = isSaving ? "Saving..." : addLabel;
 
         const savedPlayer: SavedPlayer = {
           id: player.id,
@@ -51,7 +58,7 @@ export function RecommendationsSection({
                 disabled={disabled}
                 onClick={() => {
                   if (!disabled) {
-                    void onSavePlayer(savedPlayer);
+                    void onSavePlayer(savedPlayer, targetPosition);
                   }
                 }}
               >
@@ -64,4 +71,3 @@ export function RecommendationsSection({
     </ul>
   );
 }
-
