@@ -192,8 +192,6 @@ export function RecommendationsView({
           error={weaknessError}
         />
 
-        <div className={styles.diamondCard}>
-          <div className={styles.diamondCanvas}>
             <DiamondPanel
               lineup={lineup}
               activePosition={activePosition}
@@ -207,8 +205,6 @@ export function RecommendationsView({
               onClearDragState={onClearDrag}
               onClearSlot={onClearSlot}
             />
-          </div>
-        </div>
         <div className={styles.diamondFooter}>
           <button className={styles.saveBtn} onClick={onSaveTeam}>
             Save Lineup as baseline
