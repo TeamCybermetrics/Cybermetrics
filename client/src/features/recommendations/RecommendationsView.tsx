@@ -1,116 +1,218 @@
 import type { PanelMode } from "./useRecommendations";
+import type { TeamWeaknessResponse, SavedPlayer } from "@/api/players";
+import type { DiamondPosition, LineupState } from "@/components/TeamBuilder/constants";
+import type { DragEvent } from "react";
+import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
+import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
+import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
+import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
+import { formatZScore } from "@/utils/zScoreRadar";
+import { WeaknessDeltasCard } from "@/components/Recommendations/WeaknessDeltasCard";
+import { RecommendationsRadarCard } from "@/components/Recommendations/RecommendationsRadarCard";
 import styles from "./RecommendationsView.module.css";
 
 type Props = {
   mode: PanelMode;
-  query: string;
+  searchTerm: string;
+  lineup: LineupState;
+  activePosition: DiamondPosition;
+  dropTarget: DiamondPosition | null;
+  draggingId: number | null;
+  searchResults: SavedPlayer[];
+  recommendedPlayers: SavedPlayer[];
+  savedPlayerIds: Set<number>;
+  assignedIds: Set<number>;
+  savingPlayerIds: Set<number>;
+  hasSearchTerm: boolean;
+  isRecommending: boolean;
+  recommendationError: string;
+  playerOperationError: string;
+  baselineWeakness: TeamWeaknessResponse | null;
+  currentWeakness: TeamWeaknessResponse | null;
+  weaknessLoading: boolean;
+  weaknessError: string | null;
+  setSearchTerm: (v: string) => void;
+  setActivePosition: (pos: DiamondPosition) => void;
+  setDropTarget: (pos: DiamondPosition | null) => void;
+  onClearSlot: (pos: DiamondPosition) => void;
+  onPrepareDrag: (player: SavedPlayer, fromPosition?: DiamondPosition) => void;
+  onClearDrag: () => void;
+  onPositionDrop: (e: DragEvent<HTMLButtonElement>, pos: DiamondPosition) => void;
+  onSaveTeam: () => void;
   onGetRecommendations: () => void;
-  onSearchChange: (value: string) => void;
-  onSaveLineup: () => void;
+  onAddFromSearch: (player: SavedPlayer) => void;
+  onAddFromRecommendation: (player: SavedPlayer, position?: DiamondPosition) => void;
 };
+
+const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
+  { key: "strikeout_rate", label: "Strikeout Rate" },
+  { key: "walk_rate", label: "Walk Rate" },
+  { key: "isolated_power", label: "Iso Power" },
+  { key: "on_base_percentage", label: "On Base %" },
+  { key: "base_running", label: "Base Running" },
+];
+
+const formatValueNumber = (value: number) => formatZScore(value, 2);
 
 export function RecommendationsView({
   mode,
-  query,
+  searchTerm,
+  lineup,
+  activePosition,
+  dropTarget,
+  draggingId,
+  searchResults,
+  recommendedPlayers,
+  savedPlayerIds,
+  assignedIds,
+  savingPlayerIds,
+  hasSearchTerm,
+  isRecommending,
+  recommendationError,
+  playerOperationError,
+  baselineWeakness,
+  currentWeakness,
+  weaknessLoading,
+  weaknessError,
+  setSearchTerm,
+  setActivePosition,
+  setDropTarget,
+  onClearSlot,
+  onPrepareDrag,
+  onClearDrag,
+  onPositionDrop,
+  onSaveTeam,
   onGetRecommendations,
-  onSearchChange,
-  onSaveLineup,
+  onAddFromSearch,
+  onAddFromRecommendation,
 }: Props) {
+  const EPS = 1e-3;
+  let highlightOrder: number[] = [];
+  if (baselineWeakness && currentWeakness) {
+    const deltas = STAT_KEYS.map(({ key }) => currentWeakness[key] - baselineWeakness[key]);
+    const hasMeaningfulDelta = deltas.some((d) => Math.abs(d) > EPS);
+    if (hasMeaningfulDelta) {
+      highlightOrder = deltas
+        .map((delta, idx) => ({ delta, idx }))
+        .sort((a, b) => a.delta - b.delta)
+        .map((entry) => entry.idx)
+        .slice(0, 2);
+    }
+  } else if (currentWeakness) {
+    const values = STAT_KEYS.map(({ key }) => currentWeakness[key]);
+    const hasVariation = values.some((v) => Math.abs(v) > EPS);
+    if (hasVariation) {
+      highlightOrder = values
+        .map((value, idx) => ({ value, idx }))
+        .sort((a, b) => a.value - b.value)
+        .map((entry) => entry.idx)
+        .slice(0, 2);
+    }
+  }
+
   return (
     <div className={styles.layout}>
       {/* Left column */}
       <div className={styles.leftCol}>
-        {/* Team Weakness box at top */}
-        <div className={styles.weaknessCard}>
-          <div className={styles.weaknessTitle}>Changes in Team Weakness</div>
-          <div className={styles.weaknessGrid}>
-            <div>
-              <div className={styles.weakLabel}>Strikeout Rate</div>
-              <div className={styles.weakScoreGreen}>Score +01</div>
-              <div className={styles.weakLabel}>Strikeout Rate</div>
-              <div className={styles.weakScoreGreen}>Score +01</div>
-              <div className={styles.weakLabel}>Strikeout Rate</div>
-              <div className={styles.weakScoreGreen}>Score +01</div>
-            </div>
-            <div>
-              <div className={styles.weakLabel}>Strikeout Rate</div>
-              <div className={styles.weakScoreRed}>Score -01</div>
-              <div className={styles.weakLabel}>Strikeout Rate</div>
-              <div className={styles.weakScoreRed}>Score -01</div>
-              <div className={styles.weakLabel}>Strikeout Rate</div>
-              <div className={styles.weakScoreRed}>Score -01</div>
-            </div>
-          </div>
-        </div>
+        {/* Deltas */}
+        <WeaknessDeltasCard
+          statKeys={STAT_KEYS}
+          baselineWeakness={baselineWeakness}
+          currentWeakness={currentWeakness}
+          loading={weaknessLoading}
+          error={weaknessError}
+          formatValue={formatValueNumber}
+        />
 
         {/* Get Recommendations button */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>Click to get recommendations</div>
-          <button className={styles.ctaBtn} onClick={onGetRecommendations}>
-            Get Recommendations!
+          <button className={styles.ctaBtn} onClick={onGetRecommendations} disabled={isRecommending}>
+            {isRecommending ? "Loading..." : "Get Recommendations!"}
           </button>
+          {recommendationError && <div className={styles.recommendError}>{recommendationError}</div>}
         </div>
 
         {/* Search bar */}
-        <div className={styles.card}>
-          <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="Search players by name, team, or position..."
-            aria-label="Search players by name, team, or position"
-            value={query}
-            onChange={(e) => onSearchChange(e.target.value)}
+        <div className={styles.searchCard}>
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            statusText={
+              hasSearchTerm
+                ? `${searchResults.length} results`
+                : ""
+            }
+            errorMessage={playerOperationError || undefined}
           />
-          <div className={styles.savedHint}>9 saved players</div>
         </div>
 
-        {/* Unified output panel for both search and recommendations */}
-        <div className={styles.displayPanel}>
-          {mode === "idle" && (
+        {mode === "search" && (
+          <SearchResultsSection
+            players={searchResults}
+            savedPlayerIds={savedPlayerIds}
+            assignedIds={assignedIds}
+            draggingId={draggingId}
+            savingPlayerIds={savingPlayerIds}
+            onPrepareDrag={onPrepareDrag}
+            onClearDrag={onClearDrag}
+            onSavePlayer={onAddFromSearch}
+          />
+        )}
+
+        {mode === "recommendations" && (
+          <RecommendationsSection
+            players={recommendedPlayers}
+            savedPlayerIds={savedPlayerIds}
+            savingPlayerIds={savingPlayerIds}
+            allowAddSaved
+            addLabel={`Add to ${activePosition}`}
+            targetPosition={activePosition}
+            onSavePlayer={onAddFromRecommendation}
+          />
+        )}
+
+        {mode === "idle" && (
+          <div className={styles.displayPanel}>
             <div className={styles.placeholder}>
-              Use the search bar or click "Get Recommendations!" to see results here.
+              Use the search bar or click “Get Recommendations!” to see players.
             </div>
-          )}
-          {mode === "recommendations" && (
-            <div className={styles.placeholder}>
-              {/* TODO: <RecommendationsSection ... /> */}
-              Recommendations will appear here.
-            </div>
-          )}
-          {mode === "search" && (
-            <div className={styles.placeholder}>
-              {/* TODO: <SearchResultsSection query={query} ... /> */}
-              Results for "{query}" will appear here.
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Right column */}
       <div className={styles.rightCol}>
-        {/* Before/After Radar at top */}
-        <div className={styles.radarCard}>
-          <div className={styles.radarHeader}>Before/After</div>
-          <div className={styles.radarSubheader}>Weakness radar</div>
-          {/* TODO: <BeforeAfterRadar ... /> */}
-          <div className={styles.radarPlaceholder} />
-        </div>
+        <RecommendationsRadarCard
+          statKeys={STAT_KEYS}
+          baselineWeakness={baselineWeakness}
+          currentWeakness={currentWeakness}
+          highlightOrder={highlightOrder}
+          loading={weaknessLoading}
+          error={weaknessError}
+        />
 
-        {/* Diamond panel below radar */}
         <div className={styles.diamondCard}>
-          <div className={styles.diamondHeader}>
-            <div>Your lineup</div>
-            <div className={styles.activeBadge}>ACTIVE: CF</div>
-          </div>
           <div className={styles.diamondCanvas}>
-            {/* TODO: <DiamondPanel ... /> */}
-            <div className={styles.diamondPlaceholder}>Diamond UI</div>
+            <DiamondPanel
+              lineup={lineup}
+              activePosition={activePosition}
+              dropTarget={dropTarget}
+              dragPlayer={null}
+              onSelectPosition={setActivePosition}
+              onDragOverPosition={setDropTarget}
+              onDragLeavePosition={() => setDropTarget(null)}
+              onDropOnPosition={onPositionDrop}
+              onPrepareDrag={onPrepareDrag}
+              onClearDragState={onClearDrag}
+              onClearSlot={onClearSlot}
+            />
           </div>
-          <div className={styles.diamondFooter}>
-            <button className={styles.saveBtn} onClick={onSaveLineup}>
-              Save Lineup
-            </button>
-          </div>
+        </div>
+        <div className={styles.diamondFooter}>
+          <button className={styles.saveBtn} onClick={onSaveTeam}>
+            Save Lineup as baseline
+          </button>
         </div>
       </div>
     </div>

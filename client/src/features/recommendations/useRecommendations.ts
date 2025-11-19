@@ -28,12 +28,15 @@ export function useRecommendations() {
 
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [playerOperationError, setPlayerOperationError] = useState("");
-  const savingPlayerIds = useRef<Set<number>>(new Set()).current;
+  const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(new Set());
   const latestWeaknessRequest = useRef<symbol | null>(null);
   const [dropTarget, setDropTarget] = useState<DiamondPosition | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const dragPlayerRef = useRef<SavedPlayer | null>(null);
   const [activePosition, setActivePosition] = useState<DiamondPosition>("CF");
+
+  const lineupRef = useRef(lineup);
+  const baselineLineupRef = useRef(baselineLineup);
 
   const getPlayerIdsFromLineup = useCallback((state: LineupState) => {
     return positionOrder
@@ -57,8 +60,8 @@ export function useRecommendations() {
       const requestId = Symbol("weakness");
       latestWeaknessRequest.current = requestId;
 
-      const working = workingOverride ?? lineup;
-      const baseline = baselineOverride ?? baselineLineup;
+      const working = workingOverride ?? lineupRef.current;
+      const baseline = baselineOverride ?? baselineLineupRef.current;
       const hasAny =
         getPlayerIdsFromLineup(working).length > 0 || getPlayerIdsFromLineup(baseline).length > 0;
       if (!hasAny) {
@@ -89,15 +92,17 @@ export function useRecommendations() {
         }
       }
     },
-    [baselineLineup, lineup, fetchWeaknessFor, getPlayerIdsFromLineup]
+    [fetchWeaknessFor, getPlayerIdsFromLineup]
   );
 
-  const refreshWeaknessRef = useRef(refreshWeakness);
   useEffect(() => {
-    refreshWeaknessRef.current = refreshWeakness;
-  }, [refreshWeakness]);
+    lineupRef.current = lineup;
+  }, [lineup]);
 
-  const isInitialLoadRef = useRef(true);
+  useEffect(() => {
+    baselineLineupRef.current = baselineLineup;
+  }, [baselineLineup]);
+
   useEffect(() => {
     const loadSaved = async () => {
       const res = await playerActions.getSavedPlayers();
@@ -114,23 +119,15 @@ export function useRecommendations() {
         });
         setLineup(next);
         setBaselineLineup(next);
-        void refreshWeaknessRef.current(next, next);
-        isInitialLoadRef.current = false;
+        void refreshWeakness(next, next);
       } else if (!res.success) {
         setPlayerOperationError(res.error || "Failed to load saved players");
-        isInitialLoadRef.current = false;
       }
     };
     void loadSaved();
-    // refreshWeakness captured via ref to avoid dependency loop
-  }, []);
+  }, [refreshWeakness]);
 
-  // Automatically refresh weakness when lineup or baselineLineup changes
   useEffect(() => {
-    // Skip the initial load since it's handled above
-    if (isInitialLoadRef.current) {
-      return;
-    }
     void refreshWeakness();
   }, [lineup, baselineLineup, refreshWeakness]);
 
@@ -181,7 +178,11 @@ export function useRecommendations() {
       if (savingPlayerIds.has(player.id) || savedPlayers.some((p) => p.id === player.id)) {
         return true;
       }
-      savingPlayerIds.add(player.id);
+      setSavingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
       setPlayerOperationError("");
       try {
         const res = await playerActions.addPlayer({
@@ -197,7 +198,11 @@ export function useRecommendations() {
         setPlayerOperationError(res.error || "Failed to save player");
         return false;
       } finally {
-        savingPlayerIds.delete(player.id);
+        setSavingPlayerIds((prev) => {
+          const next = new Set(prev);
+          next.delete(player.id);
+          return next;
+        });
       }
     },
     [savedPlayers, savingPlayerIds]
@@ -206,22 +211,17 @@ export function useRecommendations() {
   const assignPlayerToLineup = useCallback(
     (player: SavedPlayer, position?: DiamondPosition) => {
       const target = position ?? activePosition;
-      let nextLineup: LineupState | null = null;
       setLineup((prev) => {
         const next: LineupState = { ...prev };
         positionOrder.forEach((pos) => {
           if (next[pos]?.id === player.id) next[pos] = null;
         });
         next[target] = player;
-        nextLineup = next;
         return next;
       });
-      if (nextLineup) {
-        void refreshWeakness(nextLineup, baselineLineup);
-      }
       setActivePosition(target);
     },
-    [activePosition, baselineLineup, refreshWeakness]
+    [activePosition]
   );
 
   const handleAddFromSearch = useCallback(
@@ -239,11 +239,11 @@ export function useRecommendations() {
   );
 
   const handleAddFromRecommendation = useCallback(
-    (player: SavedPlayer) => {
+    (player: SavedPlayer, position?: DiamondPosition) => {
       void (async () => {
         const ok = await ensurePlayerSaved(player);
         if (ok) {
-          assignPlayerToLineup(player);
+          assignPlayerToLineup(player, position);
           setMode("recommendations");
         }
       })();
@@ -279,17 +279,9 @@ export function useRecommendations() {
 
   const handleClearSlot = useCallback(
     (position: DiamondPosition) => {
-      let nextLineup: LineupState | null = null;
-      setLineup((prev) => {
-        const next = { ...prev, [position]: null };
-        nextLineup = next;
-        return next;
-      });
-      if (nextLineup) {
-        void refreshWeakness(nextLineup, baselineLineup);
-      }
+      setLineup((prev) => ({ ...prev, [position]: null }));
     },
-    [baselineLineup, lineup, refreshWeakness]
+    []
   );
 
   const savedPlayerIds = useMemo(

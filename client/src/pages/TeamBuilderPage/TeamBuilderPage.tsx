@@ -546,38 +546,25 @@ export default function TeamBuilderPage() {
             onAddPlayer={handleAddPlayer}
             onDeletePlayer={handleDeletePlayer}
           />
-          {/* BOTTOM-RIGHT: Target Metrics + Get Recommendations */}
-        <section className={styles.actionsCard}>
-          {/* <button className={styles.targetMetricsBtn}>Team Target Metrics ▼</button> */}
-          <div className={styles.recommendRow}>
-            <span className={styles.recommendCopy}>Click to get recommendations</span>
-            <button
-              className={styles.recommendBtn}
-              onClick={handleGetRecommendations}
-              disabled={isRecommending || !isRosterComplete}
-            >
-              {isRecommending ? "Loading..." : "Get Recommendations!"}
-            </button>
-          </div>
-          {!isRosterComplete && (
-            <div className={styles.recommendHint}>
-              Select players for every position before requesting recommendations.
-            </div>
-          )}
-          {recommendationError && (
-            <div className={styles.recommendError}>{recommendationError}</div>
-          )}
-          {isRecommending && !recommendationError && (
-            <div className={styles.recommendLoading}>Calculating best fits…</div>
-          )}
-          <RecommendationsSection
-            players={recommendedPlayers}
-            savedPlayerIds={savedPlayerIds}
-            savingPlayerIds={savingPlayerIds}
-            onSavePlayer={(player) => void handleSavePlayerOnly(player)}
-          />
-          
-        </section>
+        {/* Recommendations list appears only when there's content */}
+        {(recommendationError || isRecommending || recommendedPlayers.length > 0) && (
+          <section className={styles.actionsCard}>
+            {recommendationError && (
+              <div className={styles.recommendError}>{recommendationError}</div>
+            )}
+            {isRecommending && !recommendationError && (
+              <div className={styles.recommendLoading}>Calculating best fits…</div>
+            )}
+            {recommendedPlayers.length > 0 && (
+              <RecommendationsSection
+                players={recommendedPlayers}
+                savedPlayerIds={savedPlayerIds}
+                savingPlayerIds={savingPlayerIds}
+                onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+              />
+            )}
+          </section>
+        )}
         </div>
 
         <DiamondPanel
@@ -599,5 +586,3 @@ export default function TeamBuilderPage() {
     </div>
   );
 }
-
-
