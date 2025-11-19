@@ -1,13 +1,15 @@
 import { SavedPlayer } from "@/api/players";
+import type { DiamondPosition } from "@/components/TeamBuilder/constants";
 import styles from "./RecommendationsSection.module.css";
 
 type RecommendationsSectionProps = {
   players: SavedPlayer[];
   savedPlayerIds?: Set<number>;
   savingPlayerIds?: Set<number>;
-  onSavePlayer: (player: SavedPlayer) => void | Promise<void>;
+  onSavePlayer: (player: SavedPlayer, position?: DiamondPosition) => void | Promise<void>;
   allowAddSaved?: boolean;
   addLabel?: string;
+  targetPosition?: DiamondPosition;
 };
 
 export function RecommendationsSection({
@@ -17,6 +19,7 @@ export function RecommendationsSection({
   onSavePlayer,
   allowAddSaved = false,
   addLabel = "Add to lineup",
+  targetPosition,
 }: RecommendationsSectionProps) {
   if (players.length === 0) {
     return null;
@@ -55,7 +58,7 @@ export function RecommendationsSection({
                 disabled={disabled}
                 onClick={() => {
                   if (!disabled) {
-                    void onSavePlayer(savedPlayer);
+                    void onSavePlayer(savedPlayer, targetPosition);
                   }
                 }}
               >

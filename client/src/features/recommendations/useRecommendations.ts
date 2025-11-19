@@ -92,11 +92,6 @@ export function useRecommendations() {
     [baselineLineup, lineup, fetchWeaknessFor, getPlayerIdsFromLineup]
   );
 
-  const refreshWeaknessRef = useRef(refreshWeakness);
-  useEffect(() => {
-    refreshWeaknessRef.current = refreshWeakness;
-  }, [refreshWeakness]);
-
   useEffect(() => {
     const loadSaved = async () => {
       const res = await playerActions.getSavedPlayers();
@@ -113,7 +108,6 @@ export function useRecommendations() {
         });
         setLineup(next);
         setBaselineLineup(next);
-        void refreshWeaknessRef.current(next, next);
       } else if (!res.success) {
         setPlayerOperationError(res.error || "Failed to load saved players");
       }
@@ -121,6 +115,10 @@ export function useRecommendations() {
     void loadSaved();
     // refreshWeakness captured via ref to avoid dependency loop
   }, []);
+
+  useEffect(() => {
+    void refreshWeakness();
+  }, [lineup, baselineLineup, refreshWeakness]);
 
   const onSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
@@ -194,22 +192,17 @@ export function useRecommendations() {
   const assignPlayerToLineup = useCallback(
     (player: SavedPlayer, position?: DiamondPosition) => {
       const target = position ?? activePosition;
-      let nextLineup: LineupState | null = null;
       setLineup((prev) => {
         const next: LineupState = { ...prev };
         positionOrder.forEach((pos) => {
           if (next[pos]?.id === player.id) next[pos] = null;
         });
         next[target] = player;
-        nextLineup = next;
         return next;
       });
-      if (nextLineup) {
-        void refreshWeakness(nextLineup, baselineLineup);
-      }
       setActivePosition(target);
     },
-    [activePosition, baselineLineup, refreshWeakness]
+    [activePosition]
   );
 
   const handleAddFromSearch = useCallback(
@@ -227,11 +220,11 @@ export function useRecommendations() {
   );
 
   const handleAddFromRecommendation = useCallback(
-    (player: SavedPlayer) => {
+    (player: SavedPlayer, position?: DiamondPosition) => {
       void (async () => {
         const ok = await ensurePlayerSaved(player);
         if (ok) {
-          assignPlayerToLineup(player);
+          assignPlayerToLineup(player, position);
           setMode("recommendations");
         }
       })();
@@ -267,17 +260,11 @@ export function useRecommendations() {
 
   const handleClearSlot = useCallback(
     (position: DiamondPosition) => {
-      let nextLineup: LineupState | null = null;
       setLineup((prev) => {
-        const next = { ...prev, [position]: null };
-        nextLineup = next;
-        return next;
+        return { ...prev, [position]: null };
       });
-      if (nextLineup) {
-        void refreshWeakness(nextLineup, baselineLineup);
-      }
     },
-    [baselineLineup, lineup, refreshWeakness]
+    []
   );
 
   const savedPlayerIds = useMemo(

@@ -44,7 +44,7 @@ type Props = {
   onSaveTeam: () => void;
   onGetRecommendations: () => void;
   onAddFromSearch: (player: SavedPlayer) => void;
-  onAddFromRecommendation: (player: SavedPlayer) => void;
+  onAddFromRecommendation: (player: SavedPlayer, position?: DiamondPosition) => void;
 };
 
 const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
@@ -176,6 +176,7 @@ export function RecommendationsView({
             savingPlayerIds={savingPlayerIds}
             allowAddSaved
             addLabel={`Add to ${activePosition}`}
+            targetPosition={activePosition}
             onSavePlayer={onAddFromRecommendation}
           />
         )}
