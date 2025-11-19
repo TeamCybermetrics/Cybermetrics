@@ -83,7 +83,8 @@ class AuthService:
             message="Login successful",
             user_id=user.user_id,
             email=user.email,
-            token=token
+            token=token,
+            display_name=user.name
         )
     
     async def verify_token(self, token: str) -> dict:
