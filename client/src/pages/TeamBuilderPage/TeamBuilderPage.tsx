@@ -36,8 +36,8 @@ export default function TeamBuilderPage() {
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [teamName] = useState("TeamName1");
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([]);
-  const [recommendedPlayers, setRecommendedPlayers] = useState<PlayerSearchResult[]>([]);
-  const [recommendationError, setRecommendationError] = useState("");
+  const recommendedPlayers: PlayerSearchResult[] = [];
+  const recommendationError = "";
 
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
   const [deletingPlayerIds, setDeletingPlayerIds] = useState<Set<number>>(() => new Set());
@@ -378,7 +378,6 @@ export default function TeamBuilderPage() {
     [lineup]
   );
 
-  const isRosterComplete = incompletePositions.length === 0;
 
   const prepareDragPlayer = (player: SavedPlayer, fromPosition?: DiamondPosition) => {
     dragPlayerRef.current = { ...player };
