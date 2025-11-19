@@ -27,6 +27,7 @@ export default function TeamBuilderPage() {
   const lineupRef = useRef(lineup);
   const [activePosition, setActivePosition] = useState<DiamondPosition | null>("CF");
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<PlayerSearchResult[]>([]);
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [savedPlayersLoaded, setSavedPlayersLoaded] = useState(false);
@@ -174,6 +175,25 @@ export default function TeamBuilderPage() {
   const trimmedSearchTerm = searchTerm.trim();
   const hasSearchTerm = trimmedSearchTerm.length > 0;
 
+  const handleSearchTermChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    if (value.trim()) {
+      setSearchModalOpen(true);
+    } else {
+      setSearchModalOpen(false);
+    }
+  }, []);
+
+  const handleSearchBarFocus = useCallback(() => {
+    setSearchModalOpen(true);
+  }, []);
+
+  const handleCloseSearchModal = useCallback(() => {
+    setSearchModalOpen(false);
+    setSearchTerm("");
+    setSearchResults([]);
+  }, []);
+
   const searchResultPlayers = useMemo(() => {
     if (!hasSearchTerm) {
       return [];
@@ -195,6 +215,17 @@ export default function TeamBuilderPage() {
       ),
     [savedPlayers]
   );
+
+  useEffect(() => {
+    if (!searchModalOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleCloseSearchModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [searchModalOpen, handleCloseSearchModal]);
 
   const persistPlayerPosition = useCallback(
     async (playerId: number, position: DiamondPosition | null) => {
@@ -461,19 +492,23 @@ export default function TeamBuilderPage() {
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn}>
           {/* Search section with Load a team and Filters */}
-          <section className={styles.searchSection}>
+          <section
+            className={styles.searchSection}
+            data-modal-open={searchModalOpen ? "true" : "false"}
+          >
             <SearchBar
               searchTerm={searchTerm}
-              onSearchTermChange={setSearchTerm}
+              onSearchTermChange={handleSearchTermChange}
               statusText={
                 hasSearchTerm
                   ? `${searchResultPlayers.length} results`
                   : `${savedPlayers.length} saved players`
               }
               errorMessage={playerOperationError}
+              onFocus={handleSearchBarFocus}
             />
           </section>
-          
+
           {hasSearchTerm && (
             <SearchResultsSection
               players={searchResultPlayers}
@@ -533,6 +568,53 @@ export default function TeamBuilderPage() {
         />
 
       </div>
+
+      {searchModalOpen && (
+        <div className={styles.searchModalBackdrop} onClick={handleCloseSearchModal}>
+          <div className={styles.searchModal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.searchModalHeader}>
+              <div>
+                <p className={styles.searchModalKicker}>Search players</p>
+                <h3 className={styles.searchModalTitle}>Add players to your lineup</h3>
+              </div>
+              <button className={styles.searchModalClose} onClick={handleCloseSearchModal}>
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.searchModalInput}>
+              <SearchBar
+                searchTerm={searchTerm}
+                onSearchTermChange={handleSearchTermChange}
+                statusText={
+                  hasSearchTerm
+                    ? `${searchResultPlayers.length} results`
+                    : "Type a player name to begin searching"
+                }
+                errorMessage={playerOperationError}
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.searchModalResults}>
+              {hasSearchTerm ? (
+                <SearchResultsSection
+                  players={searchResultPlayers}
+                  savedPlayerIds={savedPlayerIds}
+                  assignedIds={assignedIds}
+                  draggingId={draggingId}
+                  savingPlayerIds={savingPlayerIds}
+                  onPrepareDrag={prepareDragPlayer}
+                  onClearDrag={clearDragState}
+                  onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+                />
+              ) : (
+                <div className={styles.searchModalEmpty}>Start typing to see the results</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
