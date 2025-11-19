@@ -166,7 +166,9 @@ export function useRecommendations() {
 
   const ensurePlayerSaved = useCallback(
     async (player: SavedPlayer) => {
-      if (savedPlayers.some((p) => p.id === player.id)) return true;
+      if (savingPlayerIds.has(player.id) || savedPlayers.some((p) => p.id === player.id)) {
+        return true;
+      }
       savingPlayerIds.add(player.id);
       setPlayerOperationError("");
       try {
@@ -345,6 +347,7 @@ export function useRecommendations() {
     onSaveTeam: () => {
       setBaselineLineup(lineup);
       if (currentWeakness) setBaselineWeakness(currentWeakness);
+      void refreshWeakness(lineup, lineup);
     },
     onGetRecommendations: handleGetRecommendations,
     onAddFromSearch: handleAddFromSearch,
