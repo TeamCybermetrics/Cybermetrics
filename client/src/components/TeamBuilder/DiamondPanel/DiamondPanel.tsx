@@ -52,11 +52,11 @@ export function DiamondPanel({
       <div className={styles.diamond}>
         <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
           <rect x="5" y="5" width="90" height="90" rx="8" ry="8" />
-          <line x1="50" y1="10" x2="10" y2="50" />
-          <line x1="50" y1="10" x2="90" y2="50" />
-          <line x1="10" y1="50" x2="50" y2="90" />
-          <line x1="50" y1="90" x2="90" y2="50" />
-          <circle cx="50" cy="12" r="2" />
+          <line x1="50" y1="24" x2="12" y2="50" />
+          <line x1="50" y1="24" x2="88" y2="50" />
+          <line x1="12" y1="50" x2="50" y2="88" />
+          <line x1="50" y1="88" x2="88" y2="50" />
+          <circle cx="50" cy="26" r="2" />
         </svg>
 
         {positionOrder.map((pos) => {
