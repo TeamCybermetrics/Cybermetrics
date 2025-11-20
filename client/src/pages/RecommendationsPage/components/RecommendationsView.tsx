@@ -13,7 +13,6 @@ import styles from "./RecommendationsView.module.css";
 type Props = {
   mode: PanelMode;
   searchTerm: string;
-  activePosition: DiamondPosition;
   draggingId: number | null;
   searchResults: SavedPlayer[];
   recommendedPlayers: SavedPlayer[];
@@ -54,7 +53,6 @@ const formatValueNumber = (value: number) => formatZScore(value, 2);
 export function RecommendationsView({
   mode,
   searchTerm,
-  activePosition,
   draggingId,
   searchResults,
   recommendedPlayers,

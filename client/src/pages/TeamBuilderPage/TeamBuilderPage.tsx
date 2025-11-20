@@ -450,35 +450,6 @@ export default function TeamBuilderPage() {
     [persistPlayerPosition]
   );
 
-  const handleAddPlayer = useCallback(
-    async (player: SavedPlayer) => {
-      if (!activePosition) {
-        return;
-      }
-
-      setPlayerOperationError("");
-      setSavingPlayerIds((prev) => {
-        const next = new Set(prev);
-        next.add(player.id);
-        return next;
-      });
-
-      try {
-        const saved = await ensurePlayerIsSaved(player);
-        if (saved) {
-          assignPlayerToPosition(player, activePosition);
-        }
-      } finally {
-        setSavingPlayerIds((prev) => {
-          const next = new Set(prev);
-          next.delete(player.id);
-          return next;
-        });
-      }
-    },
-    [activePosition, assignPlayerToPosition, ensurePlayerIsSaved]
-  );
-
   const handleDeletePlayer = useCallback(
     async (player: SavedPlayer) => {
       setPlayerOperationError("");
@@ -566,7 +537,7 @@ export default function TeamBuilderPage() {
     setDraggingId(null);
   };
 
-  const handlePositionDrop = async (event: DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
+  const handlePositionDrop = async (event: React.DragEvent<HTMLButtonElement>, position: DiamondPosition) => {
     event.preventDefault();
     event.stopPropagation();
     const player = dragPlayerRef.current;
