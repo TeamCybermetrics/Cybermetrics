@@ -33,7 +33,7 @@ const LABEL_OVERRIDES: Partial<Record<
 >> = {
   strikeout_rate: { xOffset: -38, yOffset: -2 },
   walk_rate: { xOffset: -9, yOffset: 15 ,anchor: "start" },
-  base_running: { xOffset: 5, yOffset: 11 ,anchor: "end" },
+  base_running: { xOffset: 10, yOffset: 14 ,anchor: "end" },
   on_base_percentage: { xOffset: 35, yOffset: 8 },
   isolated_power: { xOffset: 17, yOffset: 10 },
 };
@@ -440,6 +440,11 @@ export function RecommendationsRadarCard({
             let labelClass = styles.axisLabel;
             if (idx === highlightOrder[0]) labelClass = styles.axisLabelSevere;
             else if (idx === highlightOrder[1]) labelClass = styles.axisLabelWarn;
+            
+            // Add modal class if in modal view
+            if (isModal) {
+              labelClass = `${labelClass} ${styles.axisLabelModal}`;
+            }
 
             return (
               <text
