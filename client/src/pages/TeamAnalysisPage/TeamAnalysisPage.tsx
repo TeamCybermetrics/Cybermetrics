@@ -130,7 +130,12 @@ export default function TeamAnalysisPage() {
       return;
     }
 
-    loadAnalysis(playerIds);
+    // Debounce analysis updates to avoid excessive API calls during rapid player changes
+    const timer = setTimeout(() => {
+      loadAnalysis(playerIds);
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [loadAnalysis, loadingPlayers, playerIds, playersError]);
 
   const handleRetryAnalysis = useCallback(() => {
