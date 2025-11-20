@@ -1,0 +1,515 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: 3fr 7fr;
+  }
+}
+
+/* Left column */
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Team Weakness card */
+.weaknessCard {
+  background: #0f1117;
+  border-radius: 1.125rem;
+  padding: 1.25rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.weaknessTitle {
+  text-align: center;
+  font-weight: 800;
+  color: #e5e7eb;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+}
+.weaknessGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: #1b1f2e;
+  border-radius: 1rem;
+  padding: 1.125rem;
+}
+.weakLabel {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8125rem;
+  margin-bottom: 0.25rem;
+}
+.weakScoreGreen {
+  color: #22c55e;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+.weakScoreRed {
+  color: #ef4444;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+/* Cards */
+.card {
+  background: #0f1117;
+  border-radius: 1.125rem;
+  padding: 1rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.ctaBtn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+}
+.ctaBtn:hover {
+  filter: brightness(1.05);
+}
+
+.baselineAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.baselineDescription {
+  font-size: 0.6875rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: right;
+}
+
+.baselineBtn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.baselineBtn:hover {
+  background: #5b52ed;
+  transform: translateY(-0.0625rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(79, 70, 229, 0.3);
+}
+
+/* Search */
+.searchInput {
+  width: 100%;
+  border-radius: 999px;
+  background: #121420;
+  color: #e5e7eb;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.75rem 1rem;
+  outline: none;
+}
+.searchInput:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 0.125rem rgba(79, 70, 229, 0.1);
+}
+.savedHint {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Display panel */
+.displayPanel {
+  margin-top: 0.25rem;
+  background: #0f1117;
+  border-radius: 1.125rem;
+  padding: 1rem;
+  min-height: 12.5rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9375rem;
+}
+
+/* Right column */
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Radar card */
+.radarCard {
+  background: #0f1117;
+  border-radius: 1.125rem;
+  padding: 1rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.radarHeader {
+  color: #e5e7eb;
+  font-weight: 800;
+  margin-bottom: 0.375rem;
+}
+.radarSubheader {
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.625rem;
+}
+.radarPlaceholder {
+  height: 20rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #141826 0%, #121420 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.performanceLayout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.statsComparisonColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  width: 50%;
+  min-width: 0;
+}
+
+.comparisonHeader {
+  display: flex;
+  align-items: center;
+  padding: 0 0.875rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.25rem;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.headerLabel {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  width: 7.5rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.headerSpacer {
+  width: 3.125rem;
+  flex-shrink: 0;
+}
+
+.statComparisonBlock {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  transition: background 0.3s ease;
+}
+
+.statComparisonLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #d7d9de;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex: 0 0 6.25rem;
+  margin-right: 0.5rem;
+}
+
+.statComparisonRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.statBeforeGroup,
+.statAfterGroup {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 7.5rem;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.statValueWithLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  min-height: 2rem;
+  justify-content: space-between;
+}
+
+.statPercentileWithLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  min-height: 2rem;
+  justify-content: space-between;
+}
+
+.statComparisonValue {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s ease;
+}
+
+.statComparisonPercentile {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSubLabel {
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.125rem;
+}
+
+.percentileSuffix {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 0.0625rem;
+}
+
+.statDeltaArrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  flex-shrink: 0;
+  width: 3.125rem;
+  text-align: center;
+}
+
+.statDelta {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  width: 100%;
+}
+
+.statArrow {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 300;
+  text-align: center;
+  width: 100%;
+}
+
+.statPlaceholder {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+}
+
+.statSuperGood {
+  color: #22c55e;
+}
+
+.statGood {
+  color: #86efac;
+}
+
+.statNeutral {
+  color: #e5e7eb;
+}
+
+.statBad {
+  color: #fca5a5;
+}
+
+.statSuperBad {
+  color: #ef4444;
+}
+
+.radarChart {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 50%;
+  min-width: 0;
+}
+
+.radarChart svg polygon {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radarChart svg line {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radarChart svg text {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes polygonMorph {
+  0% {
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.95;
+  }
+}
+
+.radarLegend {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+  .performanceLayout {
+    flex-direction: column;
+  }
+  
+  .statsColumn {
+    width: 100%;
+  }
+}
+.axisLabel {
+  fill: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+}
+.axisLabelWarn {
+  composes: axisLabel;
+  fill: #ffb347;
+}
+.axisLabelSevere {
+  composes: axisLabel;
+  fill: #ff6666;
+}
+.ringLabel {
+  fill: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+}
+.ringLabelAverage {
+  composes: ringLabel;
+  fill: #fff;
+  font-weight: 600;
+}
+.leaguePolygon {
+  fill: rgba(255, 173, 74, 0.18);
+  stroke: rgba(255, 198, 124, 0.9);
+  stroke-width: 1.5;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.teamPolygon {
+  fill: rgba(109, 123, 255, 0.3);
+  stroke: #6d7bff;
+  stroke-width: 2;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: polygonMorph 0.8s ease-in-out;
+}
+
+/* Diamond card */
+.diamondCard {
+  background: #0f1117;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.diamondHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #e5e7eb;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.activeBadge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+.diamondCanvas {
+  background: #0b0d14;
+  border-radius: 16px;
+  padding: 16px;
+  height: 420px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+}
+.diamondPlaceholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 2px dashed rgba(255, 255, 255, 0.18);
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+.diamondFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+.saveBtn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}

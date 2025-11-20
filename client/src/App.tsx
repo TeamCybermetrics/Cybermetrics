@@ -3,20 +3,15 @@ import LandingPage from "@/pages/LandingPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import TeamBuilderPage from "@/pages/TeamBuilderPage";
-import TeamAnalysisPage from "@/pages/TeamAnalysisPage";
 import OurAlgorithmPage from "@/pages/OurAlgorithmPage";
 import AppLayout from "@/pages/layouts/AppLayout";
 import RecommendationsPage from "@/pages/RecommendationsPage";
 import { ROUTES } from "@/config";
 
 /**
- * Root application component that configures client-side routing and shared layout.
+ * Configure client-side routing and render the application's root router with a shared layout for authenticated pages.
  *
- * Sets up top-level routes for landing, login, and signup pages, a nested route group
- * wrapped by the shared AppLayout for authenticated pages (dashboard, team builder,
- * team analysis, MLB teams), and a catch-all redirect to the landing route.
- *
- * @returns A JSX element containing the application's router and route configuration.
+ * @returns The root JSX element that renders BrowserRouter and the application's route configuration
  */
 function App() {
   return (
@@ -27,9 +22,8 @@ function App() {
         <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
 
         <Route element={<AppLayout />}>
-          <Route path={ROUTES.TEAM_BUILDER} element={<TeamBuilderPage />} />
-          <Route path={ROUTES.TEAM_ANALYSIS} element={<TeamAnalysisPage />} />
-          <Route path={ROUTES.RECOMMENDATIONS} element={<RecommendationsPage />} />
+          <Route path={ROUTES.LINEUP_CONSTRUCTOR} element={<TeamBuilderPage />} />
+          <Route path={ROUTES.ROSTER_CONSTRUCTOR} element={<RecommendationsPage />} />
           <Route path={ROUTES.OUR_ALGORITHM} element={<OurAlgorithmPage />} />
         </Route>
 

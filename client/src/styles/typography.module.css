@@ -1,0 +1,72 @@
+/* Page Headings */
+.pageTitle {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* Section Headings */
+.heading1 {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.heading2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: var(--text-primary);
+}
+
+.heading3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Body Text */
+.body {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+  color: var(--text-primary);
+  opacity: 0.85;
+}
+
+.bodyLarge {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  color: var(--text-primary);
+  opacity: 0.85;
+}
+
+.bodySmall {
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  color: var(--text-primary);
+  opacity: 0.75;
+}
+
+/* Muted text */
+.muted {
+  opacity: 0.6;
+}
+
+/* Section labels/kickers */
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  opacity: 0.5;
+  margin: 0 0 8px 0;
+}

@@ -1,5 +1,6 @@
 import { DragEvent } from "react";
 import { SavedPlayer } from "@/api/players";
+import { Card } from "@/components";
 import styles from "./DiamondPanel.module.css";
 import {
   DiamondPosition,
@@ -23,6 +24,26 @@ type DiamondPanelProps = {
   onSaveTeam?: () => void;
 };
 
+/**
+ * Renders an interactive diamond-shaped lineup editor showing positions, assigned players, and drag-and-drop controls.
+ *
+ * The component displays each position as a node on a diamond diagram, allows selecting positions, dragging assigned
+ * players between positions, clearing slots, and optionally saving the lineup.
+ *
+ * @param lineup - Mapping of DiamondPosition to a SavedPlayer or `null` for empty slots.
+ * @param activePosition - Currently selected DiamondPosition, or `null` if none.
+ * @param dropTarget - Position currently highlighted as a valid drop target, or `null`.
+ * @param dragPlayer - The SavedPlayer being dragged, or `null` when no drag is active.
+ * @param onSelectPosition - Called when a position node is clicked with the selected position.
+ * @param onDragOverPosition - Called when a draggable item is moved over a position; receives the position.
+ * @param onDragLeavePosition - Called when a draggable item leaves a position.
+ * @param onDropOnPosition - Called when a dragged player is dropped onto a position; receives the drop event and target position.
+ * @param onPrepareDrag - Called to begin dragging a player; receives the player and its origin position.
+ * @param onClearDragState - Called when a drag operation ends or is cancelled to clear drag state.
+ * @param onClearSlot - Called to clear the player assigned to the given position.
+ * @param onSaveTeam - Optional handler invoked when the "Save Lineup" button is clicked.
+ * @returns The rendered React element for the diamond lineup panel.
+ */
 export function DiamondPanel({
   lineup,
   activePosition,
@@ -38,18 +59,14 @@ export function DiamondPanel({
   onSaveTeam,
 }: DiamondPanelProps) {
   return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <div>
-          <h2>Your lineup</h2>
-          <p>Select a position, then add or drag a player.</p>
-        </div>
-        <span className={styles.positionHint}>
-          {activePosition ? `Active: ${activePosition}` : "Pick a position"}
-        </span>
-      </div>
-
-      <div className={styles.diamond}>
+    <Card title="Your Lineup" subtitle="Select a position, then add or drag a player.">
+      <div className={styles.diamondContainer}>
+        {activePosition && (
+          <div className={styles.activeBadge}>
+            Active: {activePosition}
+          </div>
+        )}
+        <div className={styles.diamond}>
         <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
           {/* Continuous foul lines from home plate through bases to outfield arc */}
           {/* <line x1="50" y1="95" x2="10" y2="38" stroke="currentColor" strokeWidth="0.5" /> */}
@@ -67,8 +84,8 @@ export function DiamondPanel({
           />
           
           {/* Base paths connecting bases */}
-          <line x1="15" y1="54" x2="50" y2="27" stroke="currentColor" strokeWidth="0.5" />
-          <line x1="50" y1="27" x2="85" y2="54" stroke="currentColor" strokeWidth="0.5" />
+          <line x1="26" y1="66" x2="50" y2="42" stroke="currentColor" strokeWidth="0.5" />
+          <line x1="50" y1="42" x2="74" y2="66" stroke="currentColor" strokeWidth="0.5" />
           
           {/* Home plate (pentagon) - point at top touching base paths */}
 
@@ -81,14 +98,14 @@ export function DiamondPanel({
           />
           
           {/* First base (square) */}
-          <rect x="83" y="52" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          <rect x="72" y="64" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
 
           {/* Second base (square) */}
           {/* 53 */}
-          <rect x="48" y="26" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          <rect x="48" y="40" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
 
           {/* Third base (square) */}
-          <rect x="13" y="52" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          <rect x="24" y="64" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
           
         </svg>
 
@@ -156,6 +173,7 @@ export function DiamondPanel({
             <div className={styles.staticHint}>Pitcher</div>
           </div>
         ))}
+        </div>
       </div>
 
       {onSaveTeam && (
@@ -163,7 +181,6 @@ export function DiamondPanel({
           Save Lineup
         </button>
       )}
-    </section>
+    </Card>
   );
 }
-

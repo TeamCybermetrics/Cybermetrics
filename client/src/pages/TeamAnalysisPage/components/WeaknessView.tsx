@@ -1,4 +1,5 @@
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
+import { Card, CardGrid } from "@/components";
 import styles from "./WeaknessView.module.css";
 
 type PlayerScoreCard = PlayerValueScore & {
@@ -66,6 +67,17 @@ const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
 const RADAR_RADIUS = 120;
 const AXIS_LABEL_OFFSET = 1.32;
 
+/**
+ * Render the team weaknesses, player adjustment scores, and radar visualization for a roster.
+ *
+ * @param weakness - Object mapping stat keys to numeric deviation scores (can be non-finite) used to build the radar and stat displays.
+ * @param players - Array of player entries with adjustment_score, id, name, and optional image_url used to render the player list and scores.
+ * @param loading - When true, shows an analysis/loading state instead of the main content.
+ * @param error - Optional error message to display with a Retry action.
+ * @param hasRoster - When false, prompts the user to add saved players instead of attempting analysis.
+ * @param onRetry - Callback invoked when the user clicks the Retry button after an error.
+ * @returns The rendered JSX element for the weaknesses view.
+ */
 export default function WeaknessView({
   weakness,
   players,
@@ -103,31 +115,37 @@ export default function WeaknessView({
   const secondWorstAxisIndex = rankedAxes[1]?.idx ?? null;
   const leagueBaselinePolygon = Array(STAT_LABELS.length).fill(BASELINE_FRACTION);
 
+  // Function to get color class based on value
+  const getStatColorClass = (value: number) => {
+    if (value >= 1.5) return styles.statSuperGood;
+    if (value >= 0.5) return styles.statGood;
+    if (value >= -0.5) return styles.statNeutral;
+    if (value >= -1.5) return styles.statBad;
+    return styles.statSuperBad;
+  };
+
   return (
     <div className={styles.container}>
-      <div className={styles.statsBubble}>
-        <div className={styles.statsHeader}>Team Stats</div>
-        <div className={styles.statsRow}>
-          {STAT_LABELS.map(({ key, label }) => {
-            const rawValue = weakness[key];
-            return (
-              <div key={key} className={styles.statBlock}>
-                <div className={styles.statLabel}>{label}</div>
-                <div className={styles.statValue}>{formatValueLabel(rawValue)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className={styles.grid}>
-        <div className={styles.leftColumn}>
-          <h2 className={styles.sectionTitle}>Player adjustment scores</h2>
+      <CardGrid columns={2} gap="large">
+        <Card title="Player Adjustment Scores" subtitle="How much each player contributes positively to your statistics">
           {players.length === 0 ? (
             <div className={styles.stateMessage}>No player metrics available.</div>
           ) : (
             <div className={styles.playerList}>
-              {players.map((player) => (
+              {(() => {
+                // Sort by score descending
+                const sorted = [...players].sort((a, b) => b.adjustment_score - a.adjustment_score);
+                // Reorder to fill columns vertically: [0,2,4...] then [1,3,5...]
+                const reordered = [];
+                const half = Math.ceil(sorted.length / 2);
+                for (let i = 0; i < half; i++) {
+                  reordered.push(sorted[i]);
+                  if (i + half < sorted.length) {
+                    reordered.push(sorted[i + half]);
+                  }
+                }
+                return reordered;
+              })().map((player) => (
                 <div key={player.id} className={styles.playerCard}>
                   <img
                     src={player.image_url || "https://via.placeholder.com/50"}
@@ -135,25 +153,36 @@ export default function WeaknessView({
                     className={styles.avatar}
                   />
                   <span className={styles.playerName}>{player.name}</span>
-                  <span className={styles.playerMeta}>{player.years_active || ""}</span>
                   <span
                     className={
                       player.adjustment_score >= 0 ? styles.scorePositive : styles.scoreNegative
                     }
                   >
-                    Adj. Score: {player.adjustment_score >= 0 ? "+" : ""}
+                    {player.adjustment_score >= 0 ? "+" : ""}
                     {player.adjustment_score.toFixed(2)}
                   </span>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className={styles.radarSection}>
-          <div className={styles.radarCard}>
-            <div className={styles.radarLabel}>Weakness radar</div>
-            <div className={styles.radarChart}>
+        <Card title="Team Performance" subtitle="Your lineup compared to league averages">
+          <div className={styles.performanceLayout}>
+            <div className={styles.statsColumn}>
+              {STAT_LABELS.map(({ key, label }) => {
+                const rawValue = weakness[key];
+                return (
+                  <div key={key} className={styles.statBlock}>
+                    <div className={styles.statLabel}>{label}</div>
+                    <div className={`${styles.statValue} ${getStatColorClass(rawValue)}`}>
+                      {formatValueLabel(rawValue)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className={styles.radarChartWrapper}>
               <svg
                 viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
                 style={{ maxWidth: "320px", width: "100%", height: "auto", overflow: "visible" }}
@@ -254,15 +283,15 @@ export default function WeaknessView({
                 })}
               </svg>
             </div>
-            <ul className={styles.radarLegend}>
-              <li>Score: Number of standard deviations above or below the mean</li>
-              <li>Dashed ring marks score 0 (league average baseline)</li>
-              <li>Orange fill = league composite, blue = your lineup</li>
-              <li>Only the two weakest axes highlight in color</li>
-            </ul>
           </div>
-        </div>
-      </div>
+          <ul className={styles.radarLegend}>
+            <li>Score: Number of standard deviations above or below the mean</li>
+            <li>Dashed ring marks score 0 (league average baseline)</li>
+            <li>Orange fill = league composite, blue = your lineup</li>
+            <li>Only the two weakest axes highlight in color</li>
+          </ul>
+        </Card>
+      </CardGrid>
     </div>
   );
 }

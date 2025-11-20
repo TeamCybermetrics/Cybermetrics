@@ -1,28 +1,27 @@
 import type { PanelMode } from "./useRecommendations";
-import type { TeamWeaknessResponse, SavedPlayer } from "@/api/players";
-import type { DiamondPosition, LineupState } from "@/components/TeamBuilder/constants";
-import type { DragEvent } from "react";
+import type { TeamWeaknessResponse, SavedPlayer, PlayerValueScore } from "@/api/players";
+import type { DiamondPosition } from "@/components/TeamBuilder/constants";
 import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
-import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
-import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
+import { RecommendationsSection } from "@/components/Recommendations/RecommendationsSection/RecommendationsSection";
+import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection/SavedPlayersSection";
 import { formatZScore } from "@/utils/zScoreRadar";
-import { WeaknessDeltasCard } from "@/components/Recommendations/WeaknessDeltasCard";
+import { Card } from "@/components";
 import { RecommendationsRadarCard } from "@/components/Recommendations/RecommendationsRadarCard";
 import styles from "./RecommendationsView.module.css";
 
 type Props = {
   mode: PanelMode;
   searchTerm: string;
-  lineup: LineupState;
-  activePosition: DiamondPosition;
-  dropTarget: DiamondPosition | null;
   draggingId: number | null;
   searchResults: SavedPlayer[];
   recommendedPlayers: SavedPlayer[];
+  savedPlayers: SavedPlayer[];
   savedPlayerIds: Set<number>;
   assignedIds: Set<number>;
   savingPlayerIds: Set<number>;
+  deletingPlayerIds: Set<number>;
+  playerScores: PlayerValueScore[];
   hasSearchTerm: boolean;
   isRecommending: boolean;
   recommendationError: string;
@@ -32,16 +31,13 @@ type Props = {
   weaknessLoading: boolean;
   weaknessError: string | null;
   setSearchTerm: (v: string) => void;
-  setActivePosition: (pos: DiamondPosition) => void;
-  setDropTarget: (pos: DiamondPosition | null) => void;
-  onClearSlot: (pos: DiamondPosition) => void;
   onPrepareDrag: (player: SavedPlayer, fromPosition?: DiamondPosition) => void;
   onClearDrag: () => void;
-  onPositionDrop: (e: DragEvent<HTMLButtonElement>, pos: DiamondPosition) => void;
+  onDeletePlayer: (player: SavedPlayer) => void | Promise<void>;
   onSaveTeam: () => void;
   onGetRecommendations: () => void;
   onAddFromSearch: (player: SavedPlayer) => void;
-  onAddFromRecommendation: (player: SavedPlayer, position?: DiamondPosition) => void;
+  onAddFromRecommendation: (player: SavedPlayer) => void;
 };
 
 const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
@@ -54,18 +50,50 @@ const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
 
 const formatValueNumber = (value: number) => formatZScore(value, 2);
 
+/**
+ * Render the recommendations view that displays saved players, a weaknesses radar, search controls, and recommended players.
+ *
+ * @param mode - Current panel mode: "idle", "search", or "recommendations"
+ * @param searchTerm - Current search input value
+ * @param draggingId - ID of the player currently being dragged, if any
+ * @param searchResults - Players matching the current search
+ * @param recommendedPlayers - Players produced by the recommendation engine
+ * @param savedPlayers - Players saved to the user's team
+ * @param savedPlayerIds - Set of IDs for players already saved to the team
+ * @param assignedIds - Set of player IDs already assigned to lineup slots
+ * @param savingPlayerIds - Set of player IDs currently being saved
+ * @param deletingPlayerIds - Set of player IDs currently being deleted
+ * @param playerScores - Array of per-player value scores used for display
+ * @param hasSearchTerm - Whether the search input contains text
+ * @param isRecommending - Whether a recommendation request is in progress
+ * @param recommendationError - Error message from the recommendation request, if any
+ * @param playerOperationError - Error message from player search/save/delete operations, if any
+ * @param baselineWeakness - Weakness profile for the saved baseline team, if set
+ * @param currentWeakness - Weakness profile for the current team, if available
+ * @param weaknessLoading - Whether weakness data is loading
+ * @param weaknessError - Error message for weakness data, if any
+ * @param setSearchTerm - Handler to update the search term
+ * @param onPrepareDrag - Handler called to begin dragging a player
+ * @param onClearDrag - Handler called to clear drag state
+ * @param onDeletePlayer - Handler to delete a saved player
+ * @param onSaveTeam - Handler to set the current saved players as the baseline team
+ * @param onGetRecommendations - Handler to trigger fetching recommendations
+ * @param onAddFromSearch - Handler to save a player from search results
+ * @param onAddFromRecommendation - Handler to save a player from recommendations
+ * @returns The rendered RecommendationsView component
+ */
 export function RecommendationsView({
   mode,
   searchTerm,
-  lineup,
-  activePosition,
-  dropTarget,
   draggingId,
   searchResults,
   recommendedPlayers,
+  savedPlayers,
   savedPlayerIds,
   assignedIds,
   savingPlayerIds,
+  deletingPlayerIds,
+  playerScores,
   hasSearchTerm,
   isRecommending,
   recommendationError,
@@ -75,12 +103,9 @@ export function RecommendationsView({
   weaknessLoading,
   weaknessError,
   setSearchTerm,
-  setActivePosition,
-  setDropTarget,
-  onClearSlot,
   onPrepareDrag,
   onClearDrag,
-  onPositionDrop,
+  onDeletePlayer,
   onSaveTeam,
   onGetRecommendations,
   onAddFromSearch,
@@ -112,29 +137,50 @@ export function RecommendationsView({
 
   return (
     <div className={styles.layout}>
-      {/* Left column */}
+      {/* Left column - Saved Players */}
       <div className={styles.leftCol}>
-        {/* Deltas */}
-        <WeaknessDeltasCard
+        <SavedPlayersSection
+          players={savedPlayers}
+          assignedIds={assignedIds}
+          draggingId={draggingId}
+          deletingPlayerIds={deletingPlayerIds}
+          onPrepareDrag={onPrepareDrag}
+          onClearDrag={onClearDrag}
+          onDeletePlayer={onDeletePlayer}
+          playerScores={playerScores}
+          headerAction={
+            <div className={styles.baselineAction}>
+              <div className={styles.baselineDescription}>Set current team as baseline</div>
+              <button className={styles.baselineBtn} onClick={onSaveTeam}>
+                Set Baseline
+              </button>
+            </div>
+          }
+        />
+      </div>
+
+      {/* Right column - Search and Recommendations */}
+      <div className={styles.rightCol}>
+        <RecommendationsRadarCard
           statKeys={STAT_KEYS}
           baselineWeakness={baselineWeakness}
           currentWeakness={currentWeakness}
+          highlightOrder={highlightOrder}
           loading={weaknessLoading}
           error={weaknessError}
           formatValue={formatValueNumber}
         />
 
         {/* Get Recommendations button */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>Click to get recommendations</div>
+        <Card title="Get Recommendations">
           <button className={styles.ctaBtn} onClick={onGetRecommendations} disabled={isRecommending}>
             {isRecommending ? "Loading..." : "Get Recommendations!"}
           </button>
           {recommendationError && <div className={styles.recommendError}>{recommendationError}</div>}
-        </div>
+        </Card>
 
         {/* Search bar */}
-        <div className={styles.searchCard}>
+        <Card title="Search Players">
           <SearchBar
             searchTerm={searchTerm}
             onSearchTermChange={setSearchTerm}
@@ -145,7 +191,7 @@ export function RecommendationsView({
             }
             errorMessage={playerOperationError || undefined}
           />
-        </div>
+        </Card>
 
         {mode === "search" && (
           <SearchResultsSection
@@ -154,9 +200,11 @@ export function RecommendationsView({
             assignedIds={assignedIds}
             draggingId={draggingId}
             savingPlayerIds={savingPlayerIds}
+            deletingPlayerIds={deletingPlayerIds}
             onPrepareDrag={onPrepareDrag}
             onClearDrag={onClearDrag}
             onSavePlayer={onAddFromSearch}
+            onDeletePlayer={onDeletePlayer}
           />
         )}
 
@@ -165,51 +213,21 @@ export function RecommendationsView({
             players={recommendedPlayers}
             savedPlayerIds={savedPlayerIds}
             savingPlayerIds={savingPlayerIds}
+            deletingPlayerIds={deletingPlayerIds}
             allowAddSaved
-            addLabel={`Add to ${activePosition}`}
-            targetPosition={activePosition}
-            onSavePlayer={onAddFromRecommendation}
+            addLabel="Save to Team"
+            onSavePlayer={(player) => onAddFromRecommendation(player)}
+            onDeletePlayer={onDeletePlayer}
           />
         )}
 
         {mode === "idle" && (
           <div className={styles.displayPanel}>
             <div className={styles.placeholder}>
-              Use the search bar or click “Get Recommendations!” to see players.
+              Use the search bar or click "Get Recommendations!" to see players.
             </div>
           </div>
         )}
-      </div>
-
-      {/* Right column */}
-      <div className={styles.rightCol}>
-        <RecommendationsRadarCard
-          statKeys={STAT_KEYS}
-          baselineWeakness={baselineWeakness}
-          currentWeakness={currentWeakness}
-          highlightOrder={highlightOrder}
-          loading={weaknessLoading}
-          error={weaknessError}
-        />
-
-            <DiamondPanel
-              lineup={lineup}
-              activePosition={activePosition}
-              dropTarget={dropTarget}
-              dragPlayer={null}
-              onSelectPosition={setActivePosition}
-              onDragOverPosition={setDropTarget}
-              onDragLeavePosition={() => setDropTarget(null)}
-              onDropOnPosition={onPositionDrop}
-              onPrepareDrag={onPrepareDrag}
-              onClearDragState={onClearDrag}
-              onClearSlot={onClearSlot}
-            />
-        <div className={styles.diamondFooter}>
-          <button className={styles.saveBtn} onClick={onSaveTeam}>
-            Save Lineup as baseline
-          </button>
-        </div>
       </div>
     </div>
   );

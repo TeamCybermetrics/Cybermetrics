@@ -2,6 +2,13 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/config";
 import styles from "./Footer.module.css";
 
+/**
+ * Renders the site footer containing brand information, product and company navigation, and a copyright bar.
+ *
+ * The footer displays the current calendar year and internal links to Product and Company pages.
+ *
+ * @returns A JSX element representing the footer markup
+ */
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -20,14 +27,11 @@ export default function Footer() {
         <div className={styles.section}>
           <h3 className={styles.heading}>Product</h3>
           <nav className={styles.links}>
-            <Link to={ROUTES.TEAM_BUILDER} className={styles.link}>
-              Team Builder
+            <Link to={ROUTES.LINEUP_CONSTRUCTOR} className={styles.link}>
+              Lineup Constructor
             </Link>
-            <Link to={ROUTES.TEAM_ANALYSIS} className={styles.link}>
-              Team Analysis
-            </Link>
-            <Link to={ROUTES.RECOMMENDATIONS} className={styles.link}>
-              Recommendations
+            <Link to={ROUTES.ROSTER_CONSTRUCTOR} className={styles.link}>
+              Roster Constructor
             </Link>
           </nav>
         </div>

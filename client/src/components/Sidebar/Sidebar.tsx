@@ -1,18 +1,26 @@
-import { NavLink, Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { Hammer, Binoculars, HelpCircle } from "lucide-react";
 import { ROUTES } from "@/config";
-import {
-  TeamBuilderIcon,
-  TeamAnalysisIcon,
-} from "@/assets/icons";
 import logo from "@/assets/brand_badge.jpg";
+import UserBadge from "../UserBadge/UserBadge";
 import styles from "./Sidebar.module.css";
 
-const navItems = [
-  { label: "Team Builder", to: ROUTES.TEAM_BUILDER, icon: TeamBuilderIcon },
-  { label: "Team Analysis", to: ROUTES.TEAM_ANALYSIS, icon: TeamAnalysisIcon },
-  { label: "Recommendations", to: ROUTES.RECOMMENDATIONS, icon: TeamAnalysisIcon }, // add
+const analysisItems = [
+  { label: "Lineup Constructor", to: ROUTES.LINEUP_CONSTRUCTOR, icon: Hammer },
+  { label: "Roster Constructor", to: ROUTES.ROSTER_CONSTRUCTOR, icon: Binoculars },
 ] as const;
 
+const aboutItems = [
+  { label: "About Cybermetrics", to: ROUTES.OUR_ALGORITHM, icon: HelpCircle },
+] as const;
+
+/**
+ * Renders the application sidebar containing the brand, grouped navigation, and a user badge.
+ *
+ * Shows the logo and product title, a navigation group for "Analysis" and another for "About" with route links, and a UserBadge area at the bottom.
+ *
+ * @returns The sidebar element containing brand, grouped navigation links, and the user badge.
+ */
 export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>
@@ -21,29 +29,45 @@ export default function Sidebar() {
         <span className={styles.title}>Cybermetrics</span>
       </div>
 
-      <nav className={styles.nav}>
-        {navItems.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              [styles.item, isActive ? styles.itemActive : ""].filter(Boolean).join(" ")
-            }
-          >
-            <Icon className={styles.icon} />
-            <span className={styles.label}>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      <div className={styles.navContainer}>
+        <div>
+          <div className={styles.sectionHeader}>Analysis</div>
+          <nav className={styles.nav}>
+            {analysisItems.map(({ label, to, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  [styles.item, isActive ? styles.itemActive : ""].filter(Boolean).join(" ")
+                }
+              >
+                <Icon className={styles.icon} size={20} />
+                <span className={styles.label}>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
 
-      <Link
-        to={ROUTES.OUR_ALGORITHM}
-        aria-label="Learn about our algorithm"
-        title="Our Algorithm"
-        className={styles.helpFab}
-      >
-        ?
-      </Link>
+          <div className={styles.sectionHeader}>About</div>
+          <nav className={styles.nav}>
+            {aboutItems.map(({ label, to, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  [styles.item, isActive ? styles.itemActive : ""].filter(Boolean).join(" ")
+                }
+              >
+                <Icon className={styles.icon} size={20} />
+                <span className={styles.label}>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        <div className={styles.userBadgeContainer}>
+          <UserBadge />
+        </div>
+      </div>
     </aside>
   );
 }
