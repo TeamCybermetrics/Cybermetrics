@@ -8,9 +8,11 @@ type SearchResultsSectionProps = {
   assignedIds: Set<number>;
   draggingId: number | null;
   savingPlayerIds: Set<number>;
+  deletingPlayerIds?: Set<number>;
   onPrepareDrag: (player: SavedPlayer) => void;
   onClearDrag: () => void;
   onSavePlayer: (player: SavedPlayer) => void | Promise<void>;
+  onDeletePlayer?: (player: SavedPlayer) => void | Promise<void>;
 };
 
 export function SearchResultsSection({
@@ -19,9 +21,11 @@ export function SearchResultsSection({
   assignedIds,
   draggingId,
   savingPlayerIds,
+  deletingPlayerIds = new Set(),
   onPrepareDrag,
   onClearDrag,
   onSavePlayer,
+  onDeletePlayer,
 }: SearchResultsSectionProps) {
   return (
     <section className={`${styles.displayBox} ${styles.searchResultsSection}`}>
@@ -40,6 +44,7 @@ export function SearchResultsSection({
             const alreadyAssigned = assignedIds.has(player.id);
             const alreadySaved = savedPlayerIds.has(player.id);
             const isSaving = savingPlayerIds.has(player.id);
+            const isDeleting = deletingPlayerIds.has(player.id);
 
             return (
               <PlayerRow
@@ -49,16 +54,20 @@ export function SearchResultsSection({
                 draggable={!alreadyAssigned}
                 onDragStart={() => !alreadyAssigned && onPrepareDrag(player)}
                 onDragEnd={onClearDrag}
-                showDelete={false}
-                addDisabled={alreadySaved || isSaving}
+                showDelete={alreadySaved}
+                deleteDisabled={isDeleting}
+                deleteLabel={isDeleting ? "Removing..." : "Remove"}
+                deleteTitle="Remove from saved players"
+                onDelete={onDeletePlayer ? () => void onDeletePlayer(player) : undefined}
                 addLabel={
-                  alreadySaved ? "Already Saved" : isSaving ? "Saving..." : "Add to Saved"
+                  alreadySaved ? undefined : isSaving ? "Saving..." : "Add to Saved"
                 }
                 addTitle={
                   alreadySaved
-                    ? "Already in your saved players"
+                    ? undefined
                     : "Add this player to your saved players"
                 }
+                addDisabled={isSaving}
                 onAdd={() => {
                   if (!alreadySaved && !isSaving) {
                     void onSavePlayer(player);

@@ -16,8 +16,22 @@
 
 .header {
   display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.headerContent {
+  display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.headerAction {
+  flex-shrink: 0;
 }
 
 .content {

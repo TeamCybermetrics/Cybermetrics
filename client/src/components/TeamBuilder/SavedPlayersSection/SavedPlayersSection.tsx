@@ -18,6 +18,7 @@ type SavedPlayersSectionProps = {
   onDeletePlayer: (player: SavedPlayer) => void | Promise<void>;
   playerScores?: PlayerValueScore[];
   benchReplacements?: Map<number, { replacesPosition: string; replacesName: string; delta: number }>;
+  headerAction?: React.ReactNode;
 };
 
 export function SavedPlayersSection({
@@ -33,6 +34,7 @@ export function SavedPlayersSection({
   onDeletePlayer,
   playerScores = [],
   benchReplacements = new Map(),
+  headerAction,
 }: SavedPlayersSectionProps) {
   const [benchSortBy, setBenchSortBy] = useState<'name' | 'score'>('name');
   
@@ -65,6 +67,7 @@ export function SavedPlayersSection({
   const renderPlayingPlayerCard = (player: SavedPlayer) => {
     const scoreData = playerScores.find(s => s.id === player.id);
     const adjustmentScore = scoreData?.adjustment_score;
+    const isDeleting = deletingPlayerIds.has(player.id);
 
     return (
       <div key={player.id} className={styles.playingPlayerCard}>
@@ -80,6 +83,14 @@ export function SavedPlayersSection({
             {adjustmentScore >= 0 ? "+" : ""}{adjustmentScore.toFixed(2)}
           </div>
         )}
+        <button
+          className={styles.deletePlayerButton}
+          disabled={isDeleting}
+          onClick={() => onDeletePlayer(player)}
+          title="Delete from saved players"
+        >
+          {isDeleting ? "Deleting…" : "Delete"}
+        </button>
       </div>
     );
   };
@@ -111,26 +122,6 @@ export function SavedPlayersSection({
             : "Delete from saved players"
         }
         onDelete={() => onDeletePlayer(player)}
-        addDisabled={
-          alreadyAssigned ||
-          !activePosition ||
-          savingPlayerIds.has(player.id)
-        }
-        addLabel={
-          alreadyAssigned
-            ? "Assigned"
-            : savingPlayerIds.has(player.id)
-            ? "Saving..."
-            : "Add"
-        }
-        addTitle={
-          alreadyAssigned
-            ? "Already Assigned"
-            : !activePosition
-            ? "Select a position first"
-            : "Add to active position"
-        }
-        onAdd={() => void onAddPlayer(player)}
         adjustmentScore={adjustmentScore}
         replacementInfo={replacement ? `Replacing ${replacement.replacesPosition}` : undefined}
       />
@@ -138,7 +129,7 @@ export function SavedPlayersSection({
   };
 
   return (
-    <Card title="Saved Players" subtitle={subtitle}>
+    <Card title="Saved Players" subtitle={subtitle} headerAction={headerAction}>
       <div className={styles.playerScroller}>
         {players.length === 0 ? (
           <div className={styles.emptyState}>

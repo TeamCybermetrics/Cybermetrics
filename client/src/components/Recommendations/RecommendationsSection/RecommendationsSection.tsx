@@ -6,7 +6,9 @@ type RecommendationsSectionProps = {
   players: SavedPlayer[];
   savedPlayerIds?: Set<number>;
   savingPlayerIds?: Set<number>;
+  deletingPlayerIds?: Set<number>;
   onSavePlayer: (player: SavedPlayer, position?: DiamondPosition) => void | Promise<void>;
+  onDeletePlayer?: (player: SavedPlayer) => void | Promise<void>;
   allowAddSaved?: boolean;
   addLabel?: string;
   targetPosition?: DiamondPosition;
@@ -16,7 +18,9 @@ export function RecommendationsSection({
   players,
   savedPlayerIds,
   savingPlayerIds,
+  deletingPlayerIds = new Set(),
   onSavePlayer,
+  onDeletePlayer,
   allowAddSaved = false,
   addLabel = "Add to lineup",
   targetPosition,
@@ -30,8 +34,10 @@ export function RecommendationsSection({
       {players.map((player) => {
         const alreadySaved = savedPlayerIds?.has(player.id) ?? false;
         const isSaving = savingPlayerIds?.has(player.id) ?? false;
-        const disabled = isSaving || (!allowAddSaved && alreadySaved);
-        const label = isSaving ? "Saving..." : addLabel;
+        const isDeleting = deletingPlayerIds.has(player.id);
+        const showRemove = alreadySaved && onDeletePlayer;
+        const disabled = isSaving || isDeleting || (!allowAddSaved && alreadySaved && !showRemove);
+        const label = isDeleting ? "Removing..." : showRemove ? "Remove" : isSaving ? "Saving..." : addLabel;
 
         const savedPlayer: SavedPlayer = {
           id: player.id,
@@ -58,7 +64,11 @@ export function RecommendationsSection({
                 disabled={disabled}
                 onClick={() => {
                   if (!disabled) {
-                    void onSavePlayer(savedPlayer);
+                    if (showRemove) {
+                      void onDeletePlayer!(savedPlayer);
+                    } else {
+                      void onSavePlayer(savedPlayer);
+                    }
                   }
                 }}
               >

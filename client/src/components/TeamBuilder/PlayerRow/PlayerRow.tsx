@@ -13,7 +13,7 @@ type PlayerRowProps = {
   deleteTitle?: string;
   onDelete?: () => void;
   addDisabled?: boolean;
-  addLabel: string;
+  addLabel?: string;
   addTitle?: string;
   onAdd?: () => void;
   adjustmentScore?: number;
@@ -78,14 +78,16 @@ export function PlayerRow({
             {deleteLabel}
           </button>
         )}
-        <button
-          className={styles.addButton}
-          disabled={addDisabled}
-          onClick={onAdd}
-          title={addTitle}
-        >
-          {addLabel}
-        </button>
+        {addLabel && (
+          <button
+            className={styles.addButton}
+            disabled={addDisabled}
+            onClick={onAdd}
+            title={addTitle}
+          >
+            {addLabel}
+          </button>
+        )}
       </div>
     </div>
   );

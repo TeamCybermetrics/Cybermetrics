@@ -36,7 +36,6 @@ export function WeaknessDeltasCard({
               <div key={label}>
                 <div className={styles.weakLabel}>{label}</div>
                 <div className={cls}>
-                  {delta >= 0 ? "+" : ""}
                   {formatValue(delta)}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { playerActions } from "@/actions/players";
-import type { SavedPlayer, TeamWeaknessResponse } from "@/api/players";
+import type { SavedPlayer, TeamWeaknessResponse, PlayerValueScore } from "@/api/players";
 import type { DiamondPosition } from "@/components/TeamBuilder/constants";
 
 export type PanelMode = "idle" | "recommendations" | "search";
@@ -10,6 +10,7 @@ export function useRecommendations() {
   const [currentWeakness, setCurrentWeakness] = useState<TeamWeaknessResponse | null>(null);
   const [weaknessLoading, setWeaknessLoading] = useState(false);
   const [weaknessError, setWeaknessError] = useState<string | null>(null);
+  const [playerScores, setPlayerScores] = useState<PlayerValueScore[]>([]);
 
   const [mode, setMode] = useState<PanelMode>("idle");
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,6 +136,24 @@ export function useRecommendations() {
       ? baselineSavedPlayersRef.current 
       : savedPlayers;
     void refreshWeakness(savedPlayers, baseline);
+    
+    // Fetch player scores
+    const fetchScores = async () => {
+      const playerIds = savedPlayers.map(p => p.id).filter((id): id is number => typeof id === 'number');
+      if (playerIds.length === 0) {
+        setPlayerScores([]);
+        return;
+      }
+      try {
+        const res = await playerActions.getPlayerValueScores(playerIds);
+        if (res.success && res.data) {
+          setPlayerScores(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch player scores:', err);
+      }
+    };
+    void fetchScores();
   }, [savedPlayers, refreshWeakness]);
 
   const onSearchChange = useCallback((value: string) => {
@@ -360,6 +379,7 @@ export function useRecommendations() {
     assignedIds,
     savingPlayerIds,
     deletingPlayerIds,
+    playerScores,
     hasSearchTerm: !!searchTerm.trim(),
     isRecommending,
     recommendationError,

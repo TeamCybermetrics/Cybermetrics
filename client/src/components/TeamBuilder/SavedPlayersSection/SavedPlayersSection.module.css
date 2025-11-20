@@ -128,6 +128,35 @@
   transition: all 0.2s ease;
   text-align: center;
   min-height: 0;
+  position: relative;
+}
+
+.playingPlayerCard .deletePlayerButton {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 4px 8px;
+  font-size: 10px;
+  background: rgba(239, 68, 68, 0.1);
+  color: rgba(239, 68, 68, 0.8);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.playingPlayerCard .deletePlayerButton:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  color: rgba(239, 68, 68, 1);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.playingPlayerCard .deletePlayerButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .playingPlayerCard:hover {
