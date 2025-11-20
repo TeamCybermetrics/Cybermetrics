@@ -90,6 +90,7 @@
   transform: translate(-50%, -50%);
   width: 90px;
   height: 90px;
+  font-size: 16px;
 }
 
 .staticPosition {
@@ -102,6 +103,8 @@
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.04);
+  width: 90px;
+  height: 90px;
 }
 
 .staticHint {
@@ -113,8 +116,8 @@
 }
 
 .positionTrigger {
-  width: 100%;
-  height: 100%;
+  width: 90px;
+  height: 90px;
   border-radius: 999px;
   background: rgba(6, 8, 18, 0.92);
   border: 2px dashed rgba(255, 255, 255, 0.28);
