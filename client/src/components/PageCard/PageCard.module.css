@@ -1,0 +1,34 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  color: var(--text-primary);
+  flex: 1 0 auto;
+  min-height: fit-content;
+  background: #050507;
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  padding-bottom: 72px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.kicker {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .page {
+    gap: 24px;
+    padding: 24px;
+  }
+}
