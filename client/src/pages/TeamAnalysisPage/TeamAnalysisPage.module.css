@@ -223,4 +223,4 @@
 .userName { font-size: 14px; font-weight: 600; }
 .userHandle { font-size: 12px; opacity: 0.6; }
 
-.tabContent { flex: 1; padding: 40px; overflow-y: auto; }
+.tabContent { flex: 1; padding: 0; overflow-y: auto; }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import styles from "./TeamAnalysisPage.module.css";
+import { PageCard } from "@/components";
 import WeaknessView from "./components/WeaknessView";
 import { playerActions } from "@/actions/players";
 import type { SavedPlayer } from "./types";
@@ -159,74 +159,15 @@ export default function TeamAnalysisPage() {
   );
 
   return (
-    <div className={styles.page}>
-      {/* Sidebar */}
-      <div
-        className={`${styles.sidebarContainer} ${
-          styles.sidebarContainerClosed
-        }`}
-      >
-        <aside className={`${styles.sidebar} ${styles.sidebarHidden}`}>
-          {(
-            <>
-              <div className={styles.sidebarHeader}>
-                <div className={styles.teamTitle}>Your Team</div>
-              </div>
-
-              <div className={styles.playerList}>
-                {loadingPlayers && (
-                  <div className={styles.loadingState}>Loading saved players…</div>
-                )}
-                {!loadingPlayers && playersError && (
-                  <div className={styles.errorState}>
-                    <span>{playersError}</span>
-                    <button
-                      className={styles.retryButton}
-                      onClick={() => { loadSavedPlayers(); }}
-                    >Retry</button>
-                  </div>
-                )}
-                {!loadingPlayers && !playersError && savedPlayers.length === 0 && (
-                  <div className={styles.emptyState}>No saved players yet.</div>
-                )}
-                {!loadingPlayers && !playersError && savedPlayers.map(p => (
-                  <div key={p.id} className={styles.playerCard}>
-                    <img
-                      src={p.image_url || "https://via.placeholder.com/50"}
-                      alt={p.name}
-                      className={styles.playerImage}
-                    />
-                    <div className={styles.playerInfo}>
-                      <div className={styles.playerName}>{p.name}</div>
-                      <div className={styles.playerTeam}>{p.years_active || ""}</div>
-                    </div>
-                    <button className={styles.playerMenu} aria-label="Player menu">⋮</button>
-                  </div>
-                ))}
-                <button className={styles.viewAllButton}>View All</button>
-              </div>
-            </>
-          )}
-        </aside>
-      </div>
-
-      {/* Header (single tab label) */}
-      <main className={styles.mainContent}>
-        <nav className={styles.tabNav}>
-          <div className={`${styles.tab} ${styles.tabActive}`}>Analysis</div>
-        </nav>
-
-        <div className={styles.tabContent}>
-          <WeaknessView
-            weakness={weakness}
-            players={playersWithScores}
-            loading={loadingAnalysis}
-            error={analysisError}
-            hasRoster={playerIds.length > 0}
-            onRetry={handleRetryAnalysis}
-          />
-        </div>
-      </main>
-    </div>
+    <PageCard title="Team Analysis">
+      <WeaknessView
+        weakness={weakness}
+        players={playersWithScores}
+        loading={loadingAnalysis}
+        error={analysisError}
+        hasRoster={playerIds.length > 0}
+        onRetry={handleRetryAnalysis}
+      />
+    </PageCard>
   );
 }

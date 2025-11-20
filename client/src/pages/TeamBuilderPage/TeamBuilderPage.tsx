@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
+import { PageCard } from "@/components";
 import styles from "./TeamBuilderPage.module.css";
 import {
   DiamondPosition,
@@ -478,11 +479,7 @@ export default function TeamBuilderPage() {
   );
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.kicker}>Team Builder</div>
-      </header>
-
+    <PageCard title="Team Builder">
       <div className={styles.builderShell}>
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn}>
@@ -594,6 +591,6 @@ export default function TeamBuilderPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageCard>
   );
 }
