@@ -15,7 +15,7 @@ const analysisItems = [
 ] as const;
 
 const aboutItems = [
-  { label: "Our Algorithm", to: ROUTES.OUR_ALGORITHM, icon: null },
+  { label: "About Cybermetrics", to: ROUTES.OUR_ALGORITHM, icon: null },
 ] as const;
 
 export default function Sidebar() {

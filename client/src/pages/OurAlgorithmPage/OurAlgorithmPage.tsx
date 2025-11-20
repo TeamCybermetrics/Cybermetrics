@@ -3,10 +3,10 @@ import typography from "@/styles/typography.module.css";
 
 export default function OurAlgorithmPage() {
   return (
-    <PageCard title="Our Algorithm">
+    <PageCard title="About Cybermetrics">
       <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
         <div>
-          <h1 className={typography.heading1}>Our Algorithm</h1>
+          <h2 className={typography.heading2}>Our Algorithm</h2>
           <p className={typography.body}>
             Our algorithm is designed to help you quickly understand where your roster is strong, 
             where it needs support, and which players provide the most value relative to those needs. 
@@ -15,14 +15,14 @@ export default function OurAlgorithmPage() {
           </p>
         </div>
         <div>
-          <h1 className={typography.heading1}>Team Weakness Vectors</h1>
+          <h2 className={typography.heading2}>Team Weakness Vectors</h2>
           <p className={typography.body}>
             Team weakness vectors show how your lineup compares to MLB averages. 
             For each stat, we calculate how far your team is from league average and express it as a z-score.
           </p>
         </div>
         <div>
-          <h1 className={typography.heading1}>Adjustment Score</h1>
+          <h2 className={typography.heading2}>Adjustment Score</h2>
           <p className={typography.body}>
             The adjustment score shows how much a player helps or hurts your team in the areas where you're weakest. 
             After identifying your roster's gaps compared to MLB averages, we compare the player's recent stats to those 
@@ -31,7 +31,7 @@ export default function OurAlgorithmPage() {
           </p>
         </div>
         <div>
-          <h1 className={typography.heading1}>Recommendation</h1>
+          <h2 className={typography.heading2}>Recommendation</h2>
           <p className={typography.body}>
             Our recommendation system begins by letting the manager choose which position they want to replace. 
             After calculating your team's current weakness vector relative to MLB averages, we evaluate every league 
