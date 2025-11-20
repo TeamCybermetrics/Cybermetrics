@@ -64,6 +64,7 @@ export function RecommendationsRadarCard({
   const [animatedCurrentFractions, setAnimatedCurrentFractions] = useState<number[]>([]);
   const [animatedBaselineFractions, setAnimatedBaselineFractions] = useState<number[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Compute scale and fractions (needed for hooks)
   const scaleData = currentWeakness ? computeScale(statKeys, baselineWeakness, currentWeakness) : null;
@@ -268,11 +269,15 @@ export function RecommendationsRadarCard({
   };
 
   return (
+    <>
     <Card 
       title="Roster Performance" 
       subtitle="Before/After Changes"
       headerAction={
-        <button className={styles.baselineBtn}>
+        <button 
+          className={styles.baselineBtn}
+          onClick={() => setIsModalOpen(true)}
+        >
           Expand Metrics
         </button>
       }
@@ -467,6 +472,20 @@ export function RecommendationsRadarCard({
       </div>
     </div>
     </Card>
+    {isModalOpen && (
+      <div 
+        className={styles.modalOverlay}
+        onClick={() => setIsModalOpen(false)}
+      >
+        <div 
+          className={styles.modalContent}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal content will go here */}
+        </div>
+      </div>
+    )}
+  </>
   );
 }
 
