@@ -191,25 +191,6 @@ export function RecommendationsView({
           loading={weaknessLoading}
           error={weaknessError}
         />
-
-            <DiamondPanel
-              lineup={lineup}
-              activePosition={activePosition}
-              dropTarget={dropTarget}
-              dragPlayer={null}
-              onSelectPosition={setActivePosition}
-              onDragOverPosition={setDropTarget}
-              onDragLeavePosition={() => setDropTarget(null)}
-              onDropOnPosition={onPositionDrop}
-              onPrepareDrag={onPrepareDrag}
-              onClearDragState={onClearDrag}
-              onClearSlot={onClearSlot}
-            />
-        <div className={styles.diamondFooter}>
-          <button className={styles.saveBtn} onClick={onSaveTeam}>
-            Save Lineup as baseline
-          </button>
-        </div>
       </div>
     </div>
   );
