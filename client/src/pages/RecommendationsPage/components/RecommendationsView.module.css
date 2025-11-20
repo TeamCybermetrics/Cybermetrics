@@ -179,6 +179,10 @@
   align-items: flex-start;
 }
 
+.performanceLayoutModal {
+  align-items: center;
+}
+
 .statsComparisonColumn {
   display: flex;
   flex-direction: column;
@@ -186,6 +190,10 @@
   flex: 1;
   width: 50%;
   min-width: 0;
+}
+
+.statsComparisonColumnModal {
+  gap: 1.5rem;
 }
 
 .comparisonHeader {
@@ -227,6 +235,27 @@
   border-radius: 0.625rem;
   padding: 0.625rem 0.875rem;
   transition: background 0.3s ease;
+}
+
+.statComparisonBlockModal {
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.875rem;
+}
+
+.statComparisonBlockModal .statComparisonLabel {
+  font-size: 0.875rem;
+  flex: 0 0 8rem;
+}
+
+
+.statComparisonBlockModal .statSubLabel {
+  font-size: 0.625rem;
+}
+
+.statComparisonBlockModal .statBeforeGroup,
+.statComparisonBlockModal .statAfterGroup {
+  width: 10rem;
+  gap: 0.75rem;
 }
 
 .statComparisonLabel {
@@ -284,10 +313,18 @@
   transition: color 0.4s ease;
 }
 
+.statComparisonValueModal {
+  font-size: 1.25rem !important;
+}
+
 .statComparisonPercentile {
   font-size: 0.9375rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.statComparisonPercentileModal {
+  font-size: 1.25rem !important;
 }
 
 .statSubLabel {
@@ -297,6 +334,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   margin-top: 0.125rem;
+  white-space: nowrap;
 }
 
 .percentileSuffix {
@@ -304,6 +342,14 @@
   font-weight: 600;
   color: rgba(255, 255, 255, 0.5);
   margin-left: 0.0625rem;
+}
+
+.percentileSuffixModal {
+  font-size: 0.875rem !important;
+}
+
+.statSubLabelModal {
+  font-size: 0.75rem !important;
 }
 
 .statDeltaArrow {
@@ -331,6 +377,20 @@
   font-weight: 300;
   text-align: center;
   width: 100%;
+}
+
+.statDeltaArrowModal {
+  width: 8rem;
+  gap: 0.2rem;
+}
+
+.statDeltaModal {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+.statArrowModal {
+  font-size: 3rem !important;
 }
 
 .statPlaceholder {
@@ -367,6 +427,7 @@
   flex: 1;
   width: 50%;
   min-width: 0;
+  margin-left: 5rem;
 }
 
 .radarChart svg polygon {
@@ -426,8 +487,15 @@
 }
 .axisLabel {
   fill: rgba(255, 255, 255, 0.85);
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 700;
 }
+
+.axisLabelModal {
+  font-size: 25px !important;
+  font-weight: 800 !important;
+}
+
 .axisLabelWarn {
   composes: axisLabel;
   fill: #ffb347;
@@ -512,4 +580,60 @@
   padding: 10px 14px;
   font-weight: 700;
   cursor: pointer;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: rgba(16, 17, 30, 0.95);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 32px;
+  max-width: 95vw;
+  max-height: 95vh;
+  overflow: auto;
+  width: 100%;
+  min-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.modalHeaderContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.modalTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.modalSubtitle {
+  font-size: 1.25rem;
 }

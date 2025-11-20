@@ -3,6 +3,7 @@ import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
 import { formatZScore } from "@/utils/zScoreRadar";
 import styles from "@/pages/RecommendationsPage/components/RecommendationsView.module.css";
+import typography from "@/styles/typography.module.css";
 
 type StatAxis = {
   key: keyof TeamWeaknessResponse;
@@ -26,15 +27,26 @@ const DEFAULT_RING_COUNT = 5;
 const AXIS_LABEL_OFFSET = 1.25;
 const SVG_PADDING = 28;
 
-const LABEL_OVERRIDES: Partial<Record<
+const LABEL_OVERRIDES_MODAL: Partial<Record<
   keyof TeamWeaknessResponse,
   { xOffset?: number; yOffset?: number; anchor?: "start" | "middle" | "end"; offsetMultiplier?: number }
 >> = {
-  strikeout_rate: { xOffset: -16, yOffset: -6 },
-  walk_rate: { xOffset: 40, anchor: "start" },
-  base_running: { xOffset: -2, anchor: "end" },
-  on_base_percentage: { yOffset: 14 },
-  isolated_power: { yOffset: 10 },
+  strikeout_rate: { xOffset: -81, yOffset: -2 },
+  walk_rate: { xOffset: -9, yOffset: 15, anchor: "start" },
+  base_running: { xOffset: 10, yOffset: 14, anchor: "end" },
+  on_base_percentage: { xOffset: 35, yOffset: 8 },
+  isolated_power: { xOffset: 80, yOffset: 10 },
+};
+
+const LABEL_OVERRIDES_CARD: Partial<Record<
+  keyof TeamWeaknessResponse,
+  { xOffset?: number; yOffset?: number; anchor?: "start" | "middle" | "end"; offsetMultiplier?: number }
+>> = {
+  strikeout_rate: { xOffset: -45, yOffset: 0 },
+  walk_rate: { xOffset: -12, yOffset: 0 },
+  base_running: { xOffset: -80, yOffset: 0 },
+  on_base_percentage: { xOffset: 0, yOffset: 0 },
+  isolated_power: { xOffset: 60, yOffset: 0 },
 };
 
 /**
@@ -64,6 +76,7 @@ export function RecommendationsRadarCard({
   const [animatedCurrentFractions, setAnimatedCurrentFractions] = useState<number[]>([]);
   const [animatedBaselineFractions, setAnimatedBaselineFractions] = useState<number[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Compute scale and fractions (needed for hooks)
   const scaleData = currentWeakness ? computeScale(statKeys, baselineWeakness, currentWeakness) : null;
@@ -267,10 +280,17 @@ export function RecommendationsRadarCard({
     return Math.round(percentile);
   };
 
-  return (
-    <Card title="Roster Performance" subtitle="Before/After Changes">
-      <div className={styles.performanceLayout}>
-        <div className={styles.statsComparisonColumn}>
+  // Render radar content - reusable for both card and modal
+  const renderRadarContent = (isModal = false) => {
+    const modalSize = isModal ? 600 : RADAR_SIZE;
+    const modalRadius = isModal ? 230 : RADAR_RADIUS;
+    const modalCenter = { x: modalSize / 2, y: modalSize / 2 };
+    const modalPadding = isModal ? SVG_PADDING * 2 : SVG_PADDING;
+    const svgMaxWidth = isModal ? "600px" : "300px";
+
+    return (
+      <div className={`${styles.performanceLayout} ${isModal ? styles.performanceLayoutModal : ''}`}>
+        <div className={`${styles.statsComparisonColumn} ${isModal ? styles.statsComparisonColumnModal : ''}`}>
           {statKeys.map(({ key, label }) => {
             const baselineValue = baselineWeakness?.[key];
             const currentValue = currentWeakness![key];
@@ -289,7 +309,7 @@ export function RecommendationsRadarCard({
             };
             
             return (
-              <div key={key} className={styles.statComparisonBlock}>
+              <div key={key} className={`${styles.statComparisonBlock} ${isModal ? styles.statComparisonBlockModal : ''}`}>
                 <div className={styles.statComparisonLabel}>{label}</div>
                 <div className={styles.statComparisonRow}>
                   {/* Baseline (Before) */}
@@ -297,16 +317,16 @@ export function RecommendationsRadarCard({
                     {baselineValue !== undefined ? (
                       <>
                         <div className={styles.statValueWithLabel}>
-                          <div className={`${styles.statComparisonValue} ${getStatColorClass(baselineValue)}`}>
+                          <div className={`${styles.statComparisonValue} ${getStatColorClass(baselineValue)} ${isModal ? styles.statComparisonValueModal : ''}`}>
                             {formatValue(baselineValue)}
                           </div>
-                          <div className={styles.statSubLabel}>std dev</div>
+                          <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>std dev</div>
                         </div>
                         <div className={styles.statPercentileWithLabel}>
-                          <div className={`${styles.statComparisonPercentile} ${getStatColorClass(baselineValue)}`}>
-                            {baselinePercentile}<span className={styles.percentileSuffix}>th</span>
+                          <div className={`${styles.statComparisonPercentile} ${getStatColorClass(baselineValue)} ${isModal ? styles.statComparisonPercentileModal : ''}`}>
+                            {baselinePercentile}<span className={`${styles.percentileSuffix} ${isModal ? styles.percentileSuffixModal : ''}`}>th</span>
                           </div>
-                          <div className={styles.statSubLabel}>percentile</div>
+                          <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>percentile</div>
                         </div>
                       </>
                     ) : (
@@ -315,28 +335,28 @@ export function RecommendationsRadarCard({
                   </div>
                   
                   {/* Delta and Arrow */}
-                  <div className={styles.statDeltaArrow}>
+                  <div className={`${styles.statDeltaArrow} ${isModal ? styles.statDeltaArrowModal : ''}`}>
                     {delta !== null && (
-                      <div className={`${styles.statDelta} ${getDeltaColorClass()}`}>
+                      <div className={`${styles.statDelta} ${getDeltaColorClass()} ${isModal ? styles.statDeltaModal : ''}`}>
                         {delta === 0 ? '0.00' : `${delta > 0 ? '+' : '-'}${Math.abs(delta).toFixed(2)}`}
                       </div>
                     )}
-                    <div className={styles.statArrow}>→</div>
+                    <div className={`${styles.statArrow} ${isModal ? styles.statArrowModal : ''}`}>→</div>
                   </div>
                   
                   {/* Current (After) */}
                   <div className={styles.statAfterGroup}>
                     <div className={styles.statValueWithLabel}>
-                      <div className={`${styles.statComparisonValue} ${getStatColorClass(currentValue)}`}>
+                      <div className={`${styles.statComparisonValue} ${getStatColorClass(currentValue)} ${isModal ? styles.statComparisonValueModal : ''}`}>
                         {formatValue(currentValue)}
                       </div>
-                      <div className={styles.statSubLabel}>std dev</div>
+                      <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>std dev</div>
                     </div>
                     <div className={styles.statPercentileWithLabel}>
-                      <div className={`${styles.statComparisonPercentile} ${getStatColorClass(currentValue)}`}>
-                        {currentPercentile}<span className={styles.percentileSuffix}>th</span>
+                      <div className={`${styles.statComparisonPercentile} ${getStatColorClass(currentValue)} ${isModal ? styles.statComparisonPercentileModal : ''}`}>
+                        {currentPercentile}<span className={`${styles.percentileSuffix} ${isModal ? styles.percentileSuffixModal : ''}`}>th</span>
                       </div>
-                      <div className={styles.statSubLabel}>percentile</div>
+                      <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>percentile</div>
                     </div>
                   </div>
                 </div>
@@ -346,13 +366,13 @@ export function RecommendationsRadarCard({
         </div>
         <div className={styles.radarChart}>
         <svg
-          viewBox={`${-SVG_PADDING} ${-SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING}`}
-          style={{ width: "100%", maxWidth: "300px", height: "auto", overflow: "visible" }}
+          viewBox={`${-modalPadding} ${-modalPadding} ${modalSize + 2 * modalPadding} ${modalSize + 2 * modalPadding}`}
+          style={{ width: "100%", maxWidth: svgMaxWidth, height: "auto", overflow: "visible" }}
         >
           {ringFractions.map((fraction, i) => (
             <polygon
               key={`ring-${i}`}
-              points={buildRingPolygon(fraction, statKeys.length)}
+              points={buildRingPolygon(fraction, statKeys.length, modalRadius, modalCenter)}
               fill="none"
               stroke="rgba(255,255,255,0.1)"
               strokeWidth={1}
@@ -360,12 +380,12 @@ export function RecommendationsRadarCard({
           ))}
 
           {statKeys.map((_, idx) => {
-            const { x, y } = getPointForFraction(1, idx, statKeys.length);
+            const { x, y } = getPointForFraction(1, idx, statKeys.length, true, modalRadius, modalCenter);
             return (
               <line
                 key={`axis-${idx}`}
-                x1={RADAR_CENTER.x}
-                y1={RADAR_CENTER.y}
+                x1={modalCenter.x}
+                y1={modalCenter.y}
                 x2={x}
                 y2={y}
                 stroke="rgba(255,255,255,0.12)"
@@ -375,19 +395,19 @@ export function RecommendationsRadarCard({
           })}
 
           <polygon
-            points={buildPolygonPoints(currentFractions, statKeys.length)}
+            points={buildPolygonPoints(currentFractions, statKeys.length, modalRadius, modalCenter)}
             className={styles.teamPolygon}
           />
 
           {baselineFractions && (
             <polygon
-              points={buildPolygonPoints(baselineFractions, statKeys.length)}
+              points={buildPolygonPoints(baselineFractions, statKeys.length, modalRadius, modalCenter)}
               className={styles.leaguePolygon}
             />
           )}
 
           <polygon
-            points={buildRingPolygon(toFraction(0), statKeys.length)}
+            points={buildRingPolygon(toFraction(0), statKeys.length, modalRadius, modalCenter)}
             fill="none"
             stroke="rgba(255,255,255,0.35)"
             strokeWidth={1}
@@ -397,11 +417,11 @@ export function RecommendationsRadarCard({
           {ringLabels.map((value) => {
             const fraction = toFraction(value);
             const isBaseline = Math.abs(value) < 1e-6;
-            const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + (isBaseline ? 6 : -4);
+            const y = modalCenter.y - modalRadius * fraction + (isBaseline ? 6 : -4);
             return (
               <text
                 key={`ring-label-${value}`}
-                x={RADAR_CENTER.x}
+                x={modalCenter.x}
                 y={y}
                 textAnchor="middle"
                 className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""}`}
@@ -413,9 +433,9 @@ export function RecommendationsRadarCard({
           })}
 
           {statKeys.map((axis, idx) => {
-          const overrides = LABEL_OVERRIDES[axis.key];
+          const overrides = isModal ? LABEL_OVERRIDES_MODAL[axis.key] : LABEL_OVERRIDES_CARD[axis.key];
           const offsetMultiplier = overrides?.offsetMultiplier ?? AXIS_LABEL_OFFSET;
-          let { x, y } = getPointForFraction(offsetMultiplier, idx, statKeys.length, false);
+          let { x, y } = getPointForFraction(offsetMultiplier, idx, statKeys.length, false, modalRadius, modalCenter);
           x += overrides?.xOffset ?? 0;
           y += overrides?.yOffset ?? 0;
           let anchor: "start" | "middle" | "end";
@@ -431,6 +451,11 @@ export function RecommendationsRadarCard({
             let labelClass = styles.axisLabel;
             if (idx === highlightOrder[0]) labelClass = styles.axisLabelSevere;
             else if (idx === highlightOrder[1]) labelClass = styles.axisLabelWarn;
+            
+            // Add modal class if in modal view
+            if (isModal) {
+              labelClass = `${labelClass} ${styles.axisLabelModal}`;
+            }
 
             return (
               <text
@@ -458,7 +483,45 @@ export function RecommendationsRadarCard({
         </div>
       </div>
     </div>
+    );
+  };
+
+  return (
+    <>
+    <Card 
+      title="Roster Performance" 
+      subtitle="Before/After Changes"
+      headerAction={
+        <button 
+          className={styles.baselineBtn}
+          onClick={() => setIsModalOpen(true)}
+        >
+          Expand Metrics
+        </button>
+      }
+    >
+      {renderRadarContent(false)}
     </Card>
+    {isModalOpen && (
+      <div 
+        className={styles.modalOverlay}
+        onClick={() => setIsModalOpen(false)}
+      >
+        <div 
+          className={styles.modalContent}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.modalHeader}>
+            <div className={styles.modalHeaderContent}>
+              <div className={`${typography.heading3} ${styles.modalTitle}`}>Roster Performance</div>
+              <div className={`${typography.bodySmall} ${typography.muted} ${styles.modalSubtitle}`}>Before/After Changes</div>
+            </div>
+          </div>
+          {renderRadarContent(true)}
+        </div>
+      </div>
+    )}
+  </>
   );
 }
 
@@ -487,25 +550,42 @@ function computeScale(
   return { scaleMin, scaleMax, ringValues };
 }
 
-function buildPolygonPoints(fractions: number[], axisCount: number) {
+function buildPolygonPoints(
+  fractions: number[], 
+  axisCount: number, 
+  radius = RADAR_RADIUS, 
+  center = RADAR_CENTER
+) {
   return fractions
     .map((fraction, idx) => {
-      const { x, y } = getPointForFraction(fraction, idx, axisCount);
+      const { x, y } = getPointForFraction(fraction, idx, axisCount, true, radius, center);
       return `${x},${y}`;
     })
     .join(" ");
 }
 
-function buildRingPolygon(fraction: number, axisCount: number) {
-  return buildPolygonPoints(Array(axisCount).fill(fraction), axisCount);
+function buildRingPolygon(
+  fraction: number, 
+  axisCount: number, 
+  radius = RADAR_RADIUS, 
+  center = RADAR_CENTER
+) {
+  return buildPolygonPoints(Array(axisCount).fill(fraction), axisCount, radius, center);
 }
 
-function getPointForFraction(fraction: number, axisIndex: number, axisCount: number, clampCircle = true) {
+function getPointForFraction(
+  fraction: number, 
+  axisIndex: number, 
+  axisCount: number, 
+  clampCircle = true,
+  radius = RADAR_RADIUS,
+  center = RADAR_CENTER
+) {
   const angle = getAngle(axisIndex, axisCount);
-  const radius = clampCircle ? RADAR_RADIUS * fraction : RADAR_RADIUS * fraction;
+  const r = clampCircle ? radius * fraction : radius * fraction;
   return {
-    x: RADAR_CENTER.x + radius * Math.sin(angle),
-    y: RADAR_CENTER.y - radius * Math.cos(angle),
+    x: center.x + r * Math.sin(angle),
+    y: center.y - r * Math.cos(angle),
   };
 }
 
