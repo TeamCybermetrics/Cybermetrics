@@ -317,16 +317,16 @@ export function RecommendationsRadarCard({
                     {baselineValue !== undefined ? (
                       <>
                         <div className={styles.statValueWithLabel}>
-                          <div className={`${styles.statComparisonValue} ${getStatColorClass(baselineValue)}`}>
+                          <div className={`${styles.statComparisonValue} ${getStatColorClass(baselineValue)} ${isModal ? styles.statComparisonValueModal : ''}`}>
                             {formatValue(baselineValue)}
                           </div>
-                          <div className={styles.statSubLabel}>std dev</div>
+                          <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>std dev</div>
                         </div>
                         <div className={styles.statPercentileWithLabel}>
-                          <div className={`${styles.statComparisonPercentile} ${getStatColorClass(baselineValue)}`}>
-                            {baselinePercentile}<span className={styles.percentileSuffix}>th</span>
+                          <div className={`${styles.statComparisonPercentile} ${getStatColorClass(baselineValue)} ${isModal ? styles.statComparisonPercentileModal : ''}`}>
+                            {baselinePercentile}<span className={`${styles.percentileSuffix} ${isModal ? styles.percentileSuffixModal : ''}`}>th</span>
                           </div>
-                          <div className={styles.statSubLabel}>percentile</div>
+                          <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>percentile</div>
                         </div>
                       </>
                     ) : (
@@ -335,28 +335,28 @@ export function RecommendationsRadarCard({
                   </div>
                   
                   {/* Delta and Arrow */}
-                  <div className={styles.statDeltaArrow}>
+                  <div className={`${styles.statDeltaArrow} ${isModal ? styles.statDeltaArrowModal : ''}`}>
                     {delta !== null && (
-                      <div className={`${styles.statDelta} ${getDeltaColorClass()}`}>
+                      <div className={`${styles.statDelta} ${getDeltaColorClass()} ${isModal ? styles.statDeltaModal : ''}`}>
                         {delta === 0 ? '0.00' : `${delta > 0 ? '+' : '-'}${Math.abs(delta).toFixed(2)}`}
                       </div>
                     )}
-                    <div className={styles.statArrow}>→</div>
+                    <div className={`${styles.statArrow} ${isModal ? styles.statArrowModal : ''}`}>→</div>
                   </div>
                   
                   {/* Current (After) */}
                   <div className={styles.statAfterGroup}>
                     <div className={styles.statValueWithLabel}>
-                      <div className={`${styles.statComparisonValue} ${getStatColorClass(currentValue)}`}>
+                      <div className={`${styles.statComparisonValue} ${getStatColorClass(currentValue)} ${isModal ? styles.statComparisonValueModal : ''}`}>
                         {formatValue(currentValue)}
                       </div>
-                      <div className={styles.statSubLabel}>std dev</div>
+                      <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>std dev</div>
                     </div>
                     <div className={styles.statPercentileWithLabel}>
-                      <div className={`${styles.statComparisonPercentile} ${getStatColorClass(currentValue)}`}>
-                        {currentPercentile}<span className={styles.percentileSuffix}>th</span>
+                      <div className={`${styles.statComparisonPercentile} ${getStatColorClass(currentValue)} ${isModal ? styles.statComparisonPercentileModal : ''}`}>
+                        {currentPercentile}<span className={`${styles.percentileSuffix} ${isModal ? styles.percentileSuffixModal : ''}`}>th</span>
                       </div>
-                      <div className={styles.statSubLabel}>percentile</div>
+                      <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ''}`}>percentile</div>
                     </div>
                   </div>
                 </div>

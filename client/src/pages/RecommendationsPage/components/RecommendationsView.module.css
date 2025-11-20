@@ -247,13 +247,6 @@
   flex: 0 0 8rem;
 }
 
-.statComparisonBlockModal .statComparisonValue {
-  font-size: 1.25rem;
-}
-
-.statComparisonBlockModal .statComparisonPercentile {
-  font-size: 1.25rem;
-}
 
 .statComparisonBlockModal .statSubLabel {
   font-size: 0.625rem;
@@ -320,10 +313,18 @@
   transition: color 0.4s ease;
 }
 
+.statComparisonValueModal {
+  font-size: 1.25rem !important;
+}
+
 .statComparisonPercentile {
   font-size: 0.9375rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.statComparisonPercentileModal {
+  font-size: 1.25rem !important;
 }
 
 .statSubLabel {
@@ -333,6 +334,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   margin-top: 0.125rem;
+  white-space: nowrap;
 }
 
 .percentileSuffix {
@@ -340,6 +342,14 @@
   font-weight: 600;
   color: rgba(255, 255, 255, 0.5);
   margin-left: 0.0625rem;
+}
+
+.percentileSuffixModal {
+  font-size: 0.875rem !important;
+}
+
+.statSubLabelModal {
+  font-size: 0.75rem !important;
 }
 
 .statDeltaArrow {
@@ -367,6 +377,20 @@
   font-weight: 300;
   text-align: center;
   width: 100%;
+}
+
+.statDeltaArrowModal {
+  width: 8rem;
+  gap: 0.2rem;
+}
+
+.statDeltaModal {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+.statArrowModal {
+  font-size: 3rem !important;
 }
 
 .statPlaceholder {
