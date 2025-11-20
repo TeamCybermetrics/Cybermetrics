@@ -58,7 +58,7 @@ export function RecommendationsSection({
                 disabled={disabled}
                 onClick={() => {
                   if (!disabled) {
-                    void onSavePlayer(savedPlayer, targetPosition);
+                    void onSavePlayer(savedPlayer);
                   }
                 }}
               >
@@ -71,3 +71,4 @@ export function RecommendationsSection({
     </ul>
   );
 }
+
