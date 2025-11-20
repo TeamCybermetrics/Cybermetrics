@@ -277,7 +277,7 @@ export function RecommendationsRadarCard({
     const svgMaxWidth = isModal ? "600px" : "300px";
 
     return (
-      <div className={styles.performanceLayout}>
+      <div className={`${styles.performanceLayout} ${isModal ? styles.performanceLayoutModal : ''}`}>
         <div className={styles.statsComparisonColumn}>
           {statKeys.map(({ key, label }) => {
             const baselineValue = baselineWeakness?.[key];

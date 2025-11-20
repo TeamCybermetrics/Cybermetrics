@@ -179,6 +179,10 @@
   align-items: flex-start;
 }
 
+.performanceLayoutModal {
+  align-items: center;
+}
+
 .statsComparisonColumn {
   display: flex;
   flex-direction: column;
