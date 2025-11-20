@@ -278,7 +278,7 @@ export function RecommendationsRadarCard({
 
     return (
       <div className={`${styles.performanceLayout} ${isModal ? styles.performanceLayoutModal : ''}`}>
-        <div className={styles.statsComparisonColumn}>
+        <div className={`${styles.statsComparisonColumn} ${isModal ? styles.statsComparisonColumnModal : ''}`}>
           {statKeys.map(({ key, label }) => {
             const baselineValue = baselineWeakness?.[key];
             const currentValue = currentWeakness![key];
@@ -297,7 +297,7 @@ export function RecommendationsRadarCard({
             };
             
             return (
-              <div key={key} className={styles.statComparisonBlock}>
+              <div key={key} className={`${styles.statComparisonBlock} ${isModal ? styles.statComparisonBlockModal : ''}`}>
                 <div className={styles.statComparisonLabel}>{label}</div>
                 <div className={styles.statComparisonRow}>
                   {/* Baseline (Before) */}

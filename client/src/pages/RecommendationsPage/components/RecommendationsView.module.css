@@ -192,6 +192,10 @@
   min-width: 0;
 }
 
+.statsComparisonColumnModal {
+  gap: 1.5rem;
+}
+
 .comparisonHeader {
   display: flex;
   align-items: center;
@@ -231,6 +235,34 @@
   border-radius: 0.625rem;
   padding: 0.625rem 0.875rem;
   transition: background 0.3s ease;
+}
+
+.statComparisonBlockModal {
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.875rem;
+}
+
+.statComparisonBlockModal .statComparisonLabel {
+  font-size: 0.875rem;
+  flex: 0 0 8rem;
+}
+
+.statComparisonBlockModal .statComparisonValue {
+  font-size: 1.25rem;
+}
+
+.statComparisonBlockModal .statComparisonPercentile {
+  font-size: 1.25rem;
+}
+
+.statComparisonBlockModal .statSubLabel {
+  font-size: 0.625rem;
+}
+
+.statComparisonBlockModal .statBeforeGroup,
+.statComparisonBlockModal .statAfterGroup {
+  width: 10rem;
+  gap: 0.75rem;
 }
 
 .statComparisonLabel {
