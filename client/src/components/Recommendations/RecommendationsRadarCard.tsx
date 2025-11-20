@@ -1,7 +1,7 @@
 import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
 import { formatZScore } from "@/utils/zScoreRadar";
-import styles from "@/features/recommendations/RecommendationsView.module.css";
+import styles from "@/pages/RecommendationsPage/components/RecommendationsView.module.css";
 
 type StatAxis = {
   key: keyof TeamWeaknessResponse;

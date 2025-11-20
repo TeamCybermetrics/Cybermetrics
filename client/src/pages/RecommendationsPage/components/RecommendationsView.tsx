@@ -183,6 +183,21 @@ export function RecommendationsView({
 
       {/* Right column */}
       <div className={styles.rightCol}>
+        <DiamondPanel
+          lineup={lineup}
+          activePosition={activePosition}
+          dropTarget={dropTarget}
+          dragPlayer={null}
+          onSelectPosition={setActivePosition}
+          onDragOverPosition={setDropTarget}
+          onDragLeavePosition={() => setDropTarget(null)}
+          onDropOnPosition={onPositionDrop}
+          onPrepareDrag={onPrepareDrag}
+          onClearDragState={onClearDrag}
+          onClearSlot={onClearSlot}
+          onSaveTeam={onSaveTeam}
+        />
+
         <RecommendationsRadarCard
           statKeys={STAT_KEYS}
           baselineWeakness={baselineWeakness}

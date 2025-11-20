@@ -60,7 +60,7 @@ export function SavedPlayersSection({
     }
   });
   
-  const subtitle = `${playingPlayers.length} playing • ${benchPlayers.length} bench`;
+  const subtitle = `${playingPlayers.length} lineup • ${benchPlayers.length} bench`;
   
   const renderPlayingPlayerCard = (player: SavedPlayer) => {
     const scoreData = playerScores.find(s => s.id === player.id);
@@ -149,7 +149,7 @@ export function SavedPlayersSection({
           <>
             {sortedPlayingPlayers.length > 0 && (
               <div className={styles.playerSection}>
-                <div className={styles.sectionHeader}>Playing</div>
+                <div className={styles.sectionHeader}>Lineup</div>
                 <div className={styles.playingPlayersGrid}>
                   {sortedPlayingPlayers.map(renderPlayingPlayerCard)}
                 </div>

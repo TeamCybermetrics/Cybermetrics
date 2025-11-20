@@ -1,6 +1,6 @@
 import { ProtectedRoute, PageCard } from "@/components";
-import { useRecommendations } from "@/features/recommendations/useRecommendations";
-import { RecommendationsView } from "@/features/recommendations/RecommendationsView";
+import { useRecommendations } from "./components/useRecommendations";
+import { RecommendationsView } from "./components/RecommendationsView";
 
 export default function RecommendationsPage() {
   const vm = useRecommendations();
