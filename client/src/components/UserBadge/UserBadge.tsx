@@ -6,7 +6,9 @@ import styles from "./UserBadge.module.css";
 
 export default function UserBadge() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   
   const { email } = authActions.getCurrentUser();
@@ -15,22 +17,34 @@ export default function UserBadge() {
   const initials = displayName.charAt(0)?.toUpperCase() || "?";
   const showEmail = !storedDisplayName; // Only show email if no display name
 
-  // Close dropdown when clicking outside
+  // Cleanup animation timeout on unmount
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
       }
     };
+  }, []);
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+  const handleMouseEnter = () => {
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
     }
+    setIsOpen(true);
+    setIsAnimating(true);
+    // Animation duration is 0.3s, so wait 300ms before allowing logout
+    animationTimeoutRef.current = setTimeout(() => {
+      setIsAnimating(false);
+    }, 300);
+  };
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
+  const handleMouseLeave = () => {
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+    setIsOpen(false);
+    setIsAnimating(false);
+  };
 
   const handleLogout = () => {
     authActions.logout();
@@ -38,23 +52,25 @@ export default function UserBadge() {
   };
 
   return (
-    <div className={styles.container} ref={dropdownRef}>
+    <div 
+      className={styles.container} 
+      ref={dropdownRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className={`${styles.slideContainer} ${isOpen ? styles.slideContainerOpen : ""}`}>
-        <button 
-          className={styles.badge}
-          onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
-        >
+        <div className={styles.badge}>
           <div className={styles.avatar}>{initials}</div>
           <div className={styles.info}>
             <span className={styles.name}>{displayName}</span>
             {showEmail && email && <span className={styles.meta}>{email}</span>}
           </div>
-        </button>
+        </div>
 
         <button 
           className={styles.logoutButton}
           onClick={handleLogout}
+          disabled={isAnimating}
           aria-label="Log out"
         >
           <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
