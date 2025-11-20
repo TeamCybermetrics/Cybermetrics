@@ -1,4 +1,5 @@
 from config.firebase import firebase_service
+import threading
 
 # auth related 
 from infrastructure.auth_repository import AuthRepositoryFirebase 
@@ -12,12 +13,19 @@ from services.player_search_service import PlayerSearchService
 
 # Singleton player repository instance (shared across all requests)
 _player_repository_singleton: PlayerRepositoryFirebase | None = None
+_player_repository_lock = threading.Lock()
 
 def _get_player_repository_singleton() -> PlayerRepositoryFirebase:
-    """Get or create the singleton player repository instance."""
+    """Get or create the singleton player repository instance (thread-safe)."""
     global _player_repository_singleton
+    
+    # Double-checked locking pattern
     if _player_repository_singleton is None:
-        _player_repository_singleton = PlayerRepositoryFirebase(firebase_service.db)
+        with _player_repository_lock:
+            # Check again after acquiring lock
+            if _player_repository_singleton is None:
+                _player_repository_singleton = PlayerRepositoryFirebase(firebase_service.db)
+    
     return _player_repository_singleton
 
 # roster average calculation related
