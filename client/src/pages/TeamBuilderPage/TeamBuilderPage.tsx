@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { ROUTES } from "@/config";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer, TeamWeaknessResponse, PlayerValueScore } from "@/api/players";
 import { PageCard, Card } from "@/components";
@@ -630,7 +632,14 @@ export default function TeamBuilderPage() {
   );
 
   return (
-    <PageCard title="Lineup Constructor">
+    <PageCard 
+      title="Lineup Constructor"
+      headerAction={
+        <Link to={ROUTES.ROSTER_CONSTRUCTOR} className={styles.navButton}>
+          Roster Constructor <ArrowRight size={16} />
+        </Link>
+      }
+    >
       <div className={styles.builderShell}>
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn}>

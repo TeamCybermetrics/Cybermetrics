@@ -5,6 +5,7 @@ interface PageCardProps {
   title: string;
   children: ReactNode;
   className?: string;
+  headerAction?: ReactNode;
 }
 
 /**
@@ -15,11 +16,12 @@ interface PageCardProps {
  * @param children - The content to display within the card
  * @param className - Optional additional CSS class names
  */
-export function PageCard({ title, children, className = "" }: PageCardProps) {
+export function PageCard({ title, children, className = "", headerAction }: PageCardProps) {
   return (
     <div className={`${styles.page} ${className}`}>
       <header className={styles.header}>
         <div className={styles.kicker}>{title}</div>
+        {headerAction && <div className={styles.headerAction}>{headerAction}</div>}
       </header>
       {children}
     </div>
