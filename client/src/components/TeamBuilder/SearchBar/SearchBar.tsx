@@ -31,7 +31,7 @@ export function SearchBar({
         </svg>
         <input
           type="text"
-          placeholder="Search players by name, team, or position…"
+          placeholder="Search players by name…"
           value={searchTerm}
           onChange={(event) => onSearchTermChange(event.target.value)}
           onFocus={onFocus}

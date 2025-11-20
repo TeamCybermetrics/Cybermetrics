@@ -31,6 +31,13 @@ export function SavedPlayersSection({
 }: SavedPlayersSectionProps) {
   const subtitle = `${players.length} player${players.length !== 1 ? 's' : ''}`;
   
+  // Sort players alphabetically by last name (second name after first space)
+  const sortedPlayers = [...players].sort((a, b) => {
+    const lastNameA = a.name.split(' ')[1] || a.name;
+    const lastNameB = b.name.split(' ')[1] || b.name;
+    return lastNameA.localeCompare(lastNameB);
+  });
+  
   return (
     <Card title="Saved Players" subtitle={subtitle}>
       <div className={styles.playerScroller}>
@@ -40,7 +47,7 @@ export function SavedPlayersSection({
             <span>Search for players and add them to your team.</span>
           </div>
         ) : (
-          players.map((player) => {
+          sortedPlayers.map((player) => {
             const alreadyAssigned = assignedIds.has(player.id);
             const isDeleting = deletingPlayerIds.has(player.id);
 
