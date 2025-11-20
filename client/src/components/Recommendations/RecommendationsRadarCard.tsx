@@ -27,15 +27,26 @@ const DEFAULT_RING_COUNT = 5;
 const AXIS_LABEL_OFFSET = 1.25;
 const SVG_PADDING = 28;
 
-const LABEL_OVERRIDES: Partial<Record<
+const LABEL_OVERRIDES_MODAL: Partial<Record<
   keyof TeamWeaknessResponse,
   { xOffset?: number; yOffset?: number; anchor?: "start" | "middle" | "end"; offsetMultiplier?: number }
 >> = {
-  strikeout_rate: { xOffset: -38, yOffset: -2 },
-  walk_rate: { xOffset: -9, yOffset: 15 ,anchor: "start" },
-  base_running: { xOffset: 10, yOffset: 14 ,anchor: "end" },
+  strikeout_rate: { xOffset: -81, yOffset: -2 },
+  walk_rate: { xOffset: -9, yOffset: 15, anchor: "start" },
+  base_running: { xOffset: 10, yOffset: 14, anchor: "end" },
   on_base_percentage: { xOffset: 35, yOffset: 8 },
-  isolated_power: { xOffset: 17, yOffset: 10 },
+  isolated_power: { xOffset: 80, yOffset: 10 },
+};
+
+const LABEL_OVERRIDES_CARD: Partial<Record<
+  keyof TeamWeaknessResponse,
+  { xOffset?: number; yOffset?: number; anchor?: "start" | "middle" | "end"; offsetMultiplier?: number }
+>> = {
+  strikeout_rate: { xOffset: -45, yOffset: 0 },
+  walk_rate: { xOffset: -12, yOffset: 0 },
+  base_running: { xOffset: -80, yOffset: 0 },
+  on_base_percentage: { xOffset: 0, yOffset: 0 },
+  isolated_power: { xOffset: 60, yOffset: 0 },
 };
 
 /**
@@ -422,7 +433,7 @@ export function RecommendationsRadarCard({
           })}
 
           {statKeys.map((axis, idx) => {
-          const overrides = LABEL_OVERRIDES[axis.key];
+          const overrides = isModal ? LABEL_OVERRIDES_MODAL[axis.key] : LABEL_OVERRIDES_CARD[axis.key];
           const offsetMultiplier = overrides?.offsetMultiplier ?? AXIS_LABEL_OFFSET;
           let { x, y } = getPointForFraction(offsetMultiplier, idx, statKeys.length, false, modalRadius, modalCenter);
           x += overrides?.xOffset ?? 0;
