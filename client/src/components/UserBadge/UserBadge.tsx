@@ -39,53 +39,35 @@ export default function UserBadge() {
 
   return (
     <div className={styles.container} ref={dropdownRef}>
-      <button 
-        className={styles.badge}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        <div className={styles.avatar}>{initials}</div>
-        <div className={styles.info}>
-          <span className={styles.name}>{displayName}</span>
-          {showEmail && email && <span className={styles.meta}>{email}</span>}
-        </div>
-        <svg 
-          className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ""}`}
-          width="16" 
-          height="16" 
-          viewBox="0 0 16 16" 
-          fill="none"
+      <div className={`${styles.slideContainer} ${isOpen ? styles.slideContainerOpen : ""}`}>
+        <button 
+          className={styles.badge}
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
         >
-          <path 
-            d="M4 6L8 10L12 6" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+          <div className={styles.avatar}>{initials}</div>
+          <div className={styles.info}>
+            <span className={styles.name}>{displayName}</span>
+            {showEmail && email && <span className={styles.meta}>{email}</span>}
+          </div>
+        </button>
 
-      {isOpen && (
-        <div className={styles.dropdown}>
-          <button 
-            className={styles.dropdownItem}
-            onClick={handleLogout}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path 
-                d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              />
-            </svg>
-            Log out
-          </button>
-        </div>
-      )}
+        <button 
+          className={styles.logoutButton}
+          onClick={handleLogout}
+          aria-label="Log out"
+        >
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+            <path 
+              d="M6 14H3.33333C2.97971 14 2.64057 13.8595 2.39052 13.6095C2.14048 13.3594 2 13.0203 2 12.6667V3.33333C2 2.97971 2.14048 2.64057 2.39052 2.39052C2.64057 2.14048 2.97971 2 3.33333 2H6M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6" 
+              stroke="currentColor" 
+              strokeWidth="1.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
