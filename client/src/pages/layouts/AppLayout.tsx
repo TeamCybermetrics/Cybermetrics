@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { ProtectedRoute, Sidebar, UserBadge, Footer } from "@/components";
+import { ProtectedRoute, Sidebar, Footer } from "@/components";
 import styles from "./AppLayout.module.css";
 
 export default function AppLayout() {
@@ -8,10 +8,6 @@ export default function AppLayout() {
       <Sidebar />
 
       <div className={styles.main}>
-        <div className={styles.topBar}>
-          <UserBadge />
-        </div>
-
         <div className={styles.content}>
           <ProtectedRoute>
             <Outlet />
