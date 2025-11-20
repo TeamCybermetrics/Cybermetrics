@@ -3,6 +3,7 @@ import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
 import { formatZScore } from "@/utils/zScoreRadar";
 import styles from "@/pages/RecommendationsPage/components/RecommendationsView.module.css";
+import typography from "@/styles/typography.module.css";
 
 type StatAxis = {
   key: keyof TeamWeaknessResponse;
@@ -494,6 +495,12 @@ export function RecommendationsRadarCard({
           className={styles.modalContent}
           onClick={(e) => e.stopPropagation()}
         >
+          <div className={styles.modalHeader}>
+            <div className={styles.modalHeaderContent}>
+              <div className={`${typography.heading3} ${styles.modalTitle}`}>Roster Performance</div>
+              <div className={`${typography.bodySmall} ${typography.muted} ${styles.modalSubtitle}`}>Before/After Changes</div>
+            </div>
+          </div>
           {renderRadarContent(true)}
         </div>
       </div>

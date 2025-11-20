@@ -576,4 +576,32 @@
   overflow: auto;
   width: 100%;
   min-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.modalHeaderContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.modalTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.modalSubtitle {
+  font-size: 1.25rem;
 }
