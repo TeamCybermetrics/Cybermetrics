@@ -18,40 +18,24 @@ export const DashboardIcon = (props: IconProps) => (
   </svg>
 );
 
-export const TeamBuilderIcon = (props: IconProps) => (
+export const HammerIcon = (props: IconProps) => (
   <svg {...baseProps} {...props}>
     <path
-      d="M9 9.5a3 3 0 1 1 6 0"
+      d="M14.5 6.5L18 10l-8.5 8.5a2.5 2.5 0 0 1-3.5 0 2.5 2.5 0 0 1 0-3.5L14.5 6.5Z"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
+      strokeLinejoin="round"
     />
     <path
-      d="M6.5 18.5c.8-2.2 2.9-4 5.5-4s4.7 1.8 5.5 4"
+      d="M14.5 6.5L17 4l3 3-2.5 2.5"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
+      strokeLinejoin="round"
     />
     <path
-      d="M5 7a2.5 2.5 0 1 1 3.4 2.3"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <path
-      d="M3.5 19a4.5 4.5 0 0 1 3.7-3.5"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <path
-      d="M16 9.3A2.5 2.5 0 1 1 19.5 7"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <path
-      d="M17 15.5a4.5 4.5 0 0 1 3.5 3.5"
+      d="M17 4L15 2"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
@@ -81,16 +65,18 @@ export const TeamAnalysisIcon = (props: IconProps) => (
   </svg>
 );
 
-export const RecommendationsIcon = (props: IconProps) => (
+export const BinocularsIcon = (props: IconProps) => (
   <svg {...baseProps} {...props}>
+    <circle cx="7" cy="14" r="4" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="17" cy="14" r="4" stroke="currentColor" strokeWidth="1.5" />
     <path
-      d="M12 3.5 13.9 8l4.6.3-3.5 3 1 4.7L12 14.3 8 16l1-4.7-3.5-3L10 8l2-4.5Z"
+      d="M7 10V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinejoin="round"
+      strokeLinecap="round"
     />
     <path
-      d="M7.5 19H12"
+      d="M11 14h2"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinecap="round"
@@ -126,9 +112,9 @@ export const MLBTeamsIcon = (props: IconProps) => (
 
 export const navIcons = {
   dashboard: DashboardIcon,
-  teamBuilder: TeamBuilderIcon,
+  hammer: HammerIcon,
   teamAnalysis: TeamAnalysisIcon,
-  recommendations: RecommendationsIcon,
+  binoculars: BinocularsIcon,
   mlbTeams: MLBTeamsIcon
 } as const;
 

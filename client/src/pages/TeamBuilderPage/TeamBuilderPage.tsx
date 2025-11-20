@@ -630,7 +630,7 @@ export default function TeamBuilderPage() {
   );
 
   return (
-    <PageCard title="Team Builder">
+    <PageCard title="Lineup Constructor">
       <div className={styles.builderShell}>
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn}>

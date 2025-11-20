@@ -1,21 +1,17 @@
 import { NavLink } from "react-router-dom";
+import { Hammer, Binoculars, HelpCircle } from "lucide-react";
 import { ROUTES } from "@/config";
-import {
-  TeamBuilderIcon,
-  TeamAnalysisIcon,
-} from "@/assets/icons";
 import logo from "@/assets/brand_badge.jpg";
 import UserBadge from "../UserBadge/UserBadge";
 import styles from "./Sidebar.module.css";
 
 const analysisItems = [
-  { label: "Team Builder", to: ROUTES.TEAM_BUILDER, icon: TeamBuilderIcon },
-  { label: "Team Analysis", to: ROUTES.TEAM_ANALYSIS, icon: TeamAnalysisIcon },
-  { label: "Recommendations", to: ROUTES.RECOMMENDATIONS, icon: TeamAnalysisIcon },
+  { label: "Lineup Constructor", to: ROUTES.LINEUP_CONSTRUCTOR, icon: Hammer },
+  { label: "Roster Constructor", to: ROUTES.ROSTER_CONSTRUCTOR, icon: Binoculars },
 ] as const;
 
 const aboutItems = [
-  { label: "About Cybermetrics", to: ROUTES.OUR_ALGORITHM, icon: null },
+  { label: "About Cybermetrics", to: ROUTES.OUR_ALGORITHM, icon: HelpCircle },
 ] as const;
 
 export default function Sidebar() {
@@ -38,7 +34,7 @@ export default function Sidebar() {
                   [styles.item, isActive ? styles.itemActive : ""].filter(Boolean).join(" ")
                 }
               >
-                <Icon className={styles.icon} />
+                <Icon className={styles.icon} size={20} />
                 <span className={styles.label}>{label}</span>
               </NavLink>
             ))}
@@ -46,7 +42,7 @@ export default function Sidebar() {
 
           <div className={styles.sectionHeader}>About</div>
           <nav className={styles.nav}>
-            {aboutItems.map(({ label, to }) => (
+            {aboutItems.map(({ label, to, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -54,7 +50,7 @@ export default function Sidebar() {
                   [styles.item, isActive ? styles.itemActive : ""].filter(Boolean).join(" ")
                 }
               >
-                <span className={styles.helpIcon}>?</span>
+                <Icon className={styles.icon} size={20} />
                 <span className={styles.label}>{label}</span>
               </NavLink>
             ))}

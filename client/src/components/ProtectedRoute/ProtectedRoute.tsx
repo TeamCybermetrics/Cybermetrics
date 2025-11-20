@@ -28,7 +28,7 @@ export default function ProtectedRoute({
         navigate(redirectTo || ROUTES.LOGIN);
       } else if (!requireAuth && isAuth) {
         // Don't need auth but logged in → redirect to dashboard
-        navigate(redirectTo || ROUTES.TEAM_BUILDER);
+        navigate(redirectTo || ROUTES.LINEUP_CONSTRUCTOR);
       } else {
         // All good, show the page
         setIsAuthorized(true);

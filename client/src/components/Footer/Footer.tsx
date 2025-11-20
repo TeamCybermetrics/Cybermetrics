@@ -20,14 +20,11 @@ export default function Footer() {
         <div className={styles.section}>
           <h3 className={styles.heading}>Product</h3>
           <nav className={styles.links}>
-            <Link to={ROUTES.TEAM_BUILDER} className={styles.link}>
-              Team Builder
+            <Link to={ROUTES.LINEUP_CONSTRUCTOR} className={styles.link}>
+              Lineup Constructor
             </Link>
-            <Link to={ROUTES.TEAM_ANALYSIS} className={styles.link}>
-              Team Analysis
-            </Link>
-            <Link to={ROUTES.RECOMMENDATIONS} className={styles.link}>
-              Recommendations
+            <Link to={ROUTES.ROSTER_CONSTRUCTOR} className={styles.link}>
+              Roster Constructor
             </Link>
           </nav>
         </div>

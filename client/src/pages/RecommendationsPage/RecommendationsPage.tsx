@@ -7,7 +7,7 @@ export default function RecommendationsPage() {
 
   return (
     <ProtectedRoute requireAuth>
-      <PageCard title="Recommendations">
+      <PageCard title="Roster Constructor">
         <RecommendationsView {...vm} />
       </PageCard>
     </ProtectedRoute>

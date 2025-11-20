@@ -10,8 +10,7 @@ export const ROUTES = {
   LANDING: "/",
   LOGIN: "/login",
   SIGNUP: "/signup",
-  TEAM_BUILDER: "/team-builder",
-  TEAM_ANALYSIS: "/team-analysis",
-  RECOMMENDATIONS: "/recommendations",
+  LINEUP_CONSTRUCTOR: "/lineup-constructor",
+  ROSTER_CONSTRUCTOR: "/roster-constructor",
   OUR_ALGORITHM: "/our-algorithm",
 } as const;

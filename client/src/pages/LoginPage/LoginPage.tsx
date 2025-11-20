@@ -25,7 +25,7 @@ export default function LoginPage() {
     if (result.success) {
       setSuccess("Login successful!");
       setTimeout(() => {
-        navigate(ROUTES.TEAM_BUILDER);
+        navigate(ROUTES.LINEUP_CONSTRUCTOR);
       }, 1000);
     } else {
       setError(result.error || "An error occurred");

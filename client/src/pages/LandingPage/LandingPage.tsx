@@ -33,7 +33,7 @@ export default function LandingPage() {
 
       <div className={styles.signUpButtonContainer}>
         {isAuthenticated ? (
-          <Link to={ROUTES.TEAM_BUILDER} className={styles.signUpButton}>
+          <Link to={ROUTES.LINEUP_CONSTRUCTOR} className={styles.signUpButton}>
             Dashboard
           </Link>
         ) : (
