@@ -5,6 +5,16 @@ import { playerActions } from "@/actions/players";
 import type { SavedPlayer } from "./types";
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
 
+/**
+ * Displays a team analysis UI that computes and shows team weaknesses and player value scores
+ * for either the active lineup or the full roster, with independent loading and error states.
+ *
+ * The component loads saved players, derives active and full roster IDs, debounces analysis requests,
+ * and runs separate API-driven analyses (weaknesses and player scores) for each mode; users can toggle
+ * between "Active Lineup" and "Full Roster" and retry the current analysis.
+ *
+ * @returns A React element containing the team analysis page with mode toggles and a WeaknessView populated with the current analysis state
+ */
 export default function TeamAnalysisPage() {
   const [savedPlayers, setSavedPlayers] = useState<SavedPlayer[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState<boolean>(true);

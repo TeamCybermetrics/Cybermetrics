@@ -14,6 +14,13 @@ const aboutItems = [
   { label: "About Cybermetrics", to: ROUTES.OUR_ALGORITHM, icon: HelpCircle },
 ] as const;
 
+/**
+ * Renders the application sidebar containing the brand, grouped navigation, and a user badge.
+ *
+ * Shows the logo and product title, a navigation group for "Analysis" and another for "About" with route links, and a UserBadge area at the bottom.
+ *
+ * @returns The sidebar element containing brand, grouped navigation links, and the user badge.
+ */
 export default function Sidebar() {
   return (
     <aside className={styles.sidebar}>

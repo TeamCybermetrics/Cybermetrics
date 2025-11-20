@@ -50,6 +50,38 @@ const STAT_KEYS: { key: keyof TeamWeaknessResponse; label: string }[] = [
 
 const formatValueNumber = (value: number) => formatZScore(value, 2);
 
+/**
+ * Render the recommendations view that displays saved players, a weaknesses radar, search controls, and recommended players.
+ *
+ * @param mode - Current panel mode: "idle", "search", or "recommendations"
+ * @param searchTerm - Current search input value
+ * @param draggingId - ID of the player currently being dragged, if any
+ * @param searchResults - Players matching the current search
+ * @param recommendedPlayers - Players produced by the recommendation engine
+ * @param savedPlayers - Players saved to the user's team
+ * @param savedPlayerIds - Set of IDs for players already saved to the team
+ * @param assignedIds - Set of player IDs already assigned to lineup slots
+ * @param savingPlayerIds - Set of player IDs currently being saved
+ * @param deletingPlayerIds - Set of player IDs currently being deleted
+ * @param playerScores - Array of per-player value scores used for display
+ * @param hasSearchTerm - Whether the search input contains text
+ * @param isRecommending - Whether a recommendation request is in progress
+ * @param recommendationError - Error message from the recommendation request, if any
+ * @param playerOperationError - Error message from player search/save/delete operations, if any
+ * @param baselineWeakness - Weakness profile for the saved baseline team, if set
+ * @param currentWeakness - Weakness profile for the current team, if available
+ * @param weaknessLoading - Whether weakness data is loading
+ * @param weaknessError - Error message for weakness data, if any
+ * @param setSearchTerm - Handler to update the search term
+ * @param onPrepareDrag - Handler called to begin dragging a player
+ * @param onClearDrag - Handler called to clear drag state
+ * @param onDeletePlayer - Handler to delete a saved player
+ * @param onSaveTeam - Handler to set the current saved players as the baseline team
+ * @param onGetRecommendations - Handler to trigger fetching recommendations
+ * @param onAddFromSearch - Handler to save a player from search results
+ * @param onAddFromRecommendation - Handler to save a player from recommendations
+ * @returns The rendered RecommendationsView component
+ */
 export function RecommendationsView({
   mode,
   searchTerm,

@@ -24,6 +24,26 @@ type DiamondPanelProps = {
   onSaveTeam?: () => void;
 };
 
+/**
+ * Renders an interactive diamond-shaped lineup editor showing positions, assigned players, and drag-and-drop controls.
+ *
+ * The component displays each position as a node on a diamond diagram, allows selecting positions, dragging assigned
+ * players between positions, clearing slots, and optionally saving the lineup.
+ *
+ * @param lineup - Mapping of DiamondPosition to a SavedPlayer or `null` for empty slots.
+ * @param activePosition - Currently selected DiamondPosition, or `null` if none.
+ * @param dropTarget - Position currently highlighted as a valid drop target, or `null`.
+ * @param dragPlayer - The SavedPlayer being dragged, or `null` when no drag is active.
+ * @param onSelectPosition - Called when a position node is clicked with the selected position.
+ * @param onDragOverPosition - Called when a draggable item is moved over a position; receives the position.
+ * @param onDragLeavePosition - Called when a draggable item leaves a position.
+ * @param onDropOnPosition - Called when a dragged player is dropped onto a position; receives the drop event and target position.
+ * @param onPrepareDrag - Called to begin dragging a player; receives the player and its origin position.
+ * @param onClearDragState - Called when a drag operation ends or is cancelled to clear drag state.
+ * @param onClearSlot - Called to clear the player assigned to the given position.
+ * @param onSaveTeam - Optional handler invoked when the "Save Lineup" button is clicked.
+ * @returns The rendered React element for the diamond lineup panel.
+ */
 export function DiamondPanel({
   lineup,
   activePosition,
@@ -164,4 +184,3 @@ export function DiamondPanel({
     </Card>
   );
 }
-

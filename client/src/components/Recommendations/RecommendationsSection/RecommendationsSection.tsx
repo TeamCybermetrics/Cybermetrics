@@ -13,6 +13,19 @@ type RecommendationsSectionProps = {
   addLabel?: string;
 };
 
+/**
+ * Render a list of recommended players with controls to add or remove each player.
+ *
+ * @param players - Player suggestions to render.
+ * @param savedPlayerIds - IDs of players already saved; presence enables the remove action for that item.
+ * @param savingPlayerIds - IDs of players currently being saved; those items show "Saving..." and are disabled.
+ * @param deletingPlayerIds - IDs of players currently being deleted; those items show "Removing..." and are disabled.
+ * @param onSavePlayer - Callback invoked when the add action is triggered for a player.
+ * @param onDeletePlayer - Optional callback invoked when the remove action is triggered for a saved player.
+ * @param allowAddSaved - When true, allows adding players that are already saved; when false, add is disabled for saved players unless a remove handler exists.
+ * @param addLabel - Label text used for the add action when not saving or removing.
+ * @returns The rendered recommendations list element, or `null` when `players` is empty.
+ */
 export function RecommendationsSection({
   players,
   savedPlayerIds,
@@ -79,4 +92,3 @@ export function RecommendationsSection({
     </ul>
   );
 }
-

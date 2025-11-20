@@ -4,6 +4,13 @@ import { authActions } from "@/actions/auth";
 import { ROUTES } from "@/config";
 import styles from "./UserBadge.module.css";
 
+/**
+ * Renders a hover-activated user badge showing an avatar, display name, optional email, and a logout control.
+ *
+ * The badge expands while hovered to reveal a logout button; the logout button is disabled briefly to allow the open animation to finish. The component reads the current user via authActions.getCurrentUser() and prefers a stored display name from localStorage; if no stored name exists it shows the email's local-part and displays the full email as metadata. Activating the logout control calls authActions.logout() and navigates to ROUTES.LANDING.
+ *
+ * @returns A JSX element containing the user badge with avatar initials, display name, optional email metadata, and a logout button.
+ */
 export default function UserBadge() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);

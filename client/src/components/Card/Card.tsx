@@ -12,13 +12,17 @@ interface CardProps {
 }
 
 /**
- * Standardized card component with consistent header styling.
- * 
- * @param title - Optional card title (uses heading3 typography)
- * @param subtitle - Optional card subtitle (uses bodySmall typography with muted color)
- * @param children - Card content
- * @param className - Optional additional CSS classes
- * @param variant - Card size variant: "default" or "compact"
+ * Render a styled card component with an optional header and a content area.
+ *
+ * The header is rendered only when `title`, `subtitle`, or `headerAction` is provided.
+ *
+ * @param title - Optional card title shown in the header
+ * @param subtitle - Optional card subtitle shown below the title in the header
+ * @param children - Content displayed inside the card body
+ * @param className - Optional additional CSS classes applied to the card container
+ * @param variant - Visual variant of the card; `"compact"` reduces spacing, `"default"` uses standard spacing
+ * @param headerAction - Optional node rendered on the right side of the header (e.g., buttons or controls)
+ * @returns A JSX element representing the card
  */
 export function Card({ title, subtitle, children, className = "", variant = "default", headerAction }: CardProps) {
   return (

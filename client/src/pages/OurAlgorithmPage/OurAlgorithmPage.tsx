@@ -1,6 +1,14 @@
 import { PageCard } from "@/components";
 import typography from "@/styles/typography.module.css";
 
+/**
+ * Render an informational page that explains Cybermetrics' roster analysis methodology.
+ *
+ * The page is wrapped in a PageCard titled "About Cybermetrics" and contains four explanatory sections:
+ * "Our Algorithm", "Team Weakness Vectors", "Adjustment Score", and "Recommendation".
+ *
+ * @returns A React element containing the About Cybermetrics informational page
+ */
 export default function OurAlgorithmPage() {
   return (
     <PageCard title="About Cybermetrics">

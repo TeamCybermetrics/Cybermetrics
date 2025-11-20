@@ -67,6 +67,17 @@ const RADAR_CENTER = { x: RADAR_SIZE / 2, y: RADAR_SIZE / 2 };
 const RADAR_RADIUS = 120;
 const AXIS_LABEL_OFFSET = 1.32;
 
+/**
+ * Render the team weaknesses, player adjustment scores, and radar visualization for a roster.
+ *
+ * @param weakness - Object mapping stat keys to numeric deviation scores (can be non-finite) used to build the radar and stat displays.
+ * @param players - Array of player entries with adjustment_score, id, name, and optional image_url used to render the player list and scores.
+ * @param loading - When true, shows an analysis/loading state instead of the main content.
+ * @param error - Optional error message to display with a Retry action.
+ * @param hasRoster - When false, prompts the user to add saved players instead of attempting analysis.
+ * @param onRetry - Callback invoked when the user clicks the Retry button after an error.
+ * @returns The rendered JSX element for the weaknesses view.
+ */
 export default function WeaknessView({
   weakness,
   players,
