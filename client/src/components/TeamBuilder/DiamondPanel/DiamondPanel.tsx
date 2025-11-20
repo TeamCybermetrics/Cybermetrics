@@ -64,8 +64,8 @@ export function DiamondPanel({
           />
           
           {/* Base paths connecting bases */}
-          <line x1="15" y1="54" x2="50" y2="27" stroke="currentColor" strokeWidth="0.5" />
-          <line x1="50" y1="27" x2="85" y2="54" stroke="currentColor" strokeWidth="0.5" />
+          <line x1="26" y1="66" x2="50" y2="42" stroke="currentColor" strokeWidth="0.5" />
+          <line x1="50" y1="42" x2="74" y2="66" stroke="currentColor" strokeWidth="0.5" />
           
           {/* Home plate (pentagon) - point at top touching base paths */}
 
@@ -78,14 +78,14 @@ export function DiamondPanel({
           />
           
           {/* First base (square) */}
-          <rect x="83" y="52" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          <rect x="72" y="64" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
 
           {/* Second base (square) */}
           {/* 53 */}
-          <rect x="48" y="26" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          <rect x="48" y="40" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
 
           {/* Third base (square) */}
-          <rect x="13" y="52" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
+          <rect x="24" y="64" width="4" height="4" fill="currentColor" stroke="currentColor" strokeWidth="0.3" />
           
         </svg>
 
