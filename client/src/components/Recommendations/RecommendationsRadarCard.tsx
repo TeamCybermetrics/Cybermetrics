@@ -268,20 +268,15 @@ export function RecommendationsRadarCard({
     return Math.round(percentile);
   };
 
-  return (
-    <>
-    <Card 
-      title="Roster Performance" 
-      subtitle="Before/After Changes"
-      headerAction={
-        <button 
-          className={styles.baselineBtn}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Expand Metrics
-        </button>
-      }
-    >
+  // Render radar content - reusable for both card and modal
+  const renderRadarContent = (isModal = false) => {
+    const modalSize = isModal ? 600 : RADAR_SIZE;
+    const modalRadius = isModal ? 230 : RADAR_RADIUS;
+    const modalCenter = { x: modalSize / 2, y: modalSize / 2 };
+    const modalPadding = isModal ? SVG_PADDING * 2 : SVG_PADDING;
+    const svgMaxWidth = isModal ? "600px" : "300px";
+
+    return (
       <div className={styles.performanceLayout}>
         <div className={styles.statsComparisonColumn}>
           {statKeys.map(({ key, label }) => {
@@ -359,13 +354,13 @@ export function RecommendationsRadarCard({
         </div>
         <div className={styles.radarChart}>
         <svg
-          viewBox={`${-SVG_PADDING} ${-SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING}`}
-          style={{ width: "100%", maxWidth: "300px", height: "auto", overflow: "visible" }}
+          viewBox={`${-modalPadding} ${-modalPadding} ${modalSize + 2 * modalPadding} ${modalSize + 2 * modalPadding}`}
+          style={{ width: "100%", maxWidth: svgMaxWidth, height: "auto", overflow: "visible" }}
         >
           {ringFractions.map((fraction, i) => (
             <polygon
               key={`ring-${i}`}
-              points={buildRingPolygon(fraction, statKeys.length)}
+              points={buildRingPolygon(fraction, statKeys.length, modalRadius, modalCenter)}
               fill="none"
               stroke="rgba(255,255,255,0.1)"
               strokeWidth={1}
@@ -373,12 +368,12 @@ export function RecommendationsRadarCard({
           ))}
 
           {statKeys.map((_, idx) => {
-            const { x, y } = getPointForFraction(1, idx, statKeys.length);
+            const { x, y } = getPointForFraction(1, idx, statKeys.length, true, modalRadius, modalCenter);
             return (
               <line
                 key={`axis-${idx}`}
-                x1={RADAR_CENTER.x}
-                y1={RADAR_CENTER.y}
+                x1={modalCenter.x}
+                y1={modalCenter.y}
                 x2={x}
                 y2={y}
                 stroke="rgba(255,255,255,0.12)"
@@ -388,19 +383,19 @@ export function RecommendationsRadarCard({
           })}
 
           <polygon
-            points={buildPolygonPoints(currentFractions, statKeys.length)}
+            points={buildPolygonPoints(currentFractions, statKeys.length, modalRadius, modalCenter)}
             className={styles.teamPolygon}
           />
 
           {baselineFractions && (
             <polygon
-              points={buildPolygonPoints(baselineFractions, statKeys.length)}
+              points={buildPolygonPoints(baselineFractions, statKeys.length, modalRadius, modalCenter)}
               className={styles.leaguePolygon}
             />
           )}
 
           <polygon
-            points={buildRingPolygon(toFraction(0), statKeys.length)}
+            points={buildRingPolygon(toFraction(0), statKeys.length, modalRadius, modalCenter)}
             fill="none"
             stroke="rgba(255,255,255,0.35)"
             strokeWidth={1}
@@ -410,11 +405,11 @@ export function RecommendationsRadarCard({
           {ringLabels.map((value) => {
             const fraction = toFraction(value);
             const isBaseline = Math.abs(value) < 1e-6;
-            const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + (isBaseline ? 6 : -4);
+            const y = modalCenter.y - modalRadius * fraction + (isBaseline ? 6 : -4);
             return (
               <text
                 key={`ring-label-${value}`}
-                x={RADAR_CENTER.x}
+                x={modalCenter.x}
                 y={y}
                 textAnchor="middle"
                 className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""}`}
@@ -428,7 +423,7 @@ export function RecommendationsRadarCard({
           {statKeys.map((axis, idx) => {
           const overrides = LABEL_OVERRIDES[axis.key];
           const offsetMultiplier = overrides?.offsetMultiplier ?? AXIS_LABEL_OFFSET;
-          let { x, y } = getPointForFraction(offsetMultiplier, idx, statKeys.length, false);
+          let { x, y } = getPointForFraction(offsetMultiplier, idx, statKeys.length, false, modalRadius, modalCenter);
           x += overrides?.xOffset ?? 0;
           y += overrides?.yOffset ?? 0;
           let anchor: "start" | "middle" | "end";
@@ -471,6 +466,24 @@ export function RecommendationsRadarCard({
         </div>
       </div>
     </div>
+    );
+  };
+
+  return (
+    <>
+    <Card 
+      title="Roster Performance" 
+      subtitle="Before/After Changes"
+      headerAction={
+        <button 
+          className={styles.baselineBtn}
+          onClick={() => setIsModalOpen(true)}
+        >
+          Expand Metrics
+        </button>
+      }
+    >
+      {renderRadarContent(false)}
     </Card>
     {isModalOpen && (
       <div 
@@ -481,7 +494,7 @@ export function RecommendationsRadarCard({
           className={styles.modalContent}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Modal content will go here */}
+          {renderRadarContent(true)}
         </div>
       </div>
     )}
@@ -514,25 +527,42 @@ function computeScale(
   return { scaleMin, scaleMax, ringValues };
 }
 
-function buildPolygonPoints(fractions: number[], axisCount: number) {
+function buildPolygonPoints(
+  fractions: number[], 
+  axisCount: number, 
+  radius = RADAR_RADIUS, 
+  center = RADAR_CENTER
+) {
   return fractions
     .map((fraction, idx) => {
-      const { x, y } = getPointForFraction(fraction, idx, axisCount);
+      const { x, y } = getPointForFraction(fraction, idx, axisCount, true, radius, center);
       return `${x},${y}`;
     })
     .join(" ");
 }
 
-function buildRingPolygon(fraction: number, axisCount: number) {
-  return buildPolygonPoints(Array(axisCount).fill(fraction), axisCount);
+function buildRingPolygon(
+  fraction: number, 
+  axisCount: number, 
+  radius = RADAR_RADIUS, 
+  center = RADAR_CENTER
+) {
+  return buildPolygonPoints(Array(axisCount).fill(fraction), axisCount, radius, center);
 }
 
-function getPointForFraction(fraction: number, axisIndex: number, axisCount: number, clampCircle = true) {
+function getPointForFraction(
+  fraction: number, 
+  axisIndex: number, 
+  axisCount: number, 
+  clampCircle = true,
+  radius = RADAR_RADIUS,
+  center = RADAR_CENTER
+) {
   const angle = getAngle(axisIndex, axisCount);
-  const radius = clampCircle ? RADAR_RADIUS * fraction : RADAR_RADIUS * fraction;
+  const r = clampCircle ? radius * fraction : radius * fraction;
   return {
-    x: RADAR_CENTER.x + radius * Math.sin(angle),
-    y: RADAR_CENTER.y - radius * Math.cos(angle),
+    x: center.x + r * Math.sin(angle),
+    y: center.y - r * Math.cos(angle),
   };
 }
 

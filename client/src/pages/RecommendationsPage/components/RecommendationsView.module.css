@@ -534,8 +534,10 @@
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 24px;
-  max-width: 90vw;
-  max-height: 90vh;
+  padding: 32px;
+  max-width: 95vw;
+  max-height: 95vh;
   overflow: auto;
+  width: 100%;
+  min-width: 800px;
 }
