@@ -5,6 +5,7 @@ export type SavedPlayer = {
   name: string;
   image_url?: string;
   years_active?: string;
+  position?: string | null;
 };
 
 export type LineupState = Record<DiamondPosition, SavedPlayer | null>;
@@ -12,7 +13,8 @@ export type LineupState = Record<DiamondPosition, SavedPlayer | null>;
 export type SavedTeam = {
   id: string;
   name: string;
-  lineup: LineupState;
+  lineup: LineupState; // The 9 active players in positions
+  fullRoster: SavedPlayer[]; // All saved players (including bench)
   savedAt: string;
 };
 

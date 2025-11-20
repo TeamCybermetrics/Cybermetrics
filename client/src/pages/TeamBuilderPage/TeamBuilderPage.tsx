@@ -438,7 +438,8 @@ export default function TeamBuilderPage() {
     const newTeam: SavedTeam = {
       id: Date.now().toString(),
       name: teamName,
-      lineup: lineup,
+      lineup: lineup, // The 9 active players in positions
+      fullRoster: savedPlayers, // All saved players (including bench)
       savedAt: new Date().toISOString()
     };
 
