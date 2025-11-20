@@ -176,8 +176,6 @@ export default function TeamBuilderPage() {
     setSearchTerm(value);
     if (value.trim()) {
       setSearchModalOpen(true);
-    } else {
-      setSearchModalOpen(false);
     }
   }, []);
 
