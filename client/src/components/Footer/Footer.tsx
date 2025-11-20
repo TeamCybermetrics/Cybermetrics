@@ -2,6 +2,13 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/config";
 import styles from "./Footer.module.css";
 
+/**
+ * Renders the site footer containing brand information, product and company navigation, and a copyright bar.
+ *
+ * The footer displays the current calendar year and internal links to Product and Company pages.
+ *
+ * @returns A JSX element representing the footer markup
+ */
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 

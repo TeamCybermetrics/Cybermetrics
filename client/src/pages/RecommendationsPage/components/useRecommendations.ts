@@ -5,6 +5,31 @@ import type { DiamondPosition } from "@/components/TeamBuilder/constants";
 
 export type PanelMode = "idle" | "recommendations" | "search";
 
+/**
+ * Manages saved players, team weakness computation, search, recommendations, and drag state for the recommendations UI.
+ *
+ * Provides state and callbacks to load and update saved players, fetch team weakness for baseline and current saved rosters,
+ * perform player search, request recommendations, manage concurrent save/delete operations, fetch player value scores,
+ * and support dragging a player for position assignment.
+ *
+ * @returns An object exposing hook state and actions:
+ * - mode: current panel mode ("idle" | "recommendations" | "search")
+ * - searchTerm: current search input
+ * - baselineWeakness, currentWeakness: computed weakness data for baseline and working teams (or `null`)
+ * - weaknessLoading, weaknessError: loading flag and error message for weakness fetches
+ * - activePosition, draggingId: current active diamond position and id of a dragging player (or `null`)
+ * - searchResults, recommendedPlayers, savedPlayers: lists of players for search, recommendations, and saved team
+ * - savedPlayerIds, assignedIds: Sets of saved player ids and ids with assigned positions
+ * - savingPlayerIds, deletingPlayerIds: Sets tracking in-flight save/delete player operations
+ * - playerScores: latest fetched player value scores
+ * - hasSearchTerm, isRecommending, recommendationError, playerOperationError: derived flags and error strings
+ * - setSearchTerm, setActivePosition: setters for search term and active position
+ * - onPrepareDrag, onClearDrag: drag lifecycle callbacks
+ * - onDeletePlayer: deletes a saved player
+ * - onSaveTeam: mark current saved players as baseline and refresh weaknesses
+ * - onGetRecommendations: request recommended players from backend
+ * - onAddFromSearch, onAddFromRecommendation: add a player from search or recommendations
+ */
 export function useRecommendations() {
   const [baselineWeakness, setBaselineWeakness] = useState<TeamWeaknessResponse | null>(null);
   const [currentWeakness, setCurrentWeakness] = useState<TeamWeaknessResponse | null>(null);

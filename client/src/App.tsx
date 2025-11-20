@@ -9,13 +9,9 @@ import RecommendationsPage from "@/pages/RecommendationsPage";
 import { ROUTES } from "@/config";
 
 /**
- * Root application component that configures client-side routing and shared layout.
+ * Configure client-side routing and render the application's root router with a shared layout for authenticated pages.
  *
- * Sets up top-level routes for landing, login, and signup pages, a nested route group
- * wrapped by the shared AppLayout for authenticated pages (dashboard, team builder,
- * team analysis, MLB teams), and a catch-all redirect to the landing route.
- *
- * @returns A JSX element containing the application's router and route configuration.
+ * @returns The root JSX element that renders BrowserRouter and the application's route configuration
  */
 function App() {
   return (

@@ -18,6 +18,21 @@ type SavedPlayersSectionProps = {
   headerAction?: React.ReactNode;
 };
 
+/**
+ * Render the "Saved Players" UI with separate Lineup and Bench sections, sorting, drag-and-drop, and per-player actions.
+ *
+ * @param players - Array of saved players to display.
+ * @param assignedIds - Set of player IDs currently assigned to the active lineup.
+ * @param draggingId - ID of the player currently being dragged (if any).
+ * @param deletingPlayerIds - Set of player IDs that are in the deleting state.
+ * @param onPrepareDrag - Callback invoked with a player when a drag is started.
+ * @param onClearDrag - Callback invoked when a drag operation ends.
+ * @param onDeletePlayer - Callback invoked with a player when the delete action is confirmed.
+ * @param playerScores - Optional list of player score objects used to display and sort by adjustment_score; missing scores are treated as 0.
+ * @param benchReplacements - Optional map of bench player ID to replacement info (position, name, delta) shown alongside bench players.
+ * @param headerAction - Optional React node rendered in the card header (e.g., action button).
+ * @returns The rendered Saved Players section as a Card containing lineup and bench lists, sort controls, and per-player controls.
+ */
 export function SavedPlayersSection({
   players,
   assignedIds,
@@ -171,4 +186,3 @@ export function SavedPlayersSection({
     </Card>
   );
 }
-

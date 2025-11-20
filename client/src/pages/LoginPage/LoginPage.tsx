@@ -6,6 +6,14 @@ import { AuthCard, Input, Button, Alert } from "@/components";
 import logo from "@/assets/brand_badge.jpg";
 import styles from "./LoginPage.module.css";
 
+/**
+ * Render the login page and handle user authentication.
+ *
+ * Displays a form for email and password, shows error or success alerts, and disables inputs while submitting.
+ * On successful authentication it shows a success message and navigates to ROUTES.LINEUP_CONSTRUCTOR after 1 second.
+ *
+ * @returns The login page as a JSX element
+ */
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

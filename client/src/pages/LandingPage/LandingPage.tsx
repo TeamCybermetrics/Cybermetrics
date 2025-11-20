@@ -8,6 +8,15 @@ import logo from "@/assets/logo_bubble.svg";
 import demoImage from "@/assets/demo.png";
 import connector from "@/assets/svg/landingPageConnector.svg"; 
 
+/**
+ * Render the application's public landing page and select navigation actions based on user authentication.
+ *
+ * Checks authentication on mount and displays a Spinner while the check is in progress. After loading,
+ * renders the brand area, hero, demo, features section (with connector SVG), and footer. Shows a "Dashboard"
+ * link (to ROUTES.LINEUP_CONSTRUCTOR) when the user is authenticated, otherwise shows "Log In" and "Sign Up" links.
+ *
+ * @returns The landing page React element.
+ */
 export default function LandingPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

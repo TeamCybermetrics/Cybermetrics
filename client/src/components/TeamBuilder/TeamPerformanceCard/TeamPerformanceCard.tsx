@@ -37,6 +37,11 @@ const MAX_VALUE = 2;
 const VALUE_SPAN = MAX_VALUE - MIN_VALUE;
 const BASELINE_VALUE = 0;
 
+/**
+ * Maps a numeric value to a normalized fraction between 0 and 1 based on the configured min/max range.
+ *
+ * @param value - The value to normalize; non-finite values are treated specially.
+ * @returns A number in [0, 1] representing `value`'s relative position where 0 corresponds to `MIN_VALUE` and 1 corresponds to `MAX_VALUE`. Non-finite inputs return `0.5`. */
 function valueToFraction(value: number) {
   if (!Number.isFinite(value)) return 0.5;
   const fraction = (value - MIN_VALUE) / VALUE_SPAN;
@@ -58,6 +63,16 @@ type TeamPerformanceCardProps = {
   hasLineup: boolean;
 };
 
+/**
+ * Render a "Team Performance" card that visualizes a lineup's per-stat deviations from league averages using a radar chart and stat summaries.
+ *
+ * The component displays loading and empty-lineup states, animates polygon morphing when weakness data changes, highlights the worst axes, and includes league-average and lineup polygons with ring and axis labels.
+ *
+ * @param weakness - Optional team weakness metrics keyed by stat; used to compute radar fractions and stat summaries.
+ * @param loading - When true, shows an analyzing state and preserves the previous weakness for smooth transitions.
+ * @param hasLineup - When false, shows a prompt to add players instead of the performance visualization.
+ * @returns The rendered Team Performance card element.
+ */
 export function TeamPerformanceCard({
   weakness,
   loading,
@@ -344,6 +359,14 @@ type PolygonStyle = {
   strokeDasharray?: string;
 };
 
+/**
+ * Renders an SVG polygon for a radar chart from per-axis fractions.
+ *
+ * @param fractions - Array of fractions (0–1) for each axis, ordered to match the chart axes.
+ * @param style - Optional polygon styling (fill, stroke, strokeWidth, className, strokeDasharray).
+ * @param key - Optional React key applied to the polygon element.
+ * @returns The SVG <polygon> element representing the radar polygon.
+ */
 function renderRadarPolygon(fractions: number[], style?: PolygonStyle, key?: string) {
   const points = buildPolygonPoints(fractions);
 
@@ -364,10 +387,24 @@ function renderRadarPolygon(fractions: number[], style?: PolygonStyle, key?: str
   );
 }
 
+/**
+ * Compute the angle in radians for a given radar axis index, with index 0 positioned at the top.
+ *
+ * @param axisIndex - Zero-based index of the axis around the radar
+ * @returns The angle in radians for that axis; angles increase clockwise as the index increases
+ */
 function getAngle(axisIndex: number) {
   return (2 * Math.PI * axisIndex) / STAT_LABELS.length - Math.PI / 2;
 }
 
+/**
+ * Computes the SVG coordinate on the radar for a given radial fraction and axis.
+ *
+ * @param fraction - Fraction of the radar radius (0 = center, 1 = outer edge); values outside [0,1] are honored only when `clamp` is false.
+ * @param axisIndex - Zero-based index of the axis around the radar (0 corresponds to the top axis).
+ * @param clamp - When true, restricts `fraction` to the [0,1] range before conversion.
+ * @returns An object with `x` and `y` coordinates in the radar's SVG coordinate space.
+ */
 function getPointForFraction(fraction: number, axisIndex: number, clamp: boolean = true) {
   const value = clamp ? Math.min(Math.max(fraction, 0), 1) : fraction;
   const angle = getAngle(axisIndex);
@@ -378,6 +415,12 @@ function getPointForFraction(fraction: number, axisIndex: number, clamp: boolean
   };
 }
 
+/**
+ * Builds an SVG-compatible points string from radial fractions for each axis.
+ *
+ * @param fractions - Array of radial fractions (typically 0–1) where each entry corresponds to an axis index and represents distance from the radar center.
+ * @returns A space-separated string of `"x,y"` coordinate pairs suitable for an SVG `points` attribute (e.g. `"x1,y1 x2,y2 …"`).
+ */
 function buildPolygonPoints(fractions: number[]) {
   return fractions
     .map((fraction, idx) => {
@@ -387,19 +430,43 @@ function buildPolygonPoints(fractions: number[]) {
     .join(" ");
 }
 
+/**
+ * Create the SVG polygon point string for a radar chart ring at a uniform radial fraction.
+ *
+ * @param fraction - Radial fraction (0 to 1) describing distance from center where the ring should be placed
+ * @returns A space-separated list of `x,y` coordinate pairs suitable for an SVG polygon `points` attribute
+ */
 function buildRingPolygon(fraction: number) {
   return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction));
 }
 
+/**
+ * Normalizes a raw weakness score into a display-ready numeric value.
+ *
+ * @param value - The raw weakness score which may be non-finite or highly precise
+ * @returns `BASELINE_VALUE` when `value` is not finite; otherwise `value` rounded to three significant digits
+ */
 function weaknessToValue(value: number) {
   if (!Number.isFinite(value)) return BASELINE_VALUE;
   return Number(value.toPrecision(3));
 }
 
+/**
+ * Convert a team's weakness scores into normalized 0–1 fractions for each radar axis.
+ *
+ * @param weakness - Object mapping stat keys to numeric weakness scores used to compute axis fractions
+ * @returns An array of numbers between 0 and 1 representing the fraction for each axis, in the same order as `STAT_LABELS`
+ */
 function getValueFractions(weakness: TeamWeaknessResponse) {
   return STAT_LABELS.map(({ key }) => valueToFraction(weaknessToValue(weakness[key])));
 }
 
+/**
+ * Describe how a numeric statistic compares to the league average.
+ *
+ * @param value - Signed numeric difference from league average (positive means worse than league average); non-finite values indicate unavailable data
+ * @returns A human-readable message: `"Difference vs league unavailable"` for non-finite input, `"On par with league average"` for differences under 0.5 points, or `"<n> pts below league average"` / `"<n> pts above league average"` where `n` is rounded to an integer for values >= 10 points or shown with one decimal otherwise
+ */
 function describeWeakness(value: number) {
   if (!Number.isFinite(value)) {
     return "Difference vs league unavailable";
@@ -416,14 +483,32 @@ function describeWeakness(value: number) {
   return `${rounded} pts ${direction}`;
 }
 
+/**
+ * Format a numeric performance value into a display-ready label.
+ *
+ * @param value - Performance metric (e.g., a standard-deviation-like score) to format for display
+ * @returns A string containing the formatted representation of `value` suitable for UI presentation
+ */
 function formatValueLabel(value: number) {
   return `${formatValueNumber(value)}`;
 }
 
+/**
+ * Format a numeric axis tick label for display.
+ *
+ * @param value - The numeric value to format for an axis tick
+ * @returns A string suitable for use as a tick label
+ */
 function formatValueTick(value: number) {
   return `${formatValueNumber(value)}`;
 }
 
+/**
+ * Format a numeric value into a compact signed string for display.
+ *
+ * @param value - The number to format.
+ * @returns `"-"` for non-finite inputs; otherwise a string with a leading `"+"` for values >= 0 (no sign for negative values), rounded to two decimal places with a trailing `.00` removed when present.
+ */
 function formatValueNumber(value: number) {
   if (!Number.isFinite(value)) return "-";
   return (value >= 0 ? "+" : "") + value.toFixed(2).replace(/\.00$/, "");

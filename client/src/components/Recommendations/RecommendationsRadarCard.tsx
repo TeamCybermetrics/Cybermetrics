@@ -37,6 +37,18 @@ const LABEL_OVERRIDES: Partial<Record<
   isolated_power: { yOffset: 10 },
 };
 
+/**
+ * Renders a "Before/After" weakness radar with a side-by-side stat comparison and animates polygon transitions when data changes.
+ *
+ * @param statKeys - Array of stat axis descriptors ({ key, label }) that define radar axes.
+ * @param baselineWeakness - Baseline (before) z-score values keyed by stat, or `null` if not available.
+ * @param currentWeakness - Current (after) z-score values keyed by stat; required to render the radar.
+ * @param highlightOrder - Tuple of two axis indices to visually emphasize (first = severe, second = warn).
+ * @param loading - When `true`, shows a loading placeholder instead of the chart.
+ * @param error - Optional error message to display in place of the chart.
+ * @param formatValue - Formatter function for numeric stat values (e.g., std dev display).
+ * @returns The rendered RecommendationsRadarCard element.
+ */
 export function RecommendationsRadarCard({
   statKeys,
   baselineWeakness,
