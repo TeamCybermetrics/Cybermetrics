@@ -166,8 +166,7 @@ export function RecommendationsView({
             savedPlayerIds={savedPlayerIds}
             savingPlayerIds={savingPlayerIds}
             allowAddSaved
-            addLabel={`Add to ${activePosition}`}
-            targetPosition={activePosition}
+            addLabel="Save to Team"
             onSavePlayer={onAddFromRecommendation}
           />
         )}

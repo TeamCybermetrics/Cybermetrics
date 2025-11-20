@@ -38,6 +38,8 @@ export function useRecommendations() {
 
   const lineupRef = useRef(lineup);
   const baselineLineupRef = useRef(baselineLineup);
+  const savedPlayersRef = useRef(savedPlayers);
+  const baselineSavedPlayersRef = useRef<SavedPlayer[]>([]);
 
   const getPlayerIdsFromLineup = useCallback((state: LineupState) => {
     return positionOrder
@@ -45,23 +47,30 @@ export function useRecommendations() {
       .filter((id): id is number => typeof id === "number");
   }, []);
 
+  // Get all player IDs from saved players (including bench players without positions)
+  const getPlayerIdsFromSavedPlayers = useCallback((players: SavedPlayer[]) => {
+    return players
+      .map((p) => p.id)
+      .filter((id): id is number => typeof id === "number");
+  }, []);
+
   const fetchWeaknessFor = useCallback(
-    async (state: LineupState) => {
-      const ids = getPlayerIdsFromLineup(state);
+    async (players: SavedPlayer[]) => {
+      const ids = getPlayerIdsFromSavedPlayers(players);
       if (ids.length === 0) return null;
       const result = await playerActions.getTeamWeakness(ids);
       if (result.success && result.data) return result.data;
       throw new Error(result.error || "Failed to load weaknesses");
     },
-    [getPlayerIdsFromLineup]
+    [getPlayerIdsFromSavedPlayers]
   );
 
   const refreshWeakness = useCallback(
-    async (workingOverride?: LineupState, baselineOverride?: LineupState) => {
-      const working = workingOverride ?? lineupRef.current;
-      const baseline = baselineOverride ?? baselineLineupRef.current;
+    async (workingOverride?: SavedPlayer[], baselineOverride?: SavedPlayer[]) => {
+      const working = workingOverride ?? savedPlayersRef.current;
+      const baseline = baselineOverride ?? baselineSavedPlayersRef.current;
       const hasAny =
-        getPlayerIdsFromLineup(working).length > 0 || getPlayerIdsFromLineup(baseline).length > 0;
+        getPlayerIdsFromSavedPlayers(working).length > 0 || getPlayerIdsFromSavedPlayers(baseline).length > 0;
       if (!hasAny) {
         setBaselineWeakness(null);
         setCurrentWeakness(null);
@@ -70,8 +79,8 @@ export function useRecommendations() {
         latestWeaknessRequest.current = null;
         return;
       }
-      const workingIds = getPlayerIdsFromLineup(working);
-      const baselineIds = getPlayerIdsFromLineup(baseline);
+      const workingIds = getPlayerIdsFromSavedPlayers(working);
+      const baselineIds = getPlayerIdsFromSavedPlayers(baseline);
       const workingKey = workingIds.join(",");
       const baselineKey = baselineIds.join(",");
       const unchanged =
@@ -106,7 +115,7 @@ export function useRecommendations() {
         }
       }
     },
-    [fetchWeaknessFor, getPlayerIdsFromLineup]
+    [fetchWeaknessFor, getPlayerIdsFromSavedPlayers]
   );
 
   useEffect(() => {
@@ -133,7 +142,8 @@ export function useRecommendations() {
         });
         setLineup(next);
         setBaselineLineup(next);
-        void refreshWeakness(next, next);
+        baselineSavedPlayersRef.current = res.data;
+        void refreshWeakness(res.data, res.data);
       } else if (!res.success) {
         setPlayerOperationError(res.error || "Failed to load saved players");
       }
@@ -141,9 +151,45 @@ export function useRecommendations() {
     void loadSaved();
   }, [refreshWeakness]);
 
+  // Build lineup from saved players (for display purposes)
+  const buildLineupFromSavedPlayers = useCallback((players: SavedPlayer[]) => {
+    const next: LineupState = positionOrder.reduce(
+      (acc, pos) => ({ ...acc, [pos]: null }),
+      {} as LineupState
+    );
+    players.forEach((p) => {
+      if (p.position && positionOrder.includes(p.position as DiamondPosition)) {
+        next[p.position as DiamondPosition] = p;
+      }
+    });
+    return next;
+  }, []);
+
+  // Watch savedPlayers and rebuild lineup, then trigger weakness refresh
   useEffect(() => {
-    void refreshWeakness();
-  }, [lineup, baselineLineup, refreshWeakness]);
+    const next = buildLineupFromSavedPlayers(savedPlayers);
+    setLineup(next);
+    // Refresh weakness will be triggered by savedPlayers change
+  }, [savedPlayers, buildLineupFromSavedPlayers]);
+
+  // Watch savedPlayers and trigger weakness refresh when it changes
+  useEffect(() => {
+    // Update the ref to keep it in sync
+    savedPlayersRef.current = savedPlayers;
+    
+    // Skip if savedPlayers is empty (initial load will be handled by the loadSaved useEffect)
+    if (savedPlayers.length === 0 && baselineSavedPlayersRef.current.length === 0) {
+      return;
+    }
+    
+    // Pass savedPlayers directly to ensure we use the latest state, not the ref
+    // This bypasses the unchanged check and forces a refresh
+    // Use savedPlayers for baseline if baseline hasn't been set yet
+    const baseline = baselineSavedPlayersRef.current.length > 0 
+      ? baselineSavedPlayersRef.current 
+      : savedPlayers;
+    void refreshWeakness(savedPlayers, baseline);
+  }, [savedPlayers, refreshWeakness]);
 
   const onSearchChange = useCallback((value: string) => {
     setSearchTerm(value);
@@ -223,16 +269,38 @@ export function useRecommendations() {
   );
 
   const assignPlayerToLineup = useCallback(
-    (player: SavedPlayer, position?: DiamondPosition) => {
+    async (player: SavedPlayer, position?: DiamondPosition) => {
       const target = position ?? activePosition;
-      setLineup((prev) => {
-        const next: LineupState = { ...prev };
-        positionOrder.forEach((pos) => {
-          if (next[pos]?.id === player.id) next[pos] = null;
+      if (!target) return;
+      
+      // Update the player's position in the backend first
+      const result = await playerActions.updatePlayerPosition(player.id, target);
+      if (!result.success) {
+        setPlayerOperationError(result.error || "Failed to update player position");
+        return;
+      }
+
+      // Update savedPlayers state - update the player's position and clear any conflicts
+      setSavedPlayers((prev) => {
+        return prev.map((p) => {
+          // Remove position from any player currently at the target position (except the target player)
+          if (p.position === target && p.id !== player.id) {
+            return { ...p, position: null };
+          }
+          // Update the target player's position
+          if (p.id === player.id) {
+            return { ...p, position: target };
+          }
+          return p;
         });
-        next[target] = player;
-        return next;
       });
+
+      // Reload saved players to ensure sync with backend
+      const res = await playerActions.getSavedPlayers();
+      if (res.success && res.data) {
+        setSavedPlayers(res.data);
+      }
+      
       setActivePosition(target);
     },
     [activePosition]
@@ -243,7 +311,7 @@ export function useRecommendations() {
       void (async () => {
         const ok = await ensurePlayerSaved(player);
         if (ok) {
-          assignPlayerToLineup(player);
+          await assignPlayerToLineup(player);
           setMode("idle");
           setSearchTerm("");
         }
@@ -253,16 +321,28 @@ export function useRecommendations() {
   );
 
   const handleAddFromRecommendation = useCallback(
-    (player: SavedPlayer, position?: DiamondPosition) => {
+    (player: SavedPlayer) => {
       void (async () => {
-        const ok = await ensurePlayerSaved(player);
-        if (ok) {
-          assignPlayerToLineup(player, position);
-          setMode("recommendations");
+        // Prevent duplication - check if already saved
+        const alreadySaved = savedPlayers.some((p) => p.id === player.id);
+        
+        if (!alreadySaved) {
+          const ok = await ensurePlayerSaved(player);
+          if (!ok) return;
+          // ensurePlayerSaved already updates savedPlayers state, which will trigger the useEffect
+          // But we reload to ensure we have the latest data from backend (in case of any server-side updates)
+          const res = await playerActions.getSavedPlayers();
+          if (res.success && res.data) {
+            setSavedPlayers(res.data);
+          }
         }
+        
+        // Just save to bench (no position assignment) - user can assign position later from saved players section
+        // The savedPlayers state change will trigger the useEffect that calls refreshWeakness
+        setMode("recommendations");
       })();
     },
-    [assignPlayerToLineup, ensurePlayerSaved]
+    [ensurePlayerSaved, savedPlayers]
   );
 
   const handleGetRecommendations = useCallback(async () => {
@@ -364,8 +444,9 @@ export function useRecommendations() {
     onPositionDrop: handlePositionDrop,
     onSaveTeam: () => {
       setBaselineLineup(lineup);
+      baselineSavedPlayersRef.current = savedPlayers;
       if (currentWeakness) setBaselineWeakness(currentWeakness);
-      void refreshWeakness(lineup, lineup);
+      void refreshWeakness(savedPlayers, savedPlayers);
     },
     onGetRecommendations: handleGetRecommendations,
     onAddFromSearch: handleAddFromSearch,
