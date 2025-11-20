@@ -11,7 +11,6 @@ type RecommendationsSectionProps = {
   onDeletePlayer?: (player: SavedPlayer) => void | Promise<void>;
   allowAddSaved?: boolean;
   addLabel?: string;
-  targetPosition?: DiamondPosition;
 };
 
 export function RecommendationsSection({
@@ -23,7 +22,6 @@ export function RecommendationsSection({
   onDeletePlayer,
   allowAddSaved = false,
   addLabel = "Add to lineup",
-  targetPosition,
 }: RecommendationsSectionProps) {
   if (players.length === 0) {
     return null;

@@ -666,12 +666,9 @@ export default function TeamBuilderPage() {
             players={savedPlayers}
             assignedIds={assignedIds}
             draggingId={draggingId}
-            savingPlayerIds={savingPlayerIds}
             deletingPlayerIds={deletingPlayerIds}
-            activePosition={activePosition}
             onPrepareDrag={prepareDragPlayer}
             onClearDrag={clearDragState}
-            onAddPlayer={handleAddPlayer}
             onDeletePlayer={handleDeletePlayer}
             playerScores={playerScores}
             benchReplacements={benchReplacements}

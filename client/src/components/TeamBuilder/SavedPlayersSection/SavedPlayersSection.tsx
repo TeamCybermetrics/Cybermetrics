@@ -4,18 +4,14 @@ import { SavedPlayer, PlayerValueScore } from "@/api/players";
 import { Card } from "@/components";
 import { PlayerRow } from "../PlayerRow/PlayerRow";
 import styles from "./SavedPlayersSection.module.css";
-import { DiamondPosition } from "../constants";
 
 type SavedPlayersSectionProps = {
   players: SavedPlayer[];
   assignedIds: Set<number>;
   draggingId: number | null;
-  savingPlayerIds: Set<number>;
   deletingPlayerIds: Set<number>;
-  activePosition: DiamondPosition | null;
   onPrepareDrag: (player: SavedPlayer) => void;
   onClearDrag: () => void;
-  onAddPlayer: (player: SavedPlayer) => void | Promise<void>;
   onDeletePlayer: (player: SavedPlayer) => void | Promise<void>;
   playerScores?: PlayerValueScore[];
   benchReplacements?: Map<number, { replacesPosition: string; replacesName: string; delta: number }>;
@@ -26,12 +22,9 @@ export function SavedPlayersSection({
   players,
   assignedIds,
   draggingId,
-  savingPlayerIds,
   deletingPlayerIds,
-  activePosition,
   onPrepareDrag,
   onClearDrag,
-  onAddPlayer,
   onDeletePlayer,
   playerScores = [],
   benchReplacements = new Map(),

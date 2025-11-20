@@ -32,7 +32,6 @@ type Props = {
   weaknessLoading: boolean;
   weaknessError: string | null;
   setSearchTerm: (v: string) => void;
-  setActivePosition: (pos: DiamondPosition) => void;
   onPrepareDrag: (player: SavedPlayer, fromPosition?: DiamondPosition) => void;
   onClearDrag: () => void;
   onDeletePlayer: (player: SavedPlayer) => void | Promise<void>;
@@ -74,7 +73,6 @@ export function RecommendationsView({
   weaknessLoading,
   weaknessError,
   setSearchTerm,
-  setActivePosition,
   onPrepareDrag,
   onClearDrag,
   onDeletePlayer,
@@ -115,12 +113,9 @@ export function RecommendationsView({
           players={savedPlayers}
           assignedIds={assignedIds}
           draggingId={draggingId}
-          savingPlayerIds={savingPlayerIds}
           deletingPlayerIds={deletingPlayerIds}
-          activePosition={activePosition}
           onPrepareDrag={onPrepareDrag}
           onClearDrag={onClearDrag}
-          onAddPlayer={() => {}} // No-op since we don't assign positions
           onDeletePlayer={onDeletePlayer}
           playerScores={playerScores}
           headerAction={
