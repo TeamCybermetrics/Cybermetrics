@@ -41,6 +41,26 @@
   padding: 8px 14px;
 }
 
+.diamondContainer {
+  position: relative;
+}
+
+.activeBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(109, 123, 255, 0.9);
+  border-radius: 8px;
+  padding: 6px 12px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 .diamond {
   position: relative;
   width: 100%;

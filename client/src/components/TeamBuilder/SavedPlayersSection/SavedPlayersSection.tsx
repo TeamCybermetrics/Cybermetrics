@@ -1,4 +1,5 @@
 import { SavedPlayer } from "@/api/players";
+import { Card } from "@/components";
 import { PlayerRow } from "../PlayerRow/PlayerRow";
 import styles from "./SavedPlayersSection.module.css";
 import { DiamondPosition } from "../constants";
@@ -28,12 +29,10 @@ export function SavedPlayersSection({
   onAddPlayer,
   onDeletePlayer,
 }: SavedPlayersSectionProps) {
+  const subtitle = `${players.length} player${players.length !== 1 ? 's' : ''}`;
+  
   return (
-    <div className={styles.displayBox}>
-      <div className={styles.sectionHeader}>
-        <h3>Saved Players</h3>
-        <span>{players.length}</span>
-      </div>
+    <Card title="Saved Players" subtitle={subtitle}>
       <div className={styles.playerScroller}>
         {players.length === 0 ? (
           <div className={styles.emptyState}>
@@ -87,7 +86,7 @@ export function SavedPlayersSection({
           })
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 

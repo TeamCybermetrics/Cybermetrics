@@ -1,4 +1,5 @@
 import type { TeamWeaknessResponse } from "@/api/players";
+import { Card } from "@/components";
 import { formatZScore } from "@/utils/zScoreRadar";
 import styles from "@/features/recommendations/RecommendationsView.module.css";
 
@@ -46,31 +47,25 @@ export function RecommendationsRadarCard({
 
   if (loading) {
     return (
-      <div className={styles.radarCard}>
-        <div className={styles.radarHeader}>Before/After</div>
-        <div className={styles.radarSubheader}>Weakness radar</div>
+      <Card title="Before/After" subtitle="Weakness Radar">
         <div className={styles.radarPlaceholder}>Calculating…</div>
-      </div>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.radarCard}>
-        <div className={styles.radarHeader}>Before/After</div>
-        <div className={styles.radarSubheader}>Weakness radar</div>
+      <Card title="Before/After" subtitle="Weakness Radar">
         <div className={styles.radarPlaceholder}>{error}</div>
-      </div>
+      </Card>
     );
   }
 
   if (!hasData) {
     return (
-      <div className={styles.radarCard}>
-        <div className={styles.radarHeader}>Before/After</div>
-        <div className={styles.radarSubheader}>Weakness radar</div>
+      <Card title="Before/After" subtitle="Weakness Radar">
         <div className={styles.radarPlaceholder}>Add players to view radar.</div>
-      </div>
+      </Card>
     );
   }
 
@@ -90,9 +85,7 @@ export function RecommendationsRadarCard({
     .sort((a, b) => a - b);
 
   return (
-    <div className={styles.radarCard}>
-      <div className={styles.radarHeader}>Before/After</div>
-      <div className={styles.radarSubheader}>Weakness radar</div>
+    <Card title="Before/After" subtitle="Weakness Radar">
       <div className={styles.radarChart}>
         <svg
           viewBox={`${-SVG_PADDING} ${-SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING} ${RADAR_SIZE + 2 * SVG_PADDING}`}
@@ -201,7 +194,7 @@ export function RecommendationsRadarCard({
         <li>Orange = baseline lineup</li>
         <li>0 = league average; positive = stronger</li>
       </ul>
-    </div>
+    </Card>
   );
 }
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer } from "@/api/players";
-import { PageCard } from "@/components";
+import { PageCard, Card } from "@/components";
 import styles from "./TeamBuilderPage.module.css";
 import {
   DiamondPosition,
@@ -484,10 +484,7 @@ export default function TeamBuilderPage() {
         {/* LEFT COLUMN */}
         <div className={styles.leftColumn}>
           {/* Search section with Load a team and Filters */}
-          <section
-            className={styles.searchSection}
-            data-modal-open={searchModalOpen ? "true" : "false"}
-          >
+          <Card title="Search Players">
             <SearchBar
               searchTerm={searchTerm}
               onSearchTermChange={handleSearchTermChange}
@@ -499,7 +496,7 @@ export default function TeamBuilderPage() {
               errorMessage={playerOperationError}
               onFocus={handleSearchBarFocus}
             />
-          </section>
+          </Card>
 
           {hasSearchTerm && (
             <SearchResultsSection
@@ -550,8 +547,8 @@ export default function TeamBuilderPage() {
           <div className={styles.searchModal} onClick={(event) => event.stopPropagation()}>
             <div className={styles.searchModalHeader}>
               <div>
-                <p className={styles.searchModalKicker}>Search players</p>
-                <h3 className={styles.searchModalTitle}>Add players to your lineup</h3>
+                <p className={styles.searchModalKicker}>Search Players</p>
+                <h3 className={styles.searchModalTitle}>Add Players to Your Lineup</h3>
               </div>
               <button className={styles.searchModalClose} onClick={handleCloseSearchModal}>
                 ✕

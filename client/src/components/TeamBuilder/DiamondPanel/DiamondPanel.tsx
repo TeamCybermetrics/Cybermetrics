@@ -1,5 +1,6 @@
 import { DragEvent } from "react";
 import { SavedPlayer } from "@/api/players";
+import { Card } from "@/components";
 import styles from "./DiamondPanel.module.css";
 import {
   DiamondPosition,
@@ -38,18 +39,14 @@ export function DiamondPanel({
   onSaveTeam,
 }: DiamondPanelProps) {
   return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <div>
-          <h2>Your lineup</h2>
-          <p>Select a position, then add or drag a player.</p>
-        </div>
-        <span className={styles.positionHint}>
-          {activePosition ? `Active: ${activePosition}` : "Pick a position"}
-        </span>
-      </div>
-
-      <div className={styles.diamond}>
+    <Card title="Your Lineup" subtitle="Select a position, then add or drag a player.">
+      <div className={styles.diamondContainer}>
+        {activePosition && (
+          <div className={styles.activeBadge}>
+            Active: {activePosition}
+          </div>
+        )}
+        <div className={styles.diamond}>
         <svg className={styles.diamondLines} viewBox="0 0 100 100" preserveAspectRatio="none">
           {/* Continuous foul lines from home plate through bases to outfield arc */}
           {/* <line x1="50" y1="95" x2="10" y2="38" stroke="currentColor" strokeWidth="0.5" /> */}
@@ -156,6 +153,7 @@ export function DiamondPanel({
             <div className={styles.staticHint}>Pitcher</div>
           </div>
         ))}
+        </div>
       </div>
 
       {onSaveTeam && (
@@ -163,7 +161,7 @@ export function DiamondPanel({
           Save Lineup
         </button>
       )}
-    </section>
+    </Card>
   );
 }
 

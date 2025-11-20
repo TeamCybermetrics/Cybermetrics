@@ -1,5 +1,5 @@
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
-import typography from "@/styles/typography.module.css";
+import { Card, CardGrid } from "@/components";
 import styles from "./WeaknessView.module.css";
 
 type PlayerScoreCard = PlayerValueScore & {
@@ -106,8 +106,7 @@ export default function WeaknessView({
 
   return (
     <div className={styles.container}>
-      <div className={styles.statsBubble}>
-        <div className={typography.heading2}>Team Stats</div>
+      <Card title="Team Stats">
         <div className={styles.statsRow}>
           {STAT_LABELS.map(({ key, label }) => {
             const rawValue = weakness[key];
@@ -119,11 +118,10 @@ export default function WeaknessView({
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      <div className={styles.grid}>
-        <div className={styles.leftColumn}>
-          <h2 className={typography.heading2}>Player adjustment scores</h2>
+      <CardGrid columns={2} gap="large">
+        <Card title="Player Adjustment Scores">
           {players.length === 0 ? (
             <div className={styles.stateMessage}>No player metrics available.</div>
           ) : (
@@ -149,12 +147,10 @@ export default function WeaknessView({
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className={styles.radarSection}>
-          <div className={styles.radarCard}>
-            <div className={styles.radarLabel}>Weakness radar</div>
-            <div className={styles.radarChart}>
+        <Card title="Weakness Radar">
+          <div className={styles.radarChart}>
               <svg
                 viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
                 style={{ maxWidth: "320px", width: "100%", height: "auto", overflow: "visible" }}
@@ -255,15 +251,14 @@ export default function WeaknessView({
                 })}
               </svg>
             </div>
-            <ul className={styles.radarLegend}>
-              <li>Score: Number of standard deviations above or below the mean</li>
-              <li>Dashed ring marks score 0 (league average baseline)</li>
-              <li>Orange fill = league composite, blue = your lineup</li>
-              <li>Only the two weakest axes highlight in color</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+          <ul className={styles.radarLegend}>
+            <li>Score: Number of standard deviations above or below the mean</li>
+            <li>Dashed ring marks score 0 (league average baseline)</li>
+            <li>Orange fill = league composite, blue = your lineup</li>
+            <li>Only the two weakest axes highlight in color</li>
+          </ul>
+        </Card>
+      </CardGrid>
     </div>
   );
 }

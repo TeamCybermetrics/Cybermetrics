@@ -1,4 +1,5 @@
 import type { TeamWeaknessResponse } from "@/api/players";
+import { Card } from "@/components";
 import styles from "@/features/recommendations/RecommendationsView.module.css";
 
 type StatKey = { key: keyof TeamWeaknessResponse; label: string };
@@ -23,8 +24,7 @@ export function WeaknessDeltasCard({
   const hasData = baselineWeakness && currentWeakness;
 
   return (
-    <div className={styles.weaknessCard}>
-      <div className={styles.weaknessTitle}>Changes in Team Weakness</div>
+    <Card title="Changes in Team Weakness">
       {loading && <div className={styles.placeholder}>Calculating…</div>}
       {error && <div className={styles.recommendError}>{error}</div>}
       {!loading && !error && hasData ? (
@@ -47,6 +47,6 @@ export function WeaknessDeltasCard({
         !loading &&
         !error && <div className={styles.placeholder}>Add players to see changes.</div>
       )}
-    </div>
+    </Card>
   );
 }
