@@ -4,7 +4,7 @@ import type { DiamondPosition, LineupState } from "@/components/TeamBuilder/cons
 import type { DragEvent } from "react";
 import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
-import { RecommendationsSection } from "@/components/TeamBuilder/RecommendationsSection/RecommendationsSection";
+import { RecommendationsSection } from "@/components/Recommendations/RecommendationsSection/RecommendationsSection";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
 import { formatZScore } from "@/utils/zScoreRadar";
 import { Card } from "@/components";
