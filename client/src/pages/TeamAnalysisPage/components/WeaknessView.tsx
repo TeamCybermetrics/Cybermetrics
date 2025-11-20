@@ -1,4 +1,5 @@
 import type { PlayerValueScore, TeamWeaknessResponse } from "@/api/players";
+import typography from "@/styles/typography.module.css";
 import styles from "./WeaknessView.module.css";
 
 type PlayerScoreCard = PlayerValueScore & {
@@ -106,7 +107,7 @@ export default function WeaknessView({
   return (
     <div className={styles.container}>
       <div className={styles.statsBubble}>
-        <div className={styles.statsHeader}>Team Stats</div>
+        <div className={typography.heading2}>Team Stats</div>
         <div className={styles.statsRow}>
           {STAT_LABELS.map(({ key, label }) => {
             const rawValue = weakness[key];
@@ -122,7 +123,7 @@ export default function WeaknessView({
 
       <div className={styles.grid}>
         <div className={styles.leftColumn}>
-          <h2 className={styles.sectionTitle}>Player adjustment scores</h2>
+          <h2 className={typography.heading2}>Player adjustment scores</h2>
           {players.length === 0 ? (
             <div className={styles.stateMessage}>No player metrics available.</div>
           ) : (

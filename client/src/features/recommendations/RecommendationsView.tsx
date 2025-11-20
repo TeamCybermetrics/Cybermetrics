@@ -9,6 +9,7 @@ import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel
 import { formatZScore } from "@/utils/zScoreRadar";
 import { WeaknessDeltasCard } from "@/components/Recommendations/WeaknessDeltasCard";
 import { RecommendationsRadarCard } from "@/components/Recommendations/RecommendationsRadarCard";
+import typography from "@/styles/typography.module.css";
 import styles from "./RecommendationsView.module.css";
 
 type Props = {
@@ -126,7 +127,7 @@ export function RecommendationsView({
 
         {/* Get Recommendations button */}
         <div className={styles.card}>
-          <div className={styles.cardHeader}>Click to get recommendations</div>
+          <div className={typography.heading3}>Click to get recommendations</div>
           <button className={styles.ctaBtn} onClick={onGetRecommendations} disabled={isRecommending}>
             {isRecommending ? "Loading..." : "Get Recommendations!"}
           </button>

@@ -1,26 +1,13 @@
 import { PageCard } from "@/components";
-
-const headingStyle = {
-  fontSize: "26px",
-  fontWeight: 600,
-  margin: 0,
-  marginBottom: "12px"
-};
-
-const descriptionStyle = {
-  fontSize: "15px",
-  opacity: 0.68,
-  lineHeight: 1.6,
-  margin: 0
-};
+import typography from "@/styles/typography.module.css";
 
 export default function OurAlgorithmPage() {
   return (
     <PageCard title="Our Algorithm">
       <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
         <div>
-          <h1 style={headingStyle}>Our Algorithm</h1>
-          <p style={descriptionStyle}>
+          <h1 className={typography.heading1}>Our Algorithm</h1>
+          <p className={typography.body}>
             Our algorithm is designed to help you quickly understand where your roster is strong, 
             where it needs support, and which players provide the most value relative to those needs. 
             To do that, we look at five batting stats: 
@@ -28,15 +15,15 @@ export default function OurAlgorithmPage() {
           </p>
         </div>
         <div>
-          <h1 style={headingStyle}>Team Weakness Vectors</h1>
-          <p style={descriptionStyle}>
+          <h1 className={typography.heading1}>Team Weakness Vectors</h1>
+          <p className={typography.body}>
             Team weakness vectors show how your lineup compares to MLB averages. 
             For each stat, we calculate how far your team is from league average and express it as a z-score.
           </p>
         </div>
         <div>
-          <h1 style={headingStyle}>Adjustment Score</h1>
-          <p style={descriptionStyle}>
+          <h1 className={typography.heading1}>Adjustment Score</h1>
+          <p className={typography.body}>
             The adjustment score shows how much a player helps or hurts your team in the areas where you're weakest. 
             After identifying your roster's gaps compared to MLB averages, we compare the player's recent stats to those 
             same league benchmarks and weight each difference by the size of the team weakness. A positive score means the 
@@ -44,8 +31,8 @@ export default function OurAlgorithmPage() {
           </p>
         </div>
         <div>
-          <h1 style={headingStyle}>Recommendation</h1>
-          <p style={descriptionStyle}>
+          <h1 className={typography.heading1}>Recommendation</h1>
+          <p className={typography.body}>
             Our recommendation system begins by letting the manager choose which position they want to replace. 
             After calculating your team's current weakness vector relative to MLB averages, we evaluate every league 
             player at that same position. For each candidate, we simulate a hypothetical roster with that player swapped in, 
