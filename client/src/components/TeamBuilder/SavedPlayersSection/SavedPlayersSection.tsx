@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { SavedPlayer, PlayerValueScore } from "@/api/players";
 import { Card } from "@/components";
 import { PlayerRow } from "../PlayerRow/PlayerRow";
@@ -89,7 +90,7 @@ export function SavedPlayersSection({
           onClick={() => onDeletePlayer(player)}
           title="Delete from saved players"
         >
-          {isDeleting ? "Deleting…" : "Delete"}
+          {isDeleting ? "..." : <Trash2 size={16} />}
         </button>
       </div>
     );
