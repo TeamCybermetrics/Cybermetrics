@@ -36,10 +36,66 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.playerNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .playerName {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.positionBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  background: rgba(109, 123, 255, 0.2);
+  border: 1px solid rgba(109, 123, 255, 0.4);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6d7bff;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.adjustmentScore {
+  margin: 0;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.scorePositive {
+  color: #00ff88;
+}
+
+.scoreNegative {
+  color: #ff6666;
+}
+
+.replacementInfo {
+  margin: 0;
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
 }
 
 .playerMeta {

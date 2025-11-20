@@ -1,4 +1,5 @@
-import { SavedPlayer } from "@/api/players";
+import { useState } from "react";
+import { SavedPlayer, PlayerValueScore } from "@/api/players";
 import { Card } from "@/components";
 import { PlayerRow } from "../PlayerRow/PlayerRow";
 import styles from "./SavedPlayersSection.module.css";
@@ -15,6 +16,8 @@ type SavedPlayersSectionProps = {
   onClearDrag: () => void;
   onAddPlayer: (player: SavedPlayer) => void | Promise<void>;
   onDeletePlayer: (player: SavedPlayer) => void | Promise<void>;
+  playerScores?: PlayerValueScore[];
+  benchReplacements?: Map<number, { replacesPosition: string; replacesName: string; delta: number }>;
 };
 
 export function SavedPlayersSection({
@@ -28,16 +31,112 @@ export function SavedPlayersSection({
   onClearDrag,
   onAddPlayer,
   onDeletePlayer,
+  playerScores = [],
+  benchReplacements = new Map(),
 }: SavedPlayersSectionProps) {
-  const subtitle = `${players.length} player${players.length !== 1 ? 's' : ''}`;
+  const [benchSortBy, setBenchSortBy] = useState<'name' | 'score'>('name');
   
-  // Sort players alphabetically by last name (second name after first space)
-  const sortedPlayers = [...players].sort((a, b) => {
-    const lastNameA = a.name.split(' ')[1] || a.name;
-    const lastNameB = b.name.split(' ')[1] || b.name;
-    return lastNameA.localeCompare(lastNameB);
+  // Split players into playing (with positions) and bench (without positions)
+  const playingPlayers = players.filter(p => p.position != null && p.position !== '');
+  const benchPlayers = players.filter(p => !p.position || p.position === '');
+  
+  // Sort playing players by score (descending)
+  const sortedPlayingPlayers = [...playingPlayers].sort((a, b) => {
+    const scoreA = playerScores.find(s => s.id === a.id)?.adjustment_score ?? 0;
+    const scoreB = playerScores.find(s => s.id === b.id)?.adjustment_score ?? 0;
+    return scoreB - scoreA; // Higher scores first
   });
   
+  // Sort bench players by selected criteria
+  const sortedBenchPlayers = [...benchPlayers].sort((a, b) => {
+    if (benchSortBy === 'score') {
+      const scoreA = playerScores.find(s => s.id === a.id)?.adjustment_score ?? 0;
+      const scoreB = playerScores.find(s => s.id === b.id)?.adjustment_score ?? 0;
+      return scoreB - scoreA; // Higher scores first
+    } else {
+      const lastNameA = a.name.split(' ')[1] || a.name;
+      const lastNameB = b.name.split(' ')[1] || b.name;
+      return lastNameA.localeCompare(lastNameB);
+    }
+  });
+  
+  const subtitle = `${playingPlayers.length} playing • ${benchPlayers.length} bench`;
+  
+  const renderPlayingPlayerCard = (player: SavedPlayer) => {
+    const scoreData = playerScores.find(s => s.id === player.id);
+    const adjustmentScore = scoreData?.adjustment_score;
+
+    return (
+      <div key={player.id} className={styles.playingPlayerCard}>
+        <img src={player.image_url ?? ""} alt={player.name} className={styles.playingPlayerAvatar} />
+        <div className={styles.playingPlayerInfo}>
+          <div className={styles.playingPlayerName}>{player.name}</div>
+          {player.position && (
+            <span className={styles.playingPlayerPosition}>{player.position}</span>
+          )}
+        </div>
+        {adjustmentScore !== undefined && (
+          <div className={`${styles.playingPlayerScore} ${adjustmentScore >= 0 ? styles.scorePositive : styles.scoreNegative}`}>
+            {adjustmentScore >= 0 ? "+" : ""}{adjustmentScore.toFixed(2)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderBenchPlayerRow = (player: SavedPlayer) => {
+    const alreadyAssigned = assignedIds.has(player.id);
+    const isDeleting = deletingPlayerIds.has(player.id);
+    const scoreData = playerScores.find(s => s.id === player.id);
+    const adjustmentScore = scoreData?.adjustment_score;
+    const replacement = benchReplacements.get(player.id);
+    
+    // Create a player object with position for display (bench players don't have position set)
+    const playerWithPosition = { ...player };
+
+    return (
+      <PlayerRow
+        key={player.id}
+        player={playerWithPosition}
+        isDragging={draggingId === player.id}
+        draggable={!alreadyAssigned}
+        onDragStart={() => !alreadyAssigned && onPrepareDrag(player)}
+        onDragEnd={onClearDrag}
+        showDelete
+        deleteDisabled={alreadyAssigned || isDeleting}
+        deleteLabel={isDeleting ? "Deleting…" : "Delete"}
+        deleteTitle={
+          alreadyAssigned
+            ? "Remove from the lineup before deleting"
+            : "Delete from saved players"
+        }
+        onDelete={() => onDeletePlayer(player)}
+        addDisabled={
+          alreadyAssigned ||
+          !activePosition ||
+          savingPlayerIds.has(player.id)
+        }
+        addLabel={
+          alreadyAssigned
+            ? "Assigned"
+            : savingPlayerIds.has(player.id)
+            ? "Saving..."
+            : "Add"
+        }
+        addTitle={
+          alreadyAssigned
+            ? "Already Assigned"
+            : !activePosition
+            ? "Select a position first"
+            : "Add to active position"
+        }
+        onAdd={() => void onAddPlayer(player)}
+        adjustmentScore={adjustmentScore}
+        replacementInfo={replacement ? `Replacing ${replacement.replacesPosition}` : undefined}
+      />
+    );
+  };
+
   return (
     <Card title="Saved Players" subtitle={subtitle}>
       <div className={styles.playerScroller}>
@@ -47,50 +146,41 @@ export function SavedPlayersSection({
             <span>Search for players and add them to your team.</span>
           </div>
         ) : (
-          sortedPlayers.map((player) => {
-            const alreadyAssigned = assignedIds.has(player.id);
-            const isDeleting = deletingPlayerIds.has(player.id);
-
-            return (
-              <PlayerRow
-                key={player.id}
-                player={player}
-                isDragging={draggingId === player.id}
-                draggable={!alreadyAssigned}
-                onDragStart={() => !alreadyAssigned && onPrepareDrag(player)}
-                onDragEnd={onClearDrag}
-                showDelete
-                deleteDisabled={alreadyAssigned || isDeleting}
-                deleteLabel={isDeleting ? "Deleting…" : "Delete"}
-                deleteTitle={
-                  alreadyAssigned
-                    ? "Remove from the lineup before deleting"
-                    : "Delete from saved players"
-                }
-                onDelete={() => onDeletePlayer(player)}
-                addDisabled={
-                  alreadyAssigned ||
-                  !activePosition ||
-                  savingPlayerIds.has(player.id)
-                }
-                addLabel={
-                  alreadyAssigned
-                    ? "Assigned"
-                    : savingPlayerIds.has(player.id)
-                    ? "Saving..."
-                    : "Add"
-                }
-                addTitle={
-                  alreadyAssigned
-                    ? "Already Assigned"
-                    : !activePosition
-                    ? "Select a position first"
-                    : "Add to active position"
-                }
-                onAdd={() => void onAddPlayer(player)}
-              />
-            );
-          })
+          <>
+            {sortedPlayingPlayers.length > 0 && (
+              <div className={styles.playerSection}>
+                <div className={styles.sectionHeader}>Playing</div>
+                <div className={styles.playingPlayersGrid}>
+                  {sortedPlayingPlayers.map(renderPlayingPlayerCard)}
+                </div>
+              </div>
+            )}
+            
+            {sortedBenchPlayers.length > 0 && (
+              <div className={styles.playerSection}>
+                <div className={styles.benchHeader}>
+                  <div className={styles.sectionHeader}>Bench</div>
+                  <div className={styles.sortToggle}>
+                    <button
+                      className={`${styles.sortButton} ${benchSortBy === 'name' ? styles.sortButtonActive : ''}`}
+                      onClick={() => setBenchSortBy('name')}
+                    >
+                      Name
+                    </button>
+                    <button
+                      className={`${styles.sortButton} ${benchSortBy === 'score' ? styles.sortButtonActive : ''}`}
+                      onClick={() => setBenchSortBy('score')}
+                    >
+                      Score
+                    </button>
+                  </div>
+                </div>
+                <div className={styles.benchPlayersList}>
+                  {sortedBenchPlayers.map(renderBenchPlayerRow)}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Card>

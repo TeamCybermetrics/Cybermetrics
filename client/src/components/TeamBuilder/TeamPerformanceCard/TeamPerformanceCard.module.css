@@ -1,0 +1,240 @@
+.stateMessage {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+}
+
+.performanceLayout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.statsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 0 0 auto;
+  min-width: 280px;
+}
+
+.statBlock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: background 0.3s ease;
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d7d9de;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValueContainer {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.statValueGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  min-height: 36px;
+  justify-content: space-between;
+}
+
+.statValue {
+  font-size: 17px;
+  font-weight: 700;
+  color: #e5e7eb;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s ease;
+}
+
+.statSubLabel {
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+.statPercentile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  min-height: 36px;
+  justify-content: space-between;
+}
+
+.percentileValue {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.4s ease;
+}
+
+.percentileSuffix {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 1px;
+}
+
+.percentileLabel {
+  font-size: 9px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Color coding for stat values */
+.statSuperGood {
+  color: #00ff88 !important;
+}
+
+.statGood {
+  color: #8BFFAA !important;
+}
+
+.statNeutral {
+  color: #e5e7eb !important;
+}
+
+.statBad {
+  color: #ffaa88 !important;
+}
+
+.statSuperBad {
+  color: #ff6666 !important;
+}
+
+.radarSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.radarChartWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  transition: opacity 0.3s ease;
+}
+
+.radarChartWrapper svg {
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.radarChartWrapper svg polygon {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radarChartWrapper svg line {
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.radarChartWrapper svg text {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ringLabel {
+  fill: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.ringLabelAverage {
+  fill: #ffffff;
+  font-weight: 600;
+}
+
+.axisLabel {
+  fill: rgba(255, 255, 255, 0.85);
+  font-size: 10px;
+  pointer-events: auto;
+}
+
+.axisLabelWarn {
+  fill: #ffb347;
+}
+
+.axisLabelSevere {
+  fill: #ff6666;
+}
+
+@keyframes polygonMorph {
+  0% {
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.95;
+  }
+}
+
+.leaguePolygon {
+  fill: rgba(255, 173, 74, 0.18);
+  stroke: rgba(255, 198, 124, 0.9);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.teamPolygon {
+  fill: rgba(109, 123, 255, 0.3);
+  stroke: #6d7bff;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: polygonMorph 0.8s ease-in-out;
+}
+
+.radarLegend {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .performanceLayout {
+    flex-direction: column;
+  }
+}

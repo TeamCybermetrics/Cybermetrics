@@ -63,8 +63,9 @@
 
 .diamond {
   position: relative;
-  width: 100%;
-  padding-bottom: 100%;
+  width: 75%;
+  padding-bottom: 75%;
+  margin: 0 auto;
   background: radial-gradient(circle at top, rgba(63, 75, 130, 0.18), transparent 60%);
   border-radius: 30px;
   overflow: hidden;

@@ -16,6 +16,8 @@ type PlayerRowProps = {
   addLabel: string;
   addTitle?: string;
   onAdd?: () => void;
+  adjustmentScore?: number;
+  replacementInfo?: string;
 };
 
 export function PlayerRow({
@@ -33,6 +35,8 @@ export function PlayerRow({
   addLabel,
   addTitle,
   onAdd,
+  adjustmentScore,
+  replacementInfo,
 }: PlayerRowProps) {
   return (
     <div
@@ -43,8 +47,23 @@ export function PlayerRow({
     >
       <div className={styles.playerProfile}>
         <img src={player.image_url ?? ""} alt={player.name} />
-        <div>
-          <p className={styles.playerName}>{player.name}</p>
+        <div className={styles.playerInfo}>
+          <div className={styles.playerNameRow}>
+            <p className={styles.playerName}>{player.name}</p>
+            {player.position && (
+              <span className={styles.positionBadge}>{player.position}</span>
+            )}
+          </div>
+          {adjustmentScore !== undefined && (
+            <p className={`${styles.adjustmentScore} ${adjustmentScore >= 0 ? styles.scorePositive : styles.scoreNegative}`}>
+              {adjustmentScore >= 0 ? "+" : ""}{adjustmentScore.toFixed(2)}
+            </p>
+          )}
+          {replacementInfo && (
+            <p className={styles.replacementInfo}>
+              {replacementInfo}
+            </p>
+          )}
         </div>
       </div>
 

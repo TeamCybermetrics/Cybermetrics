@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { playerActions } from "@/actions/players";
-import { PlayerSearchResult, SavedPlayer } from "@/api/players";
+import { PlayerSearchResult, SavedPlayer, TeamWeaknessResponse, PlayerValueScore } from "@/api/players";
 import { PageCard, Card } from "@/components";
 import styles from "./TeamBuilderPage.module.css";
 import {
@@ -14,6 +14,7 @@ import { SearchBar } from "@/components/TeamBuilder/SearchBar/SearchBar";
 import { SavedPlayersSection } from "@/components/TeamBuilder/SavedPlayersSection/SavedPlayersSection";
 import { SearchResultsSection } from "@/components/TeamBuilder/SearchResultsSection/SearchResultsSection";
 import { DiamondPanel } from "@/components/TeamBuilder/DiamondPanel/DiamondPanel";
+import { TeamPerformanceCard } from "@/components/TeamBuilder/TeamPerformanceCard/TeamPerformanceCard";
 
 /**
  * Interactive team builder page that lets users search and manage players, construct a lineup using click or drag-and-drop, apply filters, and save or load teams to localStorage.
@@ -41,6 +42,13 @@ export default function TeamBuilderPage() {
   const [savingPlayerIds, setSavingPlayerIds] = useState<Set<number>>(() => new Set());
   const [deletingPlayerIds, setDeletingPlayerIds] = useState<Set<number>>(() => new Set());
   const [playerOperationError, setPlayerOperationError] = useState("");
+
+  // Team analysis state
+  const [teamWeakness, setTeamWeakness] = useState<TeamWeaknessResponse | null>(null);
+  const [playerScores, setPlayerScores] = useState<PlayerValueScore[]>([]);
+  const [benchReplacements, setBenchReplacements] = useState<Map<number, { replacesPosition: string; replacesName: string; delta: number }>>(new Map());
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const analysisRequestId = useRef(0);
 
   useEffect(() => {
     lineupRef.current = lineup;
@@ -75,6 +83,148 @@ export default function TeamBuilderPage() {
 
     void fetchSaved();
   }, []);
+
+  // Get player IDs from lineup (only players with positions)
+  const lineupPlayerIds = useMemo(
+    () =>
+      Object.values(lineup)
+        .filter((player): player is SavedPlayer => player !== null)
+        .map((player) => player.id),
+    [lineup]
+  );
+
+  // Get all saved player IDs for scoring
+  const allSavedPlayerIds = useMemo(
+    () => savedPlayers.map((player) => player.id),
+    [savedPlayers]
+  );
+
+  // Load team analysis when lineup or saved players change
+  useEffect(() => {
+    const loadAnalysis = async () => {
+      const requestId = ++analysisRequestId.current;
+      
+      if (allSavedPlayerIds.length === 0) {
+        setTeamWeakness(null);
+        setPlayerScores([]);
+        return;
+      }
+
+      setLoadingAnalysis(true);
+
+      try {
+        // Calculate weakness based on lineup (9 players)
+        // Calculate scores ONLY for lineup players (their contribution to the 9-player team)
+        // For bench players, we calculate based on full roster (approximation of replacement value)
+        const [weaknessRes, lineupScoresRes, benchScoresRes] = await Promise.all([
+          lineupPlayerIds.length > 0 
+            ? playerActions.getTeamWeakness(lineupPlayerIds)
+            : Promise.resolve({ success: true, data: null }),
+          lineupPlayerIds.length > 0
+            ? playerActions.getPlayerValueScores(lineupPlayerIds)
+            : Promise.resolve({ success: true, data: [] }),
+          allSavedPlayerIds.length > 0
+            ? playerActions.getPlayerValueScores(allSavedPlayerIds)
+            : Promise.resolve({ success: true, data: [] })
+        ]);
+
+        if (analysisRequestId.current !== requestId) {
+          return;
+        }
+
+        if (weaknessRes.success && weaknessRes.data) {
+          setTeamWeakness(weaknessRes.data);
+        } else {
+          setTeamWeakness(null);
+        }
+
+        // Process scores
+        const lineupScores = lineupScoresRes.success ? (lineupScoresRes.data || []) : [];
+        const allScores = benchScoresRes.success ? (benchScoresRes.data || []) : [];
+        
+        // Create a map of lineup player IDs for quick lookup
+        const lineupPlayerIdSet = new Set(lineupPlayerIds);
+        
+        // Create score map for easy lookup
+        const scoreMap = new Map(allScores.map(s => [s.id, s]));
+        
+        // Get bench players
+        const benchPlayers = savedPlayers.filter(p => !lineupPlayerIdSet.has(p.id));
+        
+        // Calculate replacement values for bench players based on active position
+        const replacementMap = new Map<number, { replacesPosition: string; replacesName: string; delta: number }>();
+        
+        // Only calculate if there's an active position selected
+        if (activePosition) {
+          const activePositionPlayer = lineup[activePosition];
+          
+          if (activePositionPlayer) {
+            const activePositionScore = scoreMap.get(activePositionPlayer.id);
+            
+            if (activePositionScore) {
+              // Calculate current team total score
+              const currentTeamScore = lineupScores.reduce((sum, score) => sum + score.adjustment_score, 0);
+              
+              // For each bench player, calculate the new team score if they replace the active position
+              for (const benchPlayer of benchPlayers) {
+                const benchScore = scoreMap.get(benchPlayer.id);
+                if (!benchScore) continue;
+                
+                // New team score = current team score - removed player + added player
+                const newTeamScore = currentTeamScore - activePositionScore.adjustment_score + benchScore.adjustment_score;
+                const delta = newTeamScore - currentTeamScore;
+                
+                replacementMap.set(benchPlayer.id, {
+                  replacesPosition: activePosition,
+                  replacesName: activePositionPlayer.name,
+                  delta: delta
+                });
+              }
+            }
+          }
+        }
+        
+        setBenchReplacements(replacementMap);
+        
+        // For playing players, use their lineup contribution scores
+        // For bench players, show their score relative to who they'd replace
+        const combinedScores = [
+          ...lineupScores,
+          ...benchPlayers.map(p => {
+            const score = scoreMap.get(p.id);
+            const replacement = replacementMap.get(p.id);
+            if (score && replacement) {
+              // Show the delta (improvement) as the score for bench players
+              return {
+                ...score,
+                adjustment_score: replacement.delta
+              };
+            }
+            return score;
+          }).filter((s): s is PlayerValueScore => s !== undefined)
+        ];
+        
+        setPlayerScores(combinedScores);
+      } catch (error) {
+        if (analysisRequestId.current !== requestId) {
+          return;
+        }
+        setTeamWeakness(null);
+        setPlayerScores([]);
+      } finally {
+        if (analysisRequestId.current === requestId) {
+          setLoadingAnalysis(false);
+        }
+      }
+    };
+
+    // Debounce analysis updates
+    const timer = setTimeout(() => {
+      void loadAnalysis();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [lineupPlayerIds, allSavedPlayerIds, activePosition]);
 
   const ensurePlayerIsSaved = useCallback(
     async (player: SavedPlayer) => {
@@ -523,6 +673,8 @@ export default function TeamBuilderPage() {
             onClearDrag={clearDragState}
             onAddPlayer={handleAddPlayer}
             onDeletePlayer={handleDeletePlayer}
+            playerScores={playerScores}
+            benchReplacements={benchReplacements}
           />
         </div>
 
@@ -539,6 +691,12 @@ export default function TeamBuilderPage() {
           onClearDragState={clearDragState}
           onClearSlot={handleClearSlot}
           onSaveTeam={saveTeam}
+        />
+
+        <TeamPerformanceCard
+          weakness={teamWeakness}
+          loading={loadingAnalysis}
+          hasLineup={lineupPlayerIds.length > 0}
         />
 
       </div>
