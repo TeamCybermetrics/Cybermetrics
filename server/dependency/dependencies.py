@@ -10,6 +10,16 @@ from infrastructure.player_repository import PlayerRepositoryFirebase
 from useCaseHelpers.player_helper import PlayerDomain
 from services.player_search_service import PlayerSearchService
 
+# Singleton player repository instance (shared across all requests)
+_player_repository_singleton: PlayerRepositoryFirebase | None = None
+
+def _get_player_repository_singleton() -> PlayerRepositoryFirebase:
+    """Get or create the singleton player repository instance."""
+    global _player_repository_singleton
+    if _player_repository_singleton is None:
+        _player_repository_singleton = PlayerRepositoryFirebase(firebase_service.db)
+    return _player_repository_singleton
+
 # roster average calculation related
 from infrastructure.roster_repository import RosterRepositoryFirebase
 from useCaseHelpers.roster_helper import RosterDomain
@@ -37,9 +47,9 @@ def get_auth_service():
     return AuthService(auth_repo, auth_domain)
 
 # player search related
-def get_player_repository():
-    """Create Firebase player repository instance"""
-    return PlayerRepositoryFirebase(firebase_service.db)
+def get_player_repository() -> PlayerRepositoryFirebase:
+    """Get singleton Firebase player repository instance (for dependency injection)."""
+    return _get_player_repository_singleton()
 
 def get_player_domain():
     """Create player domain instance"""

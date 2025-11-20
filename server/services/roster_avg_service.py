@@ -115,19 +115,48 @@ class RosterAvgService:
         """Compute team weakness from the given players and return each player's id, name, and value_score."""
         self.roster_domain.validate_player_ids(player_ids)
 
-        # Compute team weakness once for the provided roster
-        weakness = await self.get_team_weakness_scores(player_ids)
+        # Fetch all data once upfront to avoid redundant DB calls
+        # Get all players' season data in one call
+        players_data = await self.roster_repository.get_players_seasons_data(player_ids)
+        
+        # Compute team weakness once
+        roster_response = self.roster_domain.calculate_roster_averages(players_data)
+        team_avg = self.roster_domain.compute_unweighted_roster_average_dict(list(roster_response.stats.values()))
+        
+        # Fetch league stats once (these are cached in the repository)
+        league_avg = await self.roster_repository.get_league_unweighted_average()
+        league_std = await self.roster_repository.get_league_unweighted_std()
+        
+        # Compute team weakness
+        weakness = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
 
         results: List[PlayerValueScore] = []
         for pid in player_ids:
             try:
-                # Compute value score for each player
-                vs = await self.get_value_score(pid, weakness)
-                # Fetch player name (skip if missing)
+                # Get seasons from already-fetched data
+                seasons = players_data.get(pid)
+                if seasons is None:
+                    logger.debug("Player %s not found in fetched data, skipping", pid)
+                    continue
+                
+                # Compute value score using cached data
+                latest_war = self.roster_domain.calculate_player_latest_war(seasons)
+                latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
+                
+                vs = self.roster_domain.compute_value_score(
+                    latest_war=latest_war,
+                    player_latest_stats=latest_stats,
+                    league_avg=league_avg,
+                    league_std=league_std,
+                    team_weakness=weakness,
+                )
+                
+                # Fetch player name from cache (this uses the in-memory cache)
                 pdata = await self.player_repository.get_player_by_id(pid)
                 if not pdata:
                     continue
                 name = pdata.get("name", "Unknown")
+                
                 results.append(
                     PlayerValueScore(
                         id=pid,

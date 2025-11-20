@@ -109,17 +109,8 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
             )
         
         try:
-            # Check if player exists
-            player_ref, player_doc = await to_thread.run_sync(
-                lambda: self.fetch_ref_and_doc(user_id, player_id)
-            )
-            
-            if not player_doc.exists:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Player with ID {player_id} not found"
-                )
-            
+            # Delete directly - Firestore delete is idempotent (no read needed)
+            player_ref = self.db.collection('users').document(user_id).collection('saved_players').document(player_id)
             await to_thread.run_sync(player_ref.delete)
             
             return DeletePlayerResponse(
@@ -147,15 +138,22 @@ class SavedPlayersRepositoryFirebase(SavedPlayersRepository):
     ) -> SavedPlayer:
         collection = self.db.collection('users').document(user_id).collection('saved_players')
         doc_ref = collection.document(player_id)
+        
+        # Get current document to return updated data (1 read instead of 2)
         snapshot = doc_ref.get()
         if not snapshot.exists:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Player with ID {player_id} not found",
             )
+        
+        # Update position
         doc_ref.update({"position": position})
-        updated_snapshot = doc_ref.get()
-        return SavedPlayer(**updated_snapshot.to_dict())
+        
+        # Return updated data without re-fetching from Firestore
+        current_data = snapshot.to_dict()
+        current_data["position"] = position
+        return SavedPlayer(**current_data)
 
     async def update_position(
         self,

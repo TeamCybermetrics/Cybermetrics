@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
 from routes import auth_router, health_router, players_router, recommendations_router
 from middleware.rate_limit import RateLimitMiddleware, rate_limiter
+from dependency.dependencies import get_player_repository
 from contextlib import asynccontextmanager
 import asyncio
 
@@ -40,6 +41,16 @@ async def lifespan(app: FastAPI):
     # Start rate limiter cleanup task
     print("🧹 Starting rate limiter cleanup task...")
     rate_limiter.start_cleanup_task()
+    
+    # Preload player cache on startup
+    print("📦 Preloading player cache...")
+    try:
+        player_repo = get_player_repository()  # Gets the singleton instance
+        await player_repo._ensure_cache_loaded()
+        print("✅ Player cache loaded successfully")
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to preload player cache: {e}")
+        print("   Cache will be loaded on first request instead")
     
     yield
     

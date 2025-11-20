@@ -14,6 +14,10 @@ class RosterRepositoryFirebase(RosterRepository):
         self._free_agents_cache: List[Dict[str, Any]] = []
         self._free_agents_loaded = False
         self._free_agents_lock = Lock()
+        # Cache for league stats (loaded once per process)
+        self._league_avg_cache: Optional[Dict[str, float]] = None
+        self._league_std_cache: Optional[Dict[str, float]] = None
+        self._league_stats_lock = Lock()
     
     async def get_players_seasons_data(self, player_ids: List[int]) -> Dict[int, Dict]:
         """Gets a dictionary of mlb ids with a dictionary of their seasons stats.
@@ -91,22 +95,36 @@ class RosterRepositoryFirebase(RosterRepository):
         return result
 
     async def get_league_unweighted_average(self) -> Dict[str, float]:
-        """Fetch league unweighted averages (async wrapper)."""
+        """Fetch league unweighted averages (cached)."""
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Firebase is not configured",
             )
-        try:
-            return await to_thread.run_sync(self._get_league_unweighted_blocking)
-        except HTTPException:
-            raise
-        except Exception as e:
-            self._logger.exception("Failed to fetch league unweighted averages")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch league averages",
-            ) from e
+        
+        # Return cached value if available
+        if self._league_avg_cache is not None:
+            return self._league_avg_cache
+        
+        # Load with lock to prevent concurrent fetches
+        async with self._league_stats_lock:
+            # Double-check after acquiring lock
+            if self._league_avg_cache is not None:
+                return self._league_avg_cache
+            
+            try:
+                result = await to_thread.run_sync(self._get_league_unweighted_blocking)
+                self._league_avg_cache = result
+                self._logger.info("Loaded league averages into cache")
+                return result
+            except HTTPException:
+                raise
+            except Exception as e:
+                self._logger.exception("Failed to fetch league unweighted averages")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to fetch league averages",
+                ) from e
 
     def _get_league_unweighted_std_blocking(self) -> Dict[str, float]:
         """Blocking fetch for league unweighted standard deviations from Firestore."""
@@ -140,22 +158,36 @@ class RosterRepositoryFirebase(RosterRepository):
         return result
 
     async def get_league_unweighted_std(self) -> Dict[str, float]:
-        """Fetch league unweighted standard deviations (async wrapper)."""
+        """Fetch league unweighted standard deviations (cached)."""
         if not self.db:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Firebase is not configured",
             )
-        try:
-            return await to_thread.run_sync(self._get_league_unweighted_std_blocking)
-        except HTTPException:
-            raise
-        except Exception as e:
-            self._logger.exception("Failed to fetch league unweighted std deviations")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch league std deviations",
-            ) from e
+        
+        # Return cached value if available
+        if self._league_std_cache is not None:
+            return self._league_std_cache
+        
+        # Load with lock to prevent concurrent fetches
+        async with self._league_stats_lock:
+            # Double-check after acquiring lock
+            if self._league_std_cache is not None:
+                return self._league_std_cache
+            
+            try:
+                result = await to_thread.run_sync(self._get_league_unweighted_std_blocking)
+                self._league_std_cache = result
+                self._logger.info("Loaded league std deviations into cache")
+                return result
+            except HTTPException:
+                raise
+            except Exception as e:
+                self._logger.exception("Failed to fetch league unweighted std deviations")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to fetch league std deviations",
+                ) from e
 
     def _get_league_weighted_std_blocking(self) -> Dict[str, float]:
         """Blocking fetch for league weighted-by-player-count std deviations from Firestore."""
