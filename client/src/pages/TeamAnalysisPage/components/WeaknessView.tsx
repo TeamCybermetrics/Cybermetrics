@@ -106,7 +106,7 @@ export default function WeaknessView({
 
   return (
     <div className={styles.container}>
-      <Card title="Team Stats">
+      <Card title="Team Stats" subtitle="Your lineup compared to league averages">
         <div className={styles.statsRow}>
           {STAT_LABELS.map(({ key, label }) => {
             const rawValue = weakness[key];
@@ -121,7 +121,7 @@ export default function WeaknessView({
       </Card>
 
       <CardGrid columns={2} gap="large">
-        <Card title="Player Adjustment Scores">
+        <Card title="Player Adjustment Scores" subtitle="How each player addresses team weaknesses">
           {players.length === 0 ? (
             <div className={styles.stateMessage}>No player metrics available.</div>
           ) : (
@@ -149,7 +149,7 @@ export default function WeaknessView({
           )}
         </Card>
 
-        <Card title="Weakness Radar">
+        <Card title="Weakness Radar" subtitle="Visual comparison of your team's performance">
           <div className={styles.radarChart}>
               <svg
                 viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
