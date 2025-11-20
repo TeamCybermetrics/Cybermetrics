@@ -31,11 +31,11 @@ const LABEL_OVERRIDES: Partial<Record<
   keyof TeamWeaknessResponse,
   { xOffset?: number; yOffset?: number; anchor?: "start" | "middle" | "end"; offsetMultiplier?: number }
 >> = {
-  strikeout_rate: { xOffset: -16, yOffset: -6 },
-  walk_rate: { xOffset: 40, anchor: "start" },
-  base_running: { xOffset: -2, anchor: "end" },
-  on_base_percentage: { yOffset: 14 },
-  isolated_power: { yOffset: 10 },
+  strikeout_rate: { xOffset: -38, yOffset: -2 },
+  walk_rate: { xOffset: -9, yOffset: 15 ,anchor: "start" },
+  base_running: { xOffset: 5, yOffset: 11 ,anchor: "end" },
+  on_base_percentage: { xOffset: 35, yOffset: 8 },
+  isolated_power: { xOffset: 17, yOffset: 10 },
 };
 
 /**
