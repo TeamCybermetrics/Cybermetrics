@@ -268,7 +268,15 @@ export function RecommendationsRadarCard({
   };
 
   return (
-    <Card title="Roster Performance" subtitle="Before/After Changes">
+    <Card 
+      title="Roster Performance" 
+      subtitle="Before/After Changes"
+      headerAction={
+        <button className={styles.baselineBtn}>
+          Expand Metrics
+        </button>
+      }
+    >
       <div className={styles.performanceLayout}>
         <div className={styles.statsComparisonColumn}>
           {statKeys.map(({ key, label }) => {
