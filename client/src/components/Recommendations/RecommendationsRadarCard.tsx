@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
 import { formatZScore } from "@/utils/zScoreRadar";
-import styles from "@/pages/RecommendationsPage/components/RecommendationsView.module.css";
+import styles from "@/components/Recommendations/RecommendationsView/RecommendationsView.module.css";
 import typography from "@/styles/typography.module.css";
 
 type StatAxis = {

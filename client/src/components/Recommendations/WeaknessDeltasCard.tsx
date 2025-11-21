@@ -1,6 +1,6 @@
 import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
-import styles from "@/pages/RecommendationsPage/components/RecommendationsView.module.css";
+import styles from "@/components/Recommendations/RecommendationsView/RecommendationsView.module.css";
 
 type StatKey = { key: keyof TeamWeaknessResponse; label: string };
 

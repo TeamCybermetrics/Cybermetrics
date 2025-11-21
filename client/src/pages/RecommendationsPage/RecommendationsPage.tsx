@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { ProtectedRoute, PageCard } from "@/components";
 import { ROUTES } from "@/config";
-import { useRecommendations } from "./components/useRecommendations";
-import { RecommendationsView } from "./components/RecommendationsView";
+import { useRecommendations, RecommendationsView } from "@/components/Recommendations/RecommendationsView";
 import styles from "./RecommendationsPage.module.css";
 
 /**
