@@ -361,6 +361,8 @@
 .radarLegendModal {
   font-size: 13px; /* Slightly larger */
   gap: 32px;
+  justify-content: flex-start; /* Align to the left/start */
+  padding-left: 40px; /* Shift to the right to match polygon position */
 }
 
 @media (max-width: 768px) {
