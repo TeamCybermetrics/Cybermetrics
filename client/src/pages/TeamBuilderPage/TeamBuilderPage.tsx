@@ -5,6 +5,7 @@ import { ROUTES } from "@/config";
 import { playerActions } from "@/actions/players";
 import { PlayerSearchResult, SavedPlayer, TeamWeaknessResponse, PlayerValueScore } from "@/api/players";
 import { PageCard, Card } from "@/components";
+import { Modal } from "@/components/Modal";
 import styles from "./TeamBuilderPage.module.css";
 import {
   DiamondPosition,
@@ -678,52 +679,52 @@ export default function TeamBuilderPage() {
 
       </div>
 
-      {searchModalOpen && (
-        <div className={styles.searchModalBackdrop} onClick={handleCloseSearchModal}>
-          <div className={styles.searchModal} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.searchModalHeader}>
-              <div>
-                <p className={styles.searchModalKicker}>Search Players</p>
-                <h3 className={styles.searchModalTitle}>Add Players to Your Lineup</h3>
-              </div>
-              <button className={styles.searchModalClose} onClick={handleCloseSearchModal}>
-                ✕
-              </button>
-            </div>
-
-            <div className={styles.searchModalInput}>
-              <SearchBar
-                searchTerm={searchTerm}
-                onSearchTermChange={handleSearchTermChange}
-                statusText={
-                  hasSearchTerm
-                    ? `${searchResultPlayers.length} results`
-                    : "Type a player name to begin searching"
-                }
-                errorMessage={playerOperationError}
-                autoFocus
-              />
-            </div>
-
-            <div className={styles.searchModalResults}>
-              {hasSearchTerm ? (
-                <SearchResultsSection
-                  players={searchResultPlayers}
-                  savedPlayerIds={savedPlayerIds}
-                  assignedIds={assignedIds}
-                  draggingId={draggingId}
-                  savingPlayerIds={savingPlayerIds}
-                  onPrepareDrag={prepareDragPlayer}
-                  onClearDrag={clearDragState}
-                  onSavePlayer={(player) => void handleSavePlayerOnly(player)}
-                />
-              ) : (
-                <div className={styles.searchModalEmpty}>Start typing to see the results</div>
-              )}
-            </div>
+      <Modal 
+        isOpen={searchModalOpen} 
+        onClose={handleCloseSearchModal}
+        className={styles.searchModal}
+      >
+        <div className={styles.searchModalHeader}>
+          <div>
+            <p className={styles.searchModalKicker}>Search Players</p>
+            <h3 className={styles.searchModalTitle}>Add Players to Your Lineup</h3>
           </div>
+          <button className={styles.searchModalClose} onClick={handleCloseSearchModal}>
+            ✕
+          </button>
         </div>
-      )}
+
+        <div className={styles.searchModalInput}>
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchTermChange={handleSearchTermChange}
+            statusText={
+              hasSearchTerm
+                ? `${searchResultPlayers.length} results`
+                : "Type a player name to begin searching"
+            }
+            errorMessage={playerOperationError}
+            autoFocus
+          />
+        </div>
+
+        <div className={styles.searchModalResults}>
+          {hasSearchTerm ? (
+            <SearchResultsSection
+              players={searchResultPlayers}
+              savedPlayerIds={savedPlayerIds}
+              assignedIds={assignedIds}
+              draggingId={draggingId}
+              savingPlayerIds={savingPlayerIds}
+              onPrepareDrag={prepareDragPlayer}
+              onClearDrag={clearDragState}
+              onSavePlayer={(player) => void handleSavePlayerOnly(player)}
+            />
+          ) : (
+            <div className={styles.searchModalEmpty}>Start typing to see the results</div>
+          )}
+        </div>
+      </Modal>
     </PageCard>
   );
 }
