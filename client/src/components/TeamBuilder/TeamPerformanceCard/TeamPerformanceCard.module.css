@@ -233,6 +233,153 @@
   flex-shrink: 0;
 }
 
+/* Expand Button */
+.expandBtn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expandBtn:hover {
+  background: #5b52ed;
+  transform: translateY(-0.0625rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(79, 70, 229, 0.3);
+}
+
+/* Modal Styles */
+.modalContentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 800px;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.modalHeaderContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.modalTitle {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+}
+
+.modalSubtitle {
+  font-size: 1.25rem !important;
+}
+
+/* Modal-specific styles - larger fonts, more padding, adjusted spacing */
+.performanceLayoutModal {
+  align-items: center; /* Vertically centers content in modal */
+  gap: 48px;
+}
+
+.statsColumnModal {
+  gap: 1.5rem; /* Increased gap between rows */
+}
+
+.statBlockModal {
+  padding: 1.25rem 1.5rem; /* Increased padding */
+  border-radius: 0.875rem; /* Increased border radius */
+  gap: 16px;
+}
+
+.statLabelModal {
+  font-size: 0.875rem !important; /* Increased font size */
+}
+
+.statValueContainerModal {
+  gap: 20px; /* Increased gap */
+}
+
+.statValueGroupModal {
+  min-height: 42px; /* Increased height */
+}
+
+.statValueModal {
+  font-size: 1.25rem !important; /* Increased font size */
+}
+
+.statSubLabelModal {
+  font-size: 0.75rem !important; /* Increased font size */
+}
+
+.statPercentileModal {
+  min-height: 42px; /* Increased height */
+}
+
+.percentileValueModal {
+  font-size: 1.25rem !important; /* Increased font size */
+}
+
+.percentileSuffixModal {
+  font-size: 0.875rem !important; /* Increased font size */
+}
+
+.percentileLabelModal {
+  font-size: 0.75rem !important; /* Increased font size */
+}
+
+.radarSectionModal {
+  gap: 16px;
+}
+
+.radarChartWrapperModal {
+  margin-left: 2rem; /* Shift radar to the right */
+}
+
+.radarChartWrapperModal svg {
+  max-width: 8000px !important; /* Massive radar in modal - scaled to match 80px axis labels */
+}
+
+.ringLabelModal {
+  font-size: 64px !important; /* Proportional to 80px axis labels (3.2x scale from 20px) */
+}
+
+.axisLabelModal {
+  font-size: 100px !important; /* Massive and bolder font for axis labels */
+  font-weight: 800 !important;
+}
+
+.radarLegendModal {
+  font-size: 24px !important; /* Much larger font - matching RecommendationsRadarCard */
+  gap: 32px; /* More spacing between items */
+  margin-top: 122px !important; /* More space from radar to position below polygon */
+  justify-content: flex-start; /* Align to the left/start */
+  padding-left: 40px; /* Shift to the right to match polygon position */
+}
+
+.legendItemModal {
+  gap: 12px; /* More space between dot and text */
+}
+
+.legendDotModal {
+  width: 20px !important; /* Larger dots - matching RecommendationsRadarCard */
+  height: 20px !important; /* Larger dots */
+}
+
+.legendTextModal {
+  font-size: 24px !important; /* Larger text - matching RecommendationsRadarCard */
+  font-weight: 600; /* Bolder text */
+}
+
 @media (max-width: 768px) {
   .performanceLayout {
     flex-direction: column;

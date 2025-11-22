@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
+import { Modal } from "@/components/Modal";
 import styles from "./TeamPerformanceCard.module.css";
+import typography from "@/styles/typography.module.css";
 
 type AxisLabelPosition = {
   offsetMultiplier?: number;
@@ -81,6 +83,7 @@ export function TeamPerformanceCard({
   const previousWeaknessRef = useRef<TeamWeaknessResponse | null>(null);
   const [animatedFractions, setAnimatedFractions] = useState<number[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Store previous weakness for interpolation
   useEffect(() => {
@@ -204,59 +207,69 @@ export function TeamPerformanceCard({
     return Math.round(percentile);
   };
 
-  return (
-    <Card title="Team Performance" subtitle="Your lineup compared to league averages">
-      <div className={styles.performanceLayout}>
-        <div className={styles.statsColumn}>
+  // Render performance content - reusable for both card and modal
+  const renderPerformanceContent = (isModal = false) => {
+    // Scale radar size for modal - proportional to 80px axis labels
+    // Original: 600px radar with 25px labels, so 80px labels = 3.2x scale
+    const modalSize = isModal ? 1000 : RADAR_SIZE;
+    const modalRadius = isModal ? 736 : RADAR_RADIUS;
+    const modalCenter = { x: modalSize / 2, y: modalSize / 2 };
+    const svgPadding = 28; // Matching RecommendationsRadarCard
+    const modalPadding = isModal ? svgPadding * 2 : svgPadding;
+    const svgMaxWidth = isModal ? "2000px" : "320px";
+    
+    return (
+      <div className={`${styles.performanceLayout} ${isModal ? styles.performanceLayoutModal : ""}`}>
+        <div className={`${styles.statsColumn} ${isModal ? styles.statsColumnModal : ""}`}>
           {STAT_LABELS.map(({ key, label }) => {
             const rawValue = displayWeakness[key];
             const percentile = getPercentile(rawValue);
             return (
-              <div key={key} className={styles.statBlock}>
-                <div className={styles.statLabel}>{label}</div>
-                <div className={styles.statValueContainer}>
-                  <div className={styles.statValueGroup}>
-                    <div className={`${styles.statValue} ${getStatColorClass(rawValue)}`}>
+              <div key={key} className={`${styles.statBlock} ${isModal ? styles.statBlockModal : ""}`}>
+                <div className={`${styles.statLabel} ${isModal ? styles.statLabelModal : ""}`}>{label}</div>
+                <div className={`${styles.statValueContainer} ${isModal ? styles.statValueContainerModal : ""}`}>
+                  <div className={`${styles.statValueGroup} ${isModal ? styles.statValueGroupModal : ""}`}>
+                    <div className={`${styles.statValue} ${getStatColorClass(rawValue)} ${isModal ? styles.statValueModal : ""}`}>
                       {formatValueLabel(rawValue)}
                     </div>
-                    <div className={styles.statSubLabel}>std dev</div>
+                    <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ""}`}>std dev</div>
                   </div>
-                  <div className={styles.statPercentile}>
-                    <div className={styles.percentileValue}>
+                  <div className={`${styles.statPercentile} ${isModal ? styles.statPercentileModal : ""}`}>
+                    <div className={`${styles.percentileValue} ${isModal ? styles.percentileValueModal : ""}`}>
                       <span className={getStatColorClass(rawValue)}>{percentile}</span>
-                      <span className={styles.percentileSuffix}>th</span>
+                      <span className={`${styles.percentileSuffix} ${isModal ? styles.percentileSuffixModal : ""}`}>th</span>
                     </div>
-                    <span className={styles.percentileLabel}>percentile</span>
+                    <span className={`${styles.percentileLabel} ${isModal ? styles.percentileLabelModal : ""}`}>percentile</span>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-        <div className={styles.radarSection}>
-          <div className={styles.radarChartWrapper}>
+        <div className={`${styles.radarSection} ${isModal ? styles.radarSectionModal : ""}`}>
+          <div className={`${styles.radarChartWrapper} ${isModal ? styles.radarChartWrapperModal : ""}`}>
             <svg
-              viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
-              style={{ maxWidth: "320px", width: "100%", height: "auto", overflow: "visible" }}
+              viewBox={`${-modalPadding} ${-modalPadding} ${modalSize + 2 * modalPadding} ${modalSize + 2 * modalPadding}`}
+              style={{ width: "100%", maxWidth: svgMaxWidth, height: "auto", overflow: "visible" }}
             >
             {/* rings */}
             {RING_FRACTIONS.map((fraction, i) => (
               <polygon
                 key={`ring-${i}`}
-                points={buildRingPolygon(fraction)}
+                points={buildRingPolygon(fraction, modalRadius, modalCenter)}
                 fill="none"
-                stroke="rgba(255,255,255,0.1)"
-                strokeWidth="1"
+                stroke={isModal ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.1)"}
+                strokeWidth={isModal ? "2.5" : "1"}
               />
             ))}
             {/* axis lines */}
             {STAT_LABELS.map((_, idx) => {
-              const { x, y } = getPointForFraction(1, idx);
+              const { x, y } = getPointForFraction(1, idx, true, modalRadius, modalCenter);
               return (
                 <line
                   key={`axis-${idx}`}
-                  x1={RADAR_CENTER.x}
-                  y1={RADAR_CENTER.y}
+                  x1={modalCenter.x}
+                  y1={modalCenter.y}
                   x2={x}
                   y2={y}
                   stroke="rgba(255,255,255,0.12)"
@@ -270,35 +283,35 @@ export function TeamPerformanceCard({
               stroke: "rgba(255, 198, 124, 0.9)",
               strokeWidth: 1.5,
               className: styles.leaguePolygon
-            }, "league-polygon")}
+            }, "league-polygon", modalRadius, modalCenter)}
             {/* team polygon */}
             {renderRadarPolygon(displayFractions, {
               fill: "rgba(109,123,255,0.3)",
               stroke: "#6d7bff",
               strokeWidth: 2,
               className: styles.teamPolygon
-            }, "team-polygon")}
+            }, "team-polygon", modalRadius, modalCenter)}
             {/* baseline (midpoint) ring */}
             <polygon
-              points={buildRingPolygon(BASELINE_FRACTION)}
+              points={buildRingPolygon(BASELINE_FRACTION, modalRadius, modalCenter)}
               fill="none"
-              stroke="rgba(255,255,255,0.35)"
-              strokeWidth="1"
-              strokeDasharray="6 4"
+              stroke={isModal ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.35)"}
+              strokeWidth={isModal ? "2.5" : "1"}
+              strokeDasharray={isModal ? "12 8" : "6 4"}
             />
             {/* ring labels */}
             {RING_LABEL_VALUES.map((value) => {
               const fraction = valueToFraction(value);
               const isBaseline = Math.abs(value - BASELINE_VALUE) < 1e-6;
               const offset = isBaseline ? 6 : value === MAX_VALUE ? -10 : value === MIN_VALUE ? 14 : -4;
-              const y = RADAR_CENTER.y - RADAR_RADIUS * fraction + offset;
+              const y = modalCenter.y - modalRadius * fraction + offset;
               return (
                 <text
                   key={`ring-label-${value}`}
-                  x={RADAR_CENTER.x}
+                  x={modalCenter.x}
                   y={y}
                   textAnchor="middle"
-                  className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""}`}
+                  className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""} ${isModal ? styles.ringLabelModal : ""}`}
                 >
                   {formatValueTick(value)}{isBaseline ? " (avg)" : ""}
                 </text>
@@ -308,7 +321,7 @@ export function TeamPerformanceCard({
             {STAT_LABELS.map((axis, idx) => {
               const { position } = axis;
               const offsetMultiplier = position?.offsetMultiplier ?? AXIS_LABEL_OFFSET;
-              let { x, y } = getPointForFraction(offsetMultiplier, idx, false);
+              let { x, y } = getPointForFraction(offsetMultiplier, idx, false, modalRadius, modalCenter);
               x += position?.xOffset ?? 0;
               y += position?.yOffset ?? 0;
               let anchor: "start" | "end" | "middle";
@@ -317,6 +330,7 @@ export function TeamPerformanceCard({
               const rawValue = displayWeakness[axis.key];
               let labelClass = styles.axisLabel;
               if (idx === worstAxisIndex) labelClass = styles.axisLabelSevere; else if (idx === secondWorstAxisIndex) labelClass = styles.axisLabelWarn;
+              if (isModal) labelClass = `${labelClass} ${styles.axisLabelModal}`;
               const scoreText = formatValueLabel(rawValue);
               const deficitDescription = describeWeakness(rawValue);
               const strikeoutNote = axis.key === "strikeout_rate" ? "Lower strikeout rate plots farther out." : null;
@@ -335,19 +349,48 @@ export function TeamPerformanceCard({
             })}
             </svg>
           </div>
-          <div className={styles.radarLegend}>
-            <span className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ backgroundColor: 'rgba(255, 198, 124, 0.9)' }}></span>
-              League Average
+          <div className={`${styles.radarLegend} ${isModal ? styles.radarLegendModal : ""}`}>
+            <span className={`${styles.legendItem} ${isModal ? styles.legendItemModal : ""}`}>
+              <span className={`${styles.legendDot} ${isModal ? styles.legendDotModal : ""}`} style={{ backgroundColor: 'rgba(255, 198, 124, 0.9)' }}></span>
+              <span className={isModal ? styles.legendTextModal : ""}>League Average</span>
             </span>
-            <span className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ backgroundColor: '#6d7bff' }}></span>
-              Your Lineup
+            <span className={`${styles.legendItem} ${isModal ? styles.legendItemModal : ""}`}>
+              <span className={`${styles.legendDot} ${isModal ? styles.legendDotModal : ""}`} style={{ backgroundColor: '#6d7bff' }}></span>
+              <span className={isModal ? styles.legendTextModal : ""}>Your Lineup</span>
             </span>
           </div>
         </div>
       </div>
-    </Card>
+    );
+  };
+
+  return (
+    <>
+      <Card 
+        title="Team Performance" 
+        subtitle="Your lineup compared to league averages"
+        headerAction={
+          <button 
+            className={styles.expandBtn}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Expand Metrics
+          </button>
+        }
+      >
+        {renderPerformanceContent(false)}
+      </Card>
+      
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className={styles.modalContentWrapper}>
+        <div className={styles.modalHeader}>
+          <div className={styles.modalHeaderContent}>
+            <div className={`${typography.heading3} ${styles.modalTitle}`}>Team Performance</div>
+            <div className={`${typography.bodySmall} ${typography.muted} ${styles.modalSubtitle}`}>Your lineup compared to league averages</div>
+          </div>
+        </div>
+        {renderPerformanceContent(true)}
+      </Modal>
+    </>
   );
 }
 
@@ -365,10 +408,18 @@ type PolygonStyle = {
  * @param fractions - Array of fractions (0–1) for each axis, ordered to match the chart axes.
  * @param style - Optional polygon styling (fill, stroke, strokeWidth, className, strokeDasharray).
  * @param key - Optional React key applied to the polygon element.
+ * @param radius - Optional radius for the radar (defaults to RADAR_RADIUS).
+ * @param center - Optional center point for the radar (defaults to RADAR_CENTER).
  * @returns The SVG <polygon> element representing the radar polygon.
  */
-function renderRadarPolygon(fractions: number[], style?: PolygonStyle, key?: string) {
-  const points = buildPolygonPoints(fractions);
+function renderRadarPolygon(
+  fractions: number[], 
+  style?: PolygonStyle, 
+  key?: string,
+  radius = RADAR_RADIUS,
+  center = RADAR_CENTER
+) {
+  const points = buildPolygonPoints(fractions, radius, center);
 
   return (
     <polygon
@@ -403,15 +454,23 @@ function getAngle(axisIndex: number) {
  * @param fraction - Fraction of the radar radius (0 = center, 1 = outer edge); values outside [0,1] are honored only when `clamp` is false.
  * @param axisIndex - Zero-based index of the axis around the radar (0 corresponds to the top axis).
  * @param clamp - When true, restricts `fraction` to the [0,1] range before conversion.
+ * @param radius - Optional radius for the radar (defaults to RADAR_RADIUS).
+ * @param center - Optional center point for the radar (defaults to RADAR_CENTER).
  * @returns An object with `x` and `y` coordinates in the radar's SVG coordinate space.
  */
-function getPointForFraction(fraction: number, axisIndex: number, clamp: boolean = true) {
+function getPointForFraction(
+  fraction: number, 
+  axisIndex: number, 
+  clamp: boolean = true,
+  radius = RADAR_RADIUS,
+  center = RADAR_CENTER
+) {
   const value = clamp ? Math.min(Math.max(fraction, 0), 1) : fraction;
   const angle = getAngle(axisIndex);
-  const r = Math.max(value, 0) * RADAR_RADIUS;
+  const r = Math.max(value, 0) * radius;
   return {
-    x: RADAR_CENTER.x + r * Math.cos(angle),
-    y: RADAR_CENTER.y + r * Math.sin(angle),
+    x: center.x + r * Math.cos(angle),
+    y: center.y + r * Math.sin(angle),
   };
 }
 
@@ -419,12 +478,18 @@ function getPointForFraction(fraction: number, axisIndex: number, clamp: boolean
  * Builds an SVG-compatible points string from radial fractions for each axis.
  *
  * @param fractions - Array of radial fractions (typically 0–1) where each entry corresponds to an axis index and represents distance from the radar center.
+ * @param radius - Optional radius for the radar (defaults to RADAR_RADIUS).
+ * @param center - Optional center point for the radar (defaults to RADAR_CENTER).
  * @returns A space-separated string of `"x,y"` coordinate pairs suitable for an SVG `points` attribute (e.g. `"x1,y1 x2,y2 …"`).
  */
-function buildPolygonPoints(fractions: number[]) {
+function buildPolygonPoints(
+  fractions: number[],
+  radius = RADAR_RADIUS,
+  center = RADAR_CENTER
+) {
   return fractions
     .map((fraction, idx) => {
-      const { x, y } = getPointForFraction(fraction, idx);
+      const { x, y } = getPointForFraction(fraction, idx, true, radius, center);
       return `${x},${y}`;
     })
     .join(" ");
@@ -434,10 +499,16 @@ function buildPolygonPoints(fractions: number[]) {
  * Create the SVG polygon point string for a radar chart ring at a uniform radial fraction.
  *
  * @param fraction - Radial fraction (0 to 1) describing distance from center where the ring should be placed
+ * @param radius - Optional radius for the radar (defaults to RADAR_RADIUS).
+ * @param center - Optional center point for the radar (defaults to RADAR_CENTER).
  * @returns A space-separated list of `x,y` coordinate pairs suitable for an SVG polygon `points` attribute
  */
-function buildRingPolygon(fraction: number) {
-  return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction));
+function buildRingPolygon(
+  fraction: number,
+  radius = RADAR_RADIUS,
+  center = RADAR_CENTER
+) {
+  return buildPolygonPoints(Array(STAT_LABELS.length).fill(fraction), radius, center);
 }
 
 /**
