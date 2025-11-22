@@ -61,6 +61,7 @@ type TeamPerformanceCardProps = {
   weakness: TeamWeaknessResponse | null;
   loading: boolean;
   hasLineup: boolean;
+  isModal?: boolean;
 };
 
 /**
@@ -76,7 +77,8 @@ type TeamPerformanceCardProps = {
 export function TeamPerformanceCard({
   weakness,
   loading,
-  hasLineup
+  hasLineup,
+  isModal = false
 }: TeamPerformanceCardProps) {
   const previousWeaknessRef = useRef<TeamWeaknessResponse | null>(null);
   const [animatedFractions, setAnimatedFractions] = useState<number[]>([]);
@@ -204,40 +206,41 @@ export function TeamPerformanceCard({
     return Math.round(percentile);
   };
 
-  return (
-    <Card title="Team Performance" subtitle="Your lineup compared to league averages">
-      <div className={styles.performanceLayout}>
-        <div className={styles.statsColumn}>
+  // Render performance content - reusable for both card and modal
+  const renderPerformanceContent = (isModal = false) => {
+    return (
+      <div className={`${styles.performanceLayout} ${isModal ? styles.performanceLayoutModal : ""}`}>
+        <div className={`${styles.statsColumn} ${isModal ? styles.statsColumnModal : ""}`}>
           {STAT_LABELS.map(({ key, label }) => {
             const rawValue = displayWeakness[key];
             const percentile = getPercentile(rawValue);
             return (
-              <div key={key} className={styles.statBlock}>
-                <div className={styles.statLabel}>{label}</div>
-                <div className={styles.statValueContainer}>
-                  <div className={styles.statValueGroup}>
-                    <div className={`${styles.statValue} ${getStatColorClass(rawValue)}`}>
+              <div key={key} className={`${styles.statBlock} ${isModal ? styles.statBlockModal : ""}`}>
+                <div className={`${styles.statLabel} ${isModal ? styles.statLabelModal : ""}`}>{label}</div>
+                <div className={`${styles.statValueContainer} ${isModal ? styles.statValueContainerModal : ""}`}>
+                  <div className={`${styles.statValueGroup} ${isModal ? styles.statValueGroupModal : ""}`}>
+                    <div className={`${styles.statValue} ${getStatColorClass(rawValue)} ${isModal ? styles.statValueModal : ""}`}>
                       {formatValueLabel(rawValue)}
                     </div>
-                    <div className={styles.statSubLabel}>std dev</div>
+                    <div className={`${styles.statSubLabel} ${isModal ? styles.statSubLabelModal : ""}`}>std dev</div>
                   </div>
-                  <div className={styles.statPercentile}>
-                    <div className={styles.percentileValue}>
+                  <div className={`${styles.statPercentile} ${isModal ? styles.statPercentileModal : ""}`}>
+                    <div className={`${styles.percentileValue} ${isModal ? styles.percentileValueModal : ""}`}>
                       <span className={getStatColorClass(rawValue)}>{percentile}</span>
-                      <span className={styles.percentileSuffix}>th</span>
+                      <span className={`${styles.percentileSuffix} ${isModal ? styles.percentileSuffixModal : ""}`}>th</span>
                     </div>
-                    <span className={styles.percentileLabel}>percentile</span>
+                    <span className={`${styles.percentileLabel} ${isModal ? styles.percentileLabelModal : ""}`}>percentile</span>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-        <div className={styles.radarSection}>
-          <div className={styles.radarChartWrapper}>
+        <div className={`${styles.radarSection} ${isModal ? styles.radarSectionModal : ""}`}>
+          <div className={`${styles.radarChartWrapper} ${isModal ? styles.radarChartWrapperModal : ""}`}>
             <svg
               viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
-              style={{ maxWidth: "320px", width: "100%", height: "auto", overflow: "visible" }}
+              style={{ maxWidth: isModal ? "600px" : "320px", width: "100%", height: "auto", overflow: "visible" }}
             >
             {/* rings */}
             {RING_FRACTIONS.map((fraction, i) => (
@@ -298,7 +301,7 @@ export function TeamPerformanceCard({
                   x={RADAR_CENTER.x}
                   y={y}
                   textAnchor="middle"
-                  className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""}`}
+                  className={`${styles.ringLabel} ${isBaseline ? styles.ringLabelAverage : ""} ${isModal ? styles.ringLabelModal : ""}`}
                 >
                   {formatValueTick(value)}{isBaseline ? " (avg)" : ""}
                 </text>
@@ -317,6 +320,7 @@ export function TeamPerformanceCard({
               const rawValue = displayWeakness[axis.key];
               let labelClass = styles.axisLabel;
               if (idx === worstAxisIndex) labelClass = styles.axisLabelSevere; else if (idx === secondWorstAxisIndex) labelClass = styles.axisLabelWarn;
+              if (isModal) labelClass = `${labelClass} ${styles.axisLabelModal}`;
               const scoreText = formatValueLabel(rawValue);
               const deficitDescription = describeWeakness(rawValue);
               const strikeoutNote = axis.key === "strikeout_rate" ? "Lower strikeout rate plots farther out." : null;
@@ -335,7 +339,7 @@ export function TeamPerformanceCard({
             })}
             </svg>
           </div>
-          <div className={styles.radarLegend}>
+          <div className={`${styles.radarLegend} ${isModal ? styles.radarLegendModal : ""}`}>
             <span className={styles.legendItem}>
               <span className={styles.legendDot} style={{ backgroundColor: 'rgba(255, 198, 124, 0.9)' }}></span>
               League Average
@@ -347,6 +351,12 @@ export function TeamPerformanceCard({
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <Card title="Team Performance" subtitle="Your lineup compared to league averages">
+      {renderPerformanceContent(isModal)}
     </Card>
   );
 }

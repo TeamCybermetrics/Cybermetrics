@@ -233,6 +233,75 @@
   flex-shrink: 0;
 }
 
+/* Modal-specific styles - to be styled when modal is implemented */
+.performanceLayoutModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statsColumnModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statBlockModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statLabelModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statValueContainerModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statValueGroupModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statValueModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statSubLabelModal {
+  /* Will be styled when modal is implemented */
+}
+
+.statPercentileModal {
+  /* Will be styled when modal is implemented */
+}
+
+.percentileValueModal {
+  /* Will be styled when modal is implemented */
+}
+
+.percentileSuffixModal {
+  /* Will be styled when modal is implemented */
+}
+
+.percentileLabelModal {
+  /* Will be styled when modal is implemented */
+}
+
+.radarSectionModal {
+  /* Will be styled when modal is implemented */
+}
+
+.radarChartWrapperModal {
+  /* Will be styled when modal is implemented */
+}
+
+.ringLabelModal {
+  /* Will be styled when modal is implemented */
+}
+
+.axisLabelModal {
+  /* Will be styled when modal is implemented */
+}
+
+.radarLegendModal {
+  /* Will be styled when modal is implemented */
+}
+
 @media (max-width: 768px) {
   .performanceLayout {
     flex-direction: column;
