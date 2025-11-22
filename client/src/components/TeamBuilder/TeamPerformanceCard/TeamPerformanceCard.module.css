@@ -346,15 +346,15 @@
 }
 
 .radarChartWrapperModal svg {
-  max-width: 600px !important; /* Larger radar in modal */
+  max-width: 8000px !important; /* Massive radar in modal - scaled to match 80px axis labels */
 }
 
 .ringLabelModal {
-  font-size: 14px !important; /* Larger font */
+  font-size: 64px !important; /* Proportional to 80px axis labels (3.2x scale from 20px) */
 }
 
 .axisLabelModal {
-  font-size: 16px !important; /* Larger and bolder font */
+  font-size: 100px !important; /* Massive and bolder font for axis labels */
   font-weight: 800 !important;
 }
 
