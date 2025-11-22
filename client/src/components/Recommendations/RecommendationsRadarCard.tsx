@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
+import { Modal } from "@/components/Modal";
 import { formatZScore } from "@/utils/zScoreRadar";
 import styles from "@/components/Recommendations/RecommendationsView/RecommendationsView.module.css";
 import typography from "@/styles/typography.module.css";
@@ -502,25 +503,19 @@ export function RecommendationsRadarCard({
     >
       {renderRadarContent(false)}
     </Card>
-    {isModalOpen && (
-      <div 
-        className={styles.modalOverlay}
-        onClick={() => setIsModalOpen(false)}
-      >
-        <div 
-          className={styles.modalContent}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className={styles.modalHeader}>
-            <div className={styles.modalHeaderContent}>
-              <div className={`${typography.heading3} ${styles.modalTitle}`}>Roster Performance</div>
-              <div className={`${typography.bodySmall} ${typography.muted} ${styles.modalSubtitle}`}>Before/After Changes</div>
-            </div>
-          </div>
-          {renderRadarContent(true)}
+    <Modal 
+      isOpen={isModalOpen} 
+      onClose={() => setIsModalOpen(false)}
+      className={styles.modalContent}
+    >
+      <div className={styles.modalHeader}>
+        <div className={styles.modalHeaderContent}>
+          <div className={`${typography.heading3} ${styles.modalTitle}`}>Roster Performance</div>
+          <div className={`${typography.bodySmall} ${typography.muted} ${styles.modalSubtitle}`}>Before/After Changes</div>
         </div>
       </div>
-    )}
+      {renderRadarContent(true)}
+    </Modal>
   </>
   );
 }
