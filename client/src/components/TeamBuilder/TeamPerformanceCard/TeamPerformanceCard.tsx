@@ -350,13 +350,13 @@ export function TeamPerformanceCard({
             </svg>
           </div>
           <div className={`${styles.radarLegend} ${isModal ? styles.radarLegendModal : ""}`}>
-            <span className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ backgroundColor: 'rgba(255, 198, 124, 0.9)' }}></span>
-              League Average
+            <span className={`${styles.legendItem} ${isModal ? styles.legendItemModal : ""}`}>
+              <span className={`${styles.legendDot} ${isModal ? styles.legendDotModal : ""}`} style={{ backgroundColor: 'rgba(255, 198, 124, 0.9)' }}></span>
+              <span className={isModal ? styles.legendTextModal : ""}>League Average</span>
             </span>
-            <span className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ backgroundColor: '#6d7bff' }}></span>
-              Your Lineup
+            <span className={`${styles.legendItem} ${isModal ? styles.legendItemModal : ""}`}>
+              <span className={`${styles.legendDot} ${isModal ? styles.legendDotModal : ""}`} style={{ backgroundColor: '#6d7bff' }}></span>
+              <span className={isModal ? styles.legendTextModal : ""}>Your Lineup</span>
             </span>
           </div>
         </div>

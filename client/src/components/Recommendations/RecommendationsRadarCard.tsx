@@ -472,14 +472,14 @@ export function RecommendationsRadarCard({
             );
           })}
         </svg>
-        <div className={styles.radarLegend}>
-          <div className={styles.legendItem}>
-            <div className={styles.legendDot} style={{ background: 'rgba(255, 198, 124, 0.9)' }}></div>
-            <span>Baseline</span>
+        <div className={`${styles.radarLegend} ${isModal ? styles.radarLegendModal : ""}`}>
+          <div className={`${styles.legendItem} ${isModal ? styles.legendItemModal : ""}`}>
+            <div className={`${styles.legendDot} ${isModal ? styles.legendDotModal : ""}`} style={{ background: 'rgba(255, 198, 124, 0.9)' }}></div>
+            <span className={isModal ? styles.legendTextModal : ""}>Baseline</span>
           </div>
-          <div className={styles.legendItem}>
-            <div className={styles.legendDot} style={{ background: '#6d7bff' }}></div>
-            <span>Current</span>
+          <div className={`${styles.legendItem} ${isModal ? styles.legendItemModal : ""}`}>
+            <div className={`${styles.legendDot} ${isModal ? styles.legendDotModal : ""}`} style={{ background: '#6d7bff' }}></div>
+            <span className={isModal ? styles.legendTextModal : ""}>Current</span>
           </div>
         </div>
       </div>

@@ -359,10 +359,25 @@
 }
 
 .radarLegendModal {
-  font-size: 13px; /* Slightly larger */
-  gap: 32px;
+  font-size: 24px !important; /* Much larger font - matching RecommendationsRadarCard */
+  gap: 32px; /* More spacing between items */
+  margin-top: 122px !important; /* More space from radar to position below polygon */
   justify-content: flex-start; /* Align to the left/start */
   padding-left: 40px; /* Shift to the right to match polygon position */
+}
+
+.legendItemModal {
+  gap: 12px; /* More space between dot and text */
+}
+
+.legendDotModal {
+  width: 20px !important; /* Larger dots - matching RecommendationsRadarCard */
+  height: 20px !important; /* Larger dots */
+}
+
+.legendTextModal {
+  font-size: 24px !important; /* Larger text - matching RecommendationsRadarCard */
+  font-weight: 600; /* Bolder text */
 }
 
 @media (max-width: 768px) {

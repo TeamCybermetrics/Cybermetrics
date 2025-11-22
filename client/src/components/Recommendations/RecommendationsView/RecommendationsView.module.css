@@ -476,6 +476,27 @@
   flex-shrink: 0;
 }
 
+/* Modal-specific legend styles - larger font and dots */
+.radarLegendModal {
+  font-size: 24px !important; /* Much larger font */
+  gap: 32px; /* More spacing between items */
+  margin-top: 20px; /* More space from radar */
+}
+
+.legendItemModal {
+  gap: 12px; /* More space between dot and text */
+}
+
+.legendDotModal {
+  width: 20px !important; /* Larger dots */
+  height: 20px !important; /* Larger dots */
+}
+
+.legendTextModal {
+  font-size: 24px !important; /* Larger text */
+  font-weight: 600; /* Bolder text */
+}
+
 @media (max-width: 1200px) {
   .performanceLayout {
     flex-direction: column;
