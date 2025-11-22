@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { TeamWeaknessResponse } from "@/api/players";
 import { Card } from "@/components";
+import { Modal } from "@/components/Modal";
 import styles from "./TeamPerformanceCard.module.css";
+import typography from "@/styles/typography.module.css";
 
 type AxisLabelPosition = {
   offsetMultiplier?: number;
@@ -61,7 +63,6 @@ type TeamPerformanceCardProps = {
   weakness: TeamWeaknessResponse | null;
   loading: boolean;
   hasLineup: boolean;
-  isModal?: boolean;
 };
 
 /**
@@ -77,12 +78,12 @@ type TeamPerformanceCardProps = {
 export function TeamPerformanceCard({
   weakness,
   loading,
-  hasLineup,
-  isModal = false
+  hasLineup
 }: TeamPerformanceCardProps) {
   const previousWeaknessRef = useRef<TeamWeaknessResponse | null>(null);
   const [animatedFractions, setAnimatedFractions] = useState<number[]>([]);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Store previous weakness for interpolation
   useEffect(() => {
@@ -355,9 +356,32 @@ export function TeamPerformanceCard({
   };
 
   return (
-    <Card title="Team Performance" subtitle="Your lineup compared to league averages">
-      {renderPerformanceContent(isModal)}
-    </Card>
+    <>
+      <Card 
+        title="Team Performance" 
+        subtitle="Your lineup compared to league averages"
+        headerAction={
+          <button 
+            className={styles.expandBtn}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Expand Metrics
+          </button>
+        }
+      >
+        {renderPerformanceContent(false)}
+      </Card>
+      
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className={styles.modalContentWrapper}>
+        <div className={styles.modalHeader}>
+          <div className={styles.modalHeaderContent}>
+            <div className={`${typography.heading3} ${styles.modalTitle}`}>Team Performance</div>
+            <div className={`${typography.bodySmall} ${typography.muted} ${styles.modalSubtitle}`}>Your lineup compared to league averages</div>
+          </div>
+        </div>
+        {renderPerformanceContent(true)}
+      </Modal>
+    </>
   );
 }
 

@@ -233,73 +233,134 @@
   flex-shrink: 0;
 }
 
-/* Modal-specific styles - to be styled when modal is implemented */
+/* Expand Button */
+.expandBtn {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expandBtn:hover {
+  background: #5b52ed;
+  transform: translateY(-0.0625rem);
+  box-shadow: 0 0.25rem 0.75rem rgba(79, 70, 229, 0.3);
+}
+
+/* Modal Styles */
+.modalContentWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 800px;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.modalHeaderContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.modalTitle {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+}
+
+.modalSubtitle {
+  font-size: 1.25rem !important;
+}
+
+/* Modal-specific styles - larger fonts, more padding, adjusted spacing */
 .performanceLayoutModal {
-  /* Will be styled when modal is implemented */
+  align-items: center; /* Vertically centers content in modal */
+  gap: 48px;
 }
 
 .statsColumnModal {
-  /* Will be styled when modal is implemented */
+  gap: 1.5rem; /* Increased gap between rows */
 }
 
 .statBlockModal {
-  /* Will be styled when modal is implemented */
+  padding: 1.25rem 1.5rem; /* Increased padding */
+  border-radius: 0.875rem; /* Increased border radius */
+  gap: 16px;
 }
 
 .statLabelModal {
-  /* Will be styled when modal is implemented */
+  font-size: 0.875rem !important; /* Increased font size */
 }
 
 .statValueContainerModal {
-  /* Will be styled when modal is implemented */
+  gap: 20px; /* Increased gap */
 }
 
 .statValueGroupModal {
-  /* Will be styled when modal is implemented */
+  min-height: 42px; /* Increased height */
 }
 
 .statValueModal {
-  /* Will be styled when modal is implemented */
+  font-size: 1.25rem !important; /* Increased font size */
 }
 
 .statSubLabelModal {
-  /* Will be styled when modal is implemented */
+  font-size: 0.75rem !important; /* Increased font size */
 }
 
 .statPercentileModal {
-  /* Will be styled when modal is implemented */
+  min-height: 42px; /* Increased height */
 }
 
 .percentileValueModal {
-  /* Will be styled when modal is implemented */
+  font-size: 1.25rem !important; /* Increased font size */
 }
 
 .percentileSuffixModal {
-  /* Will be styled when modal is implemented */
+  font-size: 0.875rem !important; /* Increased font size */
 }
 
 .percentileLabelModal {
-  /* Will be styled when modal is implemented */
+  font-size: 0.75rem !important; /* Increased font size */
 }
 
 .radarSectionModal {
-  /* Will be styled when modal is implemented */
+  gap: 16px;
 }
 
 .radarChartWrapperModal {
-  /* Will be styled when modal is implemented */
+  margin-left: 2rem; /* Shift radar to the right */
+}
+
+.radarChartWrapperModal svg {
+  max-width: 600px !important; /* Larger radar in modal */
 }
 
 .ringLabelModal {
-  /* Will be styled when modal is implemented */
+  font-size: 14px !important; /* Larger font */
 }
 
 .axisLabelModal {
-  /* Will be styled when modal is implemented */
+  font-size: 16px !important; /* Larger and bolder font */
+  font-weight: 800 !important;
 }
 
 .radarLegendModal {
-  /* Will be styled when modal is implemented */
+  font-size: 13px; /* Slightly larger */
+  gap: 32px;
 }
 
 @media (max-width: 768px) {
