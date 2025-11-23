@@ -348,6 +348,14 @@ paket-files/
 *.pyc
 .venv/
 
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+
 # Cake - Uncomment if you are using it
 #tools/**
 #!tools/packages.config
