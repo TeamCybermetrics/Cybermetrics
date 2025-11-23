@@ -1,0 +1,32 @@
+# Coverage.py configuration file
+
+[run]
+# Paths to omit from coverage reporting
+omit =
+    */venv/*
+    */tests/*
+    */scripts/*
+    */__pycache__/*
+    */site-packages/*
+    */.pytest_cache/*
+
+[report]
+# Show missing lines in terminal report
+show_missing = True
+
+# Precision for coverage percentage
+precision = 2
+
+# Exclude lines from coverage (e.g., debugging code)
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+
+[html]
+# Directory for HTML coverage report
+directory = htmlcov

@@ -81,7 +81,25 @@ jobs:
           python -c "from pybaseball import batting_stats; print('✓ Pybaseball')"
           python -c "from rapidfuzz import fuzz; print('✓ RapidFuzz')"
           python -c "import httpx; print('✓ httpx')"
+          python -c "import pytest; print('✓ pytest')"
           echo "✅ All imports successful"
+
+      - name: Run tests with pytest
+        if: steps.changes.outputs.server == 'true'
+        working-directory: ./server
+        run: |
+          echo "🧪 Running tests with pytest..."
+          pytest -v --tb=short --cov=. --cov-report=term-missing --cov-report=xml
+          echo "✅ All tests passed"
+
+      - name: Upload coverage reports
+        if: steps.changes.outputs.server == 'true'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./server/coverage.xml
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
 
       - name: Test app startup
         if: steps.changes.outputs.server == 'true'
