@@ -12,7 +12,7 @@ class RosterAvgRequest(BaseModel):
     Accepts a list of player IDs to compute aggregate
     career statistics across the roster.
     """
-    player_ids: List[int] = Field(..., min_items=1, description="List of MLB player IDs (mlbam_id)")
+    player_ids: List[int] = Field(..., min_length=1, description="List of MLB player IDs (mlbam_id)")
 
 class ValueScoreRequest(BaseModel):
     """

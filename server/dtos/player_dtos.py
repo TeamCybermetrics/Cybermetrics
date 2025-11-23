@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, Dict
 from entities.players import SeasonStats
 
@@ -26,6 +26,8 @@ class PlayerDetail(BaseModel):
     Provides comprehensive player data including historical
     season-by-season statistics.
     """
+    model_config = ConfigDict(extra="allow")
+    
     mlbam_id: int
     fangraphs_id: int
     name: str
@@ -34,6 +36,3 @@ class PlayerDetail(BaseModel):
     team_abbrev: Optional[str] = None
     overall_score: float = 0.0
     seasons: Dict[str, SeasonStats]  # Year -> Stats mapping
-    
-    class Config:
-        extra = "allow"
