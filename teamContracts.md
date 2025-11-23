@@ -54,7 +54,7 @@ By signing below, each member confirms they understand and agree to this contrac
 
 **Team Member Signatures:**  
 Raymond
-_______________________________________  
+Kahn  
 _______________________________________  
 _______________________________________  
 _______________________________________  
