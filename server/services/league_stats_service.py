@@ -13,7 +13,7 @@ class LeagueStatsService:
         self.domain = domain
 
     def persist_league_aggregate(self, aggregate: LeagueAggregate) -> None:
-        self.player_repository.set_league_averages(aggregate.dict())
+        self.player_repository.set_league_averages(aggregate.model_dump())
 
     def build_team_aggregate(self, team_id: str, avg: dict, player_count: int) -> TeamAggregate:
         return TeamAggregate(team_id=team_id, avg=avg, player_count=player_count)
