@@ -283,3 +283,290 @@ class TestPlayerDomainFuzzySearch:
         if results:
             assert "https://example.com/" in results[0].image_url
             assert ".png" in results[0].image_url
+
+
+class TestPlayerDomainBuildPlayerDetail:
+    """Tests for build_player_detail method."""
+    
+    @pytest.fixture
+    def player_domain(self):
+        """Create a PlayerDomain instance for testing."""
+        return PlayerDomain()
+    
+    @pytest.mark.unit
+    def test_build_player_detail_empty_data(self, player_domain):
+        """Test that empty player data raises QueryError."""
+        from useCaseHelpers.errors import QueryError
+        
+        with pytest.raises(QueryError) as exc_info:
+            player_domain.build_player_detail({})
+        
+        assert "Player not found" in str(exc_info.value)
+    
+    @pytest.mark.unit
+    def test_build_player_detail_none_data(self, player_domain):
+        """Test that None player data raises QueryError."""
+        from useCaseHelpers.errors import QueryError
+        
+        with pytest.raises(QueryError):
+            player_domain.build_player_detail(None)
+    
+    @pytest.mark.unit
+    def test_build_player_detail_with_def_field(self, player_domain):
+        """Test that 'def' field is renamed to 'def_'."""
+        player_data = {
+            "mlbam_id": 12345,
+            "fangraphs_id": 67890,
+            "name": "Test Player",
+            "seasons": {
+                "2023": {
+                    "def": 5.5,
+                    "games": 100
+                }
+            }
+        }
+        
+        result = player_domain.build_player_detail(player_data)
+        
+        assert result.mlbam_id == 12345
+        assert "2023" in result.seasons
+        # The 'def' should be converted to 'def_' in SeasonStats
+        assert result.seasons["2023"].def_ == 5.5
+    
+    @pytest.mark.unit
+    def test_build_player_detail_with_image_builder(self, player_domain):
+        """Test build_player_detail with custom image builder."""
+        def custom_builder(player_id: int) -> str:
+            return f"https://images.com/{player_id}.jpg"
+        
+        player_data = {
+            "mlbam_id": 12345,
+            "fangraphs_id": 67890,
+            "name": "Test Player",
+            "seasons": {}
+        }
+        
+        result = player_domain.build_player_detail(player_data, custom_builder)
+        
+        assert result.image_url == "https://images.com/12345.jpg"
+
+
+class TestPlayerDomainValidatePlayerId:
+    """Tests for validate_player_id method."""
+    
+    @pytest.fixture
+    def player_domain(self):
+        """Create a PlayerDomain instance for testing."""
+        return PlayerDomain()
+    
+    @pytest.mark.unit
+    def test_validate_player_id_valid(self, player_domain):
+        """Test that valid player ID passes validation."""
+        player_domain.validate_player_id(12345)
+        player_domain.validate_player_id(1)
+    
+    @pytest.mark.unit
+    def test_validate_player_id_zero(self, player_domain):
+        """Test that zero player ID raises InputValidationError."""
+        with pytest.raises(InputValidationError) as exc_info:
+            player_domain.validate_player_id(0)
+        
+        assert "Invalid player ID" in str(exc_info.value)
+    
+    @pytest.mark.unit
+    def test_validate_player_id_negative(self, player_domain):
+        """Test that negative player ID raises InputValidationError."""
+        with pytest.raises(InputValidationError):
+            player_domain.validate_player_id(-1)
+    
+    @pytest.mark.unit
+    def test_validate_player_id_none(self, player_domain):
+        """Test that None player ID raises InputValidationError."""
+        with pytest.raises(InputValidationError):
+            player_domain.validate_player_id(None)
+
+
+class TestPlayerDomainGetPrimaryPosition:
+    """Tests for get_primary_position method."""
+    
+    @pytest.fixture
+    def player_domain(self):
+        """Create a PlayerDomain instance for testing."""
+        return PlayerDomain()
+    
+    @pytest.mark.unit
+    def test_get_primary_position_from_position_field(self, player_domain):
+        """Test getting position from explicit position field."""
+        player_data = {"position": "pitcher"}
+        
+        result = player_domain.get_primary_position(player_data)
+        
+        assert result == "PITCHER"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_from_positions_list_string(self, player_domain):
+        """Test getting position from positions list with strings."""
+        player_data = {"positions": ["SS", "2B"]}
+        
+        result = player_domain.get_primary_position(player_data)
+        
+        assert result == "SS"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_from_positions_list_dict(self, player_domain):
+        """Test getting position from positions list with dicts."""
+        player_data = {
+            "positions": [
+                {"abbreviation": "CF"},
+                {"abbreviation": "RF"}
+            ]
+        }
+        
+        result = player_domain.get_primary_position(player_data)
+        
+        assert result == "CF"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_from_seasons(self, player_domain):
+        """Test getting position from season data."""
+        player_data = {
+            "seasons": {
+                "2023": {"primary_position": "1B"},
+                "2022": {"primary_position": "DH"}
+            }
+        }
+        
+        result = player_domain.get_primary_position(player_data)
+        
+        # Should get most recent year (2023)
+        assert result == "1B"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_none_found(self, player_domain):
+        """Test that None is returned when no position found."""
+        player_data = {}
+        
+        result = player_domain.get_primary_position(player_data)
+        
+        assert result is None
+    
+    @pytest.mark.unit
+    def test_get_primary_position_normalizes_whitespace(self, player_domain):
+        """Test that position with whitespace is normalized."""
+        player_data = {"position": "  pitcher  "}
+        
+        result = player_domain.get_primary_position(player_data)
+        
+        assert result == "PITCHER"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_with_explicit_seasons_param(self, player_domain):
+        """Test get_primary_position with explicit seasons parameter."""
+        player_data = {}
+        seasons = {
+            "2023": {"position": "RF"}
+        }
+        
+        result = player_domain.get_primary_position(player_data, seasons)
+        
+        assert result == "RF"
+
+
+class TestPlayerDomainGetYearsActiveSingleYear:
+    """Tests for _get_years_active with single year."""
+    
+    @pytest.fixture
+    def player_domain(self):
+        """Create a PlayerDomain instance for testing."""
+        return PlayerDomain()
+    
+    @pytest.mark.unit
+    def test_get_years_active_single_year(self, player_domain):
+        """Test years active with single year returns just that year."""
+        seasons = {"2023": {}}
+        
+        result = player_domain._get_years_active(seasons)
+        
+        assert result == "2023"
+
+
+class TestPlayerDomainGetPrimaryPositionExceptionHandling:
+    """Tests for get_primary_position exception handling."""
+    
+    @pytest.fixture
+    def player_domain(self):
+        """Create a PlayerDomain instance for testing."""
+        return PlayerDomain()
+    
+    @pytest.mark.unit
+    def test_get_primary_position_exception_in_sorting(self, player_domain):
+        """Test get_primary_position handles exception in year sorting."""
+        player_data = {}
+        seasons_data = {
+            "invalid_year": {"primary_position": "P"},
+            "2023": {"primary_position": "1B"}
+        }
+        
+        result = player_domain.get_primary_position(player_data, seasons_data)
+        
+        # Should still find a position despite sorting error
+        assert result in ["P", "1B"]
+    
+    @pytest.mark.unit
+    def test_get_primary_position_non_dict_stats(self, player_domain):
+        """Test get_primary_position with non-dict stats."""
+        player_data = {}
+        seasons_data = {
+            "2023": "not_a_dict",
+            "2022": {"primary_position": "SS"}
+        }
+        
+        result = player_domain.get_primary_position(player_data, seasons_data)
+        
+        assert result == "SS"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_positions_list_with_dict(self, player_domain):
+        """Test get_primary_position with positions list containing dict."""
+        player_data = {}
+        seasons_data = {
+            "2023": {
+                "positions": [
+                    {"abbreviation": "OF", "code": "8"}
+                ]
+            }
+        }
+        
+        result = player_domain.get_primary_position(player_data, seasons_data)
+        
+        assert result == "OF"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_positions_list_with_string(self, player_domain):
+        """Test get_primary_position with positions list containing string."""
+        player_data = {}
+        seasons_data = {
+            "2023": {
+                "positions": ["RF"]
+            }
+        }
+        
+        result = player_domain.get_primary_position(player_data, seasons_data)
+        
+        assert result == "RF"
+    
+    @pytest.mark.unit
+    def test_get_primary_position_positions_dict_with_code(self, player_domain):
+        """Test get_primary_position with position dict using code."""
+        player_data = {}
+        seasons_data = {
+            "2023": {
+                "positions": [
+                    {"code": "9"}
+                ]
+            }
+        }
+        
+        result = player_domain.get_primary_position(player_data, seasons_data)
+        
+        assert result == "9"
