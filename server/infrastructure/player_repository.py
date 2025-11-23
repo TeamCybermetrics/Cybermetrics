@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from rapidfuzz import process, fuzz
 from fastapi import HTTPException, status
 from dtos.player_dtos import PlayerSearchResult, PlayerDetail
@@ -162,7 +162,7 @@ class PlayerRepositoryFirebase(PlayerRepository):
             self.db.collection("teams").document(team_id.upper()).set(
                 {
                     "roster_average": avg,
-                    "roster_average_updated_at": datetime.utcnow().isoformat() + "Z",
+                    "roster_average_updated_at": datetime.now(timezone.utc).isoformat(),
                 },
                 merge=True,
             )

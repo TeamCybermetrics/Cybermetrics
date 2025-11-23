@@ -1,16 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, Dict
 
 class SavedPlayer(BaseModel):
     """Saved player data"""
+    model_config = ConfigDict(extra="allow")  # Allow additional fields from Firestore
+    
     id: int
     name: str
     image_url: Optional[str] = None
     years_active: Optional[str] = None
     position: Optional[str] = None
-    
-    class Config:
-        extra = "allow"  # Allow additional fields from Firestore
 
 
 class SeasonStats(BaseModel):
@@ -61,8 +60,7 @@ class SeasonStats(BaseModel):
     # Team
     team_abbrev: Optional[str] = None
     
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 
