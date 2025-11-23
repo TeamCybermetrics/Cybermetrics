@@ -1,5 +1,5 @@
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict
 from entities.league_stats import TeamAggregate, LeagueAggregate
 
@@ -60,5 +60,5 @@ class LeagueStatsDomain:
             weighted_by_player_count_std=weighted_std,
             teams_counted=num_teams,
             players_counted=total_players,
-            updated_at=datetime.utcnow().isoformat() + "Z",
+            updated_at=datetime.now(timezone.utc).isoformat(),
         )
