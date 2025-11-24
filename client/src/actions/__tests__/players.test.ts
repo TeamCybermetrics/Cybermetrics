@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { playerActions } from './players';
+import { playerActions } from '../players';
 import { playersApi } from '@/api/players';
 
 // Mock the players API

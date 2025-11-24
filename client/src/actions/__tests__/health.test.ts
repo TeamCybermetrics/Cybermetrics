@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { healthActions } from './health';
+import { healthActions } from '../health';
 import { healthApi } from '@/api/health';
 
 // Mock the health API
