@@ -106,59 +106,55 @@ class TestRosterPlayerCountValidation:
     
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_roster_with_9_players_passes_validation(self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper):
-        """Passing exactly 9 players should not raise error and correctly return the top 5 recommended players"""
-        
-        player_ids = list(range(1, 10)) 
-        
-        # add players to repostiory
+    async def test_roster_with_9_players_passes_validation(
+        self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper
+    ):
+        """Passing exactly 9 players should not raise error and should return the top 5 recommended players."""
+        # 9 players here
+        player_ids = list(range(1, 10))  
+
+        # Add season data
         for pid in player_ids:
             mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
-        
-        # create leageu averages
+
+        # add league averages
         mock_roster_repo.set_league_avg(create_league_avg())
         mock_roster_repo.set_league_std(create_league_std())
-        
-        # force a player to have lowest adjustment as he will be replaced with players at his posiiton
-        mock_roster_helper.set_adjustment_sum(0.000000001)  
-        
-        # Set up roster player data where player 1 is RF will be replaced
+
+        # force a player to be very week
+        mock_roster_helper.set_adjustment_sum(0.000000001)
+
+        # first player in RF will be replaced
         for pid in player_ids:
-            mock_player_repo.set_player(pid, create_player(pid, f"Player {pid}", "SS" if pid != 1 else "RF"))
-        
-        # the RF position will be weakest player replaced
+            position = "RF" if pid == 1 else "SS"
+            mock_player_repo.set_player(pid, create_player(pid, f"Player {pid}", position))
+
+        # search players with the RF position
         mock_player_helper.set_primary_position("RF")
-        
-        # Add 5 candidates with matching RF position
+
+        # Add exactly 5 RF candidates
         candidate_ids = [100, 101, 102, 103, 104]
         for cid in candidate_ids:
-            candidate = create_player(cid, f"Candidate {cid}", "RF")
-            mock_player_repo.add_player(candidate)
+            mock_player_repo.add_player(create_player(cid, f"Candidate {cid}", "RF"))
             mock_roster_repo.set_players_seasons_data(cid, create_player_seasons(cid, 2023))
-        
-        # Add a left field player testing to see if we are returing it or not
-        lf_player_id = 200
-        lf_candidate = create_player(lf_player_id, "LF Candidate", "LF")
+
+        # Add a non-RF candidate that we will not recommend that player
+        lf_candidate = create_player(200, "LF Candidate", "LF")
         mock_player_repo.add_player(lf_candidate)
-        mock_roster_repo.set_players_seasons_data(lf_player_id, create_player_seasons(lf_player_id, 2023))
-        
-       # resutls from actual recommendation service
+        mock_roster_repo.set_players_seasons_data(200, create_player_seasons(200, 2023))
+
+        # what our interactor does
         result = await service.recommend_players(player_ids)
-        
-        # Check if 5 players are returned
-        assert isinstance(result, list), "Result should be a list"
-        assert len(result) == 5, f"Expected exactly 5 recommendations, got {len(result)}"
-        
-        # Check if players returned are PlayerSearchResult objects
-        for player in result:
-            assert isinstance(player, PlayerSearchResult), f"Expected PlayerSearchResult, got {type(player)}"
-            assert hasattr(player, 'id'), "Player should have id"
-            assert hasattr(player, 'name'), "Player should have name"
-            assert hasattr(player, 'score'), "Player should have score"
-        
-        # check if all players returned are RF since that is the position played by the weakest player and from our mock test
-        # then correctly returns the top 5 recommendations 
+
+        # should return exactly 5 players
+        assert isinstance(result, list)
+        assert len(result) == 5, f"Expected 5 recommendations, got {len(result)}"
+
+        # all results must be PlayerSearchResult and match the RF candidate IDs
         returned_ids = [player.id for player in result]
-        assert set(returned_ids) == set(candidate_ids), f"Expected RF candidates {candidate_ids}, got {returned_ids}"
+        assert set(returned_ids) == set(candidate_ids), (
+            f"Expected RF candidates {candidate_ids}, got {returned_ids}"
+        )
+
         
 
