@@ -1,3 +1,38 @@
+from repositories.player_repository import PlayerRepository
+from typing import Dict, List, Optional
+from unittest.mock import AsyncMock, Mock
+from repositories.roster_avg_repository import RosterRepository
+
+class MockRosterRepository(RosterRepository):
+    """Mock implementation of RosterRepository for testing"""
+    
+    def __init__(self):
+        self._players_seasons_data: Dict[int, Dict] = {}
+        self._league_avg: Dict[str, float] = {}
+        self._league_std: Dict[str, float] = {}
+    
+    async def get_players_seasons_data(self, player_ids: List[int]) -> Dict[int, Dict]:
+        """Get seasons data for multiple players."""
+        result = {}
+        for pid in player_ids:
+            if pid in self._players_seasons_data:
+                result[pid] = self._players_seasons_data[pid]
+        return result
+    
+    async def get_league_unweighted_average(self) -> Dict[str, float]:
+        """Fetch league-wide unweighted average stats."""
+        return self._league_avg.copy()
+    
+    async def get_league_unweighted_std(self) -> Dict[str, float]:
+        """Fetch league-wide unweighted standard deviations."""
+        return self._league_std.copy()
+    
+    async def get_league_weighted_std(self) -> Dict[str, float]:
+        pass
+    
+    def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, any]:
+        pass
+
 class MockPlayerRepository(PlayerRepository):
     """Mock implementation of PlayerRepository for testing."""
     
