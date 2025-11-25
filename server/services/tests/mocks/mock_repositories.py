@@ -33,6 +33,25 @@ class MockRosterRepository(RosterRepository):
     def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, any]:
         pass
 
+    # Helper methods for test setup and edge case creation for use case interactor unit testing
+    def set_players_seasons_data(self, player_id: int, seasons: Dict):
+        """Set season data for a player."""
+        self._players_seasons_data[player_id] = seasons
+    
+    def set_league_avg(self, league_avg: Dict[str, float]):
+        """Set league average stats."""
+        self._league_avg = league_avg.copy()
+    
+    def set_league_std(self, league_std: Dict[str, float]):
+        """Set league standard deviations."""
+        self._league_std = league_std.copy()
+    
+    def clear(self):
+        """Clear all mock data."""
+        self._players_seasons_data.clear()
+        self._league_avg.clear()
+        self._league_std.clear()
+
 class MockPlayerRepository(PlayerRepository):
     """Mock implementation of PlayerRepository for testing."""
     
