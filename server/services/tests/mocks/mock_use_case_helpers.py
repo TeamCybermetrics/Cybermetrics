@@ -97,6 +97,44 @@ class MockRosterHelper(RosterDomain):
         """compute adjustment"""
         return (self._adjustment_sum, self._adjustment_contributions.copy())
 
+    # helper function to set up mock helpers for the rooster
+    def set_validation_error(self, should_raise: bool, message: str = "Player IDs list cannot be empty"):
+        """set if validation should error"""
+        self._should_raise_validation_error = should_raise
+        self._validation_error_message = message
+    
+    def set_roster_response(self, response: RosterAvgResponse):
+        """set what roster response to return"""
+        self._roster_response = response
+    
+    def set_team_avg(self, team_avg: Dict[str, float]):
+        """set team avg"""
+        self._team_avg = team_avg.copy()
+    
+    def set_weakness_vector(self, weakness: Dict[str, float]):
+        """set weakness vector"""
+        self._weakness_vector = weakness.copy()
+    
+    def set_latest_stats(self, stats: Optional[Dict[str, float]]):
+        """set latest stats"""
+        self._latest_stats = stats.copy() if stats is not None else None
+    
+    def set_adjustment_sum(self, adjustment_sum: float, contributions: Optional[Dict[str, float]] = None):
+        """set adjustment sum"""
+        self._adjustment_sum = adjustment_sum
+        self._adjustment_contributions = contributions or {}
+    
+    def reset(self):
+        """reset everything back to defaults"""
+        self._should_raise_validation_error = False
+        self._validation_error_message = "Player IDs list cannot be empty"
+        self._roster_response = None
+        self._team_avg = None
+        self._weakness_vector = None
+        self._latest_stats = None
+        self._adjustment_sum = 0.0
+        self._adjustment_contributions = {}
+
 class MockPlayerHelper(PlayerDomain):
     """Mock player use case helper for tests"""
     def __init__(self):
@@ -147,5 +185,22 @@ class MockPlayerHelper(PlayerDomain):
             years_active=years_active
         )
     
-   
+    # test case helpers here to mock unexpected behaviours
+    
+    def set_primary_position(self, position: Optional[str]):
+        """set primary position"""
+        self._primary_position = position
+        self._should_return_none_position = (position is None)
+    
+    def set_search_result(self, result: Optional[PlayerSearchResult]):
+        """set search result to return"""
+        self._search_result = result
+        self._should_return_none_result = (result is None)
+    
+    def reset(self):
+        """reset to defaults"""
+        self._primary_position = "RF"
+        self._should_return_none_position = False
+        self._search_result = None
+        self._should_return_none_result = False
 
