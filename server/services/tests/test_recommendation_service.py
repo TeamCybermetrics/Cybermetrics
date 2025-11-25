@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from typing import Dict
 from services.recommendation_service import RecommendationService
 from useCaseHelpers.errors import InputValidationError
@@ -155,6 +156,37 @@ class TestRosterPlayerCountValidation:
         assert set(returned_ids) == set(candidate_ids), (
             f"Expected RF candidates {candidate_ids}, got {returned_ids}"
         )
+
+class TestValidatePlayerIdsCalled:
+    """Tests that validate_player_ids is always called by the interactor to prevent future editing and deletion of it
+    when saved players are being processed without an id"""
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_recommend_calls_validate_player_ids(self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper):
+        """RecommendationService should call roster_domain.validate_player_ids to safeguard and check before further processing"""
+        
+        player_ids = list(range(1, 10))
+
+        # mock up data
+        for pid in player_ids:
+            mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
+        mock_roster_repo.set_league_avg(create_league_avg())
+        mock_roster_repo.set_league_std(create_league_std())
+        mock_roster_helper.set_adjustment_sum(0.0001)
+        mock_player_helper.set_primary_position("RF")
+
+        # add 5 RF candidates
+        for cid in [100, 101, 102, 103, 104]:
+            mock_player_repo.add_player(create_player(cid, f"C{cid}", "RF"))
+            mock_roster_repo.set_players_seasons_data(cid, create_player_seasons(cid, 2023))
+
+        # Patch validate_player_ids to make it a mock so we can assert on it
+        with patch.object(mock_roster_helper, 'validate_player_ids') as mock_validate:
+            await service.recommend_players(player_ids)
+            
+            # assertion check here
+            mock_validate.assert_called_once_with(player_ids)
 
         
 
