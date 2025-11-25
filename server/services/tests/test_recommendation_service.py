@@ -4,6 +4,7 @@ from services.recommendation_service import RecommendationService
 from useCaseHelpers.errors import InputValidationError
 from services.tests.mocks.mock_repositories import MockRosterRepository, MockPlayerRepository
 from services.tests.mocks.mock_use_case_helpers import MockRosterHelper, MockPlayerHelper
+from dtos.player_dtos import PlayerSearchResult
 
 
 # Helper function to create mock data for our testing of recommendation use case
@@ -101,4 +102,63 @@ class TestRosterPlayerCountValidation:
             await service.recommend_players(player_ids)
 
         assert "A valid roster must contain at least 9 players" in str(exc_info.value)
-        # cant check full string cause of the full error string is included iwth the input validation error
+        # cant check full string cause of the full error string is included iwth the input validation erro
+    
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_roster_with_9_players_passes_validation(self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper):
+        """Passing exactly 9 players should not raise error and correctly return the top 5 recommended players"""
+        
+        player_ids = list(range(1, 10)) 
+        
+        # add players to repostiory
+        for pid in player_ids:
+            mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
+        
+        # create leageu averages
+        mock_roster_repo.set_league_avg(create_league_avg())
+        mock_roster_repo.set_league_std(create_league_std())
+        
+        # force a player to have lowest adjustment as he will be replaced with players at his posiiton
+        mock_roster_helper.set_adjustment_sum(0.000000001)  
+        
+        # Set up roster player data where player 1 is RF will be replaced
+        for pid in player_ids:
+            mock_player_repo.set_player(pid, create_player(pid, f"Player {pid}", "SS" if pid != 1 else "RF"))
+        
+        # the RF position will be weakest player replaced
+        mock_player_helper.set_primary_position("RF")
+        
+        # Add 5 candidates with matching RF position
+        candidate_ids = [100, 101, 102, 103, 104]
+        for cid in candidate_ids:
+            candidate = create_player(cid, f"Candidate {cid}", "RF")
+            mock_player_repo.add_player(candidate)
+            mock_roster_repo.set_players_seasons_data(cid, create_player_seasons(cid, 2023))
+        
+        # Add a left field player testing to see if we are returing it or not
+        lf_player_id = 200
+        lf_candidate = create_player(lf_player_id, "LF Candidate", "LF")
+        mock_player_repo.add_player(lf_candidate)
+        mock_roster_repo.set_players_seasons_data(lf_player_id, create_player_seasons(lf_player_id, 2023))
+        
+       # resutls from actual recommendation service
+        result = await service.recommend_players(player_ids)
+        
+        # Check if 5 players are returned
+        assert isinstance(result, list), "Result should be a list"
+        assert len(result) == 5, f"Expected exactly 5 recommendations, got {len(result)}"
+        
+        # Check if players returned are PlayerSearchResult objects
+        for player in result:
+            assert isinstance(player, PlayerSearchResult), f"Expected PlayerSearchResult, got {type(player)}"
+            assert hasattr(player, 'id'), "Player should have id"
+            assert hasattr(player, 'name'), "Player should have name"
+            assert hasattr(player, 'score'), "Player should have score"
+        
+        # check if all players returned are RF since that is the position played by the weakest player and from our mock test
+        # then correctly returns the top 5 recommendations 
+        returned_ids = [player.id for player in result]
+        assert set(returned_ids) == set(candidate_ids), f"Expected RF candidates {candidate_ids}, got {returned_ids}"
+        
+
