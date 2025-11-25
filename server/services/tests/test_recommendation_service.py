@@ -1,3 +1,9 @@
+import pytest
+from typing import Dict
+from services.recommendation_service import RecommendationService
+from useCaseHelpers.errors import InputValidationError
+from services.tests.mocks.mock_repositories import MockRosterRepository, MockPlayerRepository
+from services.tests.mocks.mock_use_case_helpers import MockRosterHelper, MockPlayerHelper
 
 
 # Helper function to create mock data for our testing of recommendation use case
@@ -58,24 +64,41 @@ def mock_player_repo():
 
 
 @pytest.fixture
-def mock_roster_domain():
-    """Create a mock roster domain"""
-    return MockRosterDomain()
+def mock_roster_helper():
+    """Create a mock roster use case helper"""
+    return MockRosterHelper()
 
 
 @pytest.fixture
-def mock_player_domain():
-    """Create a mock player domain"""
-    return MockPlayerDomain()
+def mock_player_helper():
+    """Create a mock player use case helper"""
+    return MockPlayerHelper()
 
 
 @pytest.fixture
-def service(mock_roster_repo, mock_roster_domain, mock_player_repo, mock_player_domain):
-    """Retirns a recommendationService instance with mocked dependencies"""
+def service(mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper):
+    """Returns a RecommendationService instance with mocked dependencies"""
     return RecommendationService(
         mock_roster_repo,
-        mock_roster_domain,
+        mock_roster_helper,
         mock_player_repo,
-        mock_player_domain
+        mock_player_helper
     )
 
+
+# Input validation of the list of mlb ids
+class TestRosterPlayerCountValidation:
+    """Tests that saved teams must have at least 9 players to use the recommendation"""
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_roster_with_less_than_9_players_raises_error(self, service):
+        """Passing less than 9 players for recommendations should raise input validation error"""
+        
+        player_ids = [1, 2, 3, 4, 5, 6, 7, 8]  
+
+        with pytest.raises(InputValidationError) as exc_info:
+            await service.recommend_players(player_ids)
+
+        assert "A valid roster must contain at least 9 players" in str(exc_info.value)
+        # cant check full string cause of the full error string is included iwth the input validation error
