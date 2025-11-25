@@ -185,7 +185,7 @@ class MockPlayerHelper(PlayerDomain):
             years_active=years_active
         )
     
-    # test case helpers here to mock unexpected behaviours
+    # test case helpers here to mock unexpected behaviours and test mock use case helpers
     
     def set_primary_position(self, position: Optional[str]):
         """set primary position"""
