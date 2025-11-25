@@ -25,4 +25,21 @@ class MockPlayerRepository(PlayerRepository):
         """Return a player headshot URL."""
         return f"https://example.com/players/{player_id}.jpg"
     
+    # heelper methods for test setup to add to in memory database 
+    def add_player(self, player: Dict):
+        """Add a player to the mock repository."""
+        mlbam_id = player.get("mlbam_id")
+        if mlbam_id:
+            self._player_by_id[mlbam_id] = player
+        self._players.append(player)
+    
+    def set_player(self, player_id: int, player: Dict):
+        """Set a specific player by ID."""
+        self._player_by_id[player_id] = player
+    
+    def clear(self):
+        """Clear all mock data."""
+        self._players.clear()
+        self._player_by_id.clear()
+    
 
