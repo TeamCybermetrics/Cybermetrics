@@ -48,6 +48,9 @@ class RecommendationService:
         6. Return the top 5 mlbid with the higest difference (maybe in a hashmap with mlbid, and the difference)
         
         Placeholder orchestration method for future recommendation flow."""
+        
+        if len(player_ids) < 9:
+            raise InputValidationError("A valid roster must contain at least 9 players.")
 
         start_time = time.perf_counter()
 
