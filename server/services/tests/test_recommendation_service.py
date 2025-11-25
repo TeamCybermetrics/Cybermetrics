@@ -43,3 +43,39 @@ def create_league_avg() -> Dict[str, float]:
 def create_league_std() -> Dict[str, float]:
     """Create default league standard deviations"""
     return {"strikeout_rate": 0.03,"walk_rate": 0.02,"isolated_power": 0.04,"on_base_percentage": 0.03,"base_running": 0.}
+
+# PYTEST FIXTURES ADDDed
+@pytest.fixture
+def mock_roster_repo():
+    """Create a mock roster repository."""
+    return MockRosterRepository()
+
+
+@pytest.fixture
+def mock_player_repo():
+    """Create a mock player repository"""
+    return MockPlayerRepository()
+
+
+@pytest.fixture
+def mock_roster_domain():
+    """Create a mock roster domain"""
+    return MockRosterDomain()
+
+
+@pytest.fixture
+def mock_player_domain():
+    """Create a mock player domain"""
+    return MockPlayerDomain()
+
+
+@pytest.fixture
+def service(mock_roster_repo, mock_roster_domain, mock_player_repo, mock_player_domain):
+    """Retirns a recommendationService instance with mocked dependencies"""
+    return RecommendationService(
+        mock_roster_repo,
+        mock_roster_domain,
+        mock_player_repo,
+        mock_player_domain
+    )
+
