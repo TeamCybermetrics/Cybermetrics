@@ -89,7 +89,6 @@ def service(mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_
     )
 
 
-# Input validation of the list of mlb ids
 class TestRosterPlayerCountValidation:
     """Tests that saved teams must have at least 9 players to use the recommendation"""
 
@@ -189,8 +188,6 @@ class TestValidatePlayerIdsCalled:
             # assertion check here
             mock_validate.assert_called_once_with(player_ids)
 
-
-
 class TestMissingSeasonData:
     """Tests that missing season data triggers QueryError."""
 
@@ -212,3 +209,42 @@ class TestMissingSeasonData:
         # QueryError should be raised from to missing season data 
         with pytest.raises(QueryError):
             await service.recommend_players(player_ids)
+
+class TestPositionCannotBeDetermined:
+    """Tests that missing primary position for the weakest player returns input validation error"""
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_weakest_player_no_position_raises_input_validation_error(
+        self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper
+    ):
+        """If the weakest player which means, lowest adjustment score, has no position, input 
+        validation error is raised as the algorithm could not and would not accuartely return the recommendations"""
+
+        player_ids = list(range(1, 10))
+
+        # add season data to playes
+        for pid in player_ids:
+            mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
+
+        # create league data for this mock
+        mock_roster_repo.set_league_avg(create_league_avg())
+        mock_roster_repo.set_league_std(create_league_std())
+
+        # make player one the weakest with lowest adjustment score
+        mock_roster_helper.set_adjustment_sum(0.0000000000000001)
+
+        # set up all player on roster to a position
+        for pid in player_ids:
+            position = "RF" if pid == 1 else "SS"
+            mock_player_repo.set_player(pid, create_player(pid, f"Player {pid}", position))
+
+        # force weakest player to not have a position
+        mock_player_helper.set_primary_position(None)
+
+        # raise error when detected no position 
+        with pytest.raises(InputValidationError) as exc_info:
+            await service.recommend_players(player_ids)
+
+        assert "Unable to determine position for player" in str(exc_info.value)
+
