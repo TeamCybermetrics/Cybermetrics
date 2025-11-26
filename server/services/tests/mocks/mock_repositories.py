@@ -1,37 +1,43 @@
 from repositories.player_repository import PlayerRepository
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from unittest.mock import AsyncMock, Mock
 from repositories.roster_avg_repository import RosterRepository
 
+
 class MockRosterRepository(RosterRepository):
-    """Mock implementation of RosterRepository for testing"""
-    
+    """Mock implementation of RosterRepository for testing with dynamic fallback."""
+
     def __init__(self):
         self._players_seasons_data: Dict[int, Dict] = {}
         self._league_avg: Dict[str, float] = {}
         self._league_std: Dict[str, float] = {}
-    
+
     async def get_players_seasons_data(self, player_ids: List[int]) -> Dict[int, Dict]:
-        """Get seasons data for multiple players."""
         result = {}
         for pid in player_ids:
             if pid in self._players_seasons_data:
                 result[pid] = self._players_seasons_data[pid]
         return result
-    
+
     async def get_league_unweighted_average(self) -> Dict[str, float]:
-        """Fetch league-wide unweighted average stats."""
-        return self._league_avg.copy()
-    
+        if self._league_avg:
+            return self._league_avg.copy()
+        snapshots = [self._extract_latest_stats(s) for s in self._players_seasons_data.values() if s]
+        snapshots = [s for s in snapshots if s]
+        return self._average_dicts(snapshots)
+
     async def get_league_unweighted_std(self) -> Dict[str, float]:
-        """Fetch league-wide unweighted standard deviations."""
-        return self._league_std.copy()
-    
+        if self._league_std:
+            return self._league_std.copy()
+        snapshots = [self._extract_latest_stats(s) for s in self._players_seasons_data.values() if s]
+        snapshots = [s for s in snapshots if s]
+        return self._std_dicts(snapshots)
+
     async def get_league_weighted_std(self) -> Dict[str, float]:
-        pass
-    
-    def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, any]:
-        pass
+        return {}
+
+    def fetch_team_roster(self, team_id: int, season: int) -> Dict[str, Any]:
+        return {}
 
     # Helper methods for test setup and edge case creation for use case interactor unit testing
     def set_players_seasons_data(self, player_id: int, seasons: Dict):
@@ -45,6 +51,42 @@ class MockRosterRepository(RosterRepository):
     def set_league_std(self, league_std: Dict[str, float]):
         """Set league standard deviations."""
         self._league_std = league_std.copy()
+
+    # Internal helper methods (scoped to instance to avoid leaking globals)
+    def _extract_latest_stats(self, seasons: Dict) -> Dict[str, float]:
+        if not seasons:
+            return {}
+        ordered = sorted((int(y) for y in seasons.keys()), reverse=True)
+        for y in ordered:
+            s = seasons[str(y)]
+            if (s.get("plate_appearances", 0) or 0) > 0:
+                return {
+                    "strikeout_rate": float(s.get("strikeout_rate", 0.0) or 0.0),
+                    "walk_rate": float(s.get("walk_rate", 0.0) or 0.0),
+                    "isolated_power": float(s.get("isolated_power", 0.0) or 0.0),
+                    "on_base_percentage": float(s.get("on_base_percentage", 0.0) or 0.0),
+                    "base_running": float(s.get("base_running", 0.0) or 0.0),
+                }
+        return {}
+
+    def _average_dicts(self, dicts: List[Dict[str, float]]) -> Dict[str, float]:
+        if not dicts:
+            return {"strikeout_rate": 0, "walk_rate": 0, "isolated_power": 0, "on_base_percentage": 0, "base_running": 0}
+        keys = dicts[0].keys()
+        return {k: sum(d.get(k, 0.0) for d in dicts) / len(dicts) for k in keys}
+
+    def _std_dicts(self, dicts: List[Dict[str, float]]) -> Dict[str, float]:
+        if not dicts:
+            return {"strikeout_rate": 0, "walk_rate": 0, "isolated_power": 0, "on_base_percentage": 0, "base_running": 0}
+        avg = self._average_dicts(dicts)
+        out: Dict[str, float] = {}
+        keys = dicts[0].keys()
+        for k in keys:
+            vals = [d.get(k, 0.0) for d in dicts]
+            mean = avg[k]
+            var = sum((v - mean) ** 2 for v in vals) / len(vals)
+            out[k] = (var ** 0.5) or 10**-9
+        return out
 
 class MockPlayerRepository(PlayerRepository):
     """Mock implementation of PlayerRepository for testing."""
@@ -84,4 +126,7 @@ class MockPlayerRepository(PlayerRepository):
     def set_player(self, player_id: int, player: Dict):
         """Set a specific player by ID."""
         self._player_by_id[player_id] = player
+
+async def fetch_league_vectors(repo: RosterRepository) -> tuple[Dict[str, float], Dict[str, float]]:
+    return await repo.get_league_unweighted_average(), await repo.get_league_unweighted_std()
 
