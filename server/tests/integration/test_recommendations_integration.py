@@ -80,7 +80,7 @@ class TestRecommendationsIntegration:
             # Send at least 9 player IDs as it is more logical and a requirement now for the recommendations
             response = client.post(
                 "/api/recommendations",
-                json={"player_ids": [660271, 545361, 592450, 543037, 543760, 458015, 430945, 425844, 543037]}
+                json={"player_ids": [660271, 545361, 592450, 543037, 543760, 458015, 430945, 425844, 543059]}
             )
             
             assert response.status_code == 200
