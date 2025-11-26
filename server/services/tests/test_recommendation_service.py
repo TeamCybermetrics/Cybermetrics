@@ -219,7 +219,7 @@ class TestPositionCannotBeDetermined:
         self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper
     ):
         """If the weakest player which means, lowest adjustment score, has no position, input 
-        validation error is raised as the algorithm could not and would not accuartely return the recommendations"""
+        validation error is raised as the algorithm could not and would return the recommendations"""
 
         player_ids = list(range(1, 10))
 
@@ -248,3 +248,89 @@ class TestPositionCannotBeDetermined:
 
         assert "Unable to determine position for player" in str(exc_info.value)
 
+
+class TestCandidateFiltering:
+    """Tests for edge cases in filtering candidates and skipping invalid candidates that has the same positoin"""
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_candidate_with_invalid_mlbam_id_is_skipped(
+        self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper
+    ):
+        """Test that candidates with non-integer mlbam_id are skipped"""
+        
+        player_ids = list(range(1, 10))
+        
+        # create season data and data for the mock league
+        for pid in player_ids:
+            mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
+        
+        mock_roster_repo.set_league_avg(create_league_avg())
+        mock_roster_repo.set_league_std(create_league_std())
+        mock_roster_helper.set_adjustment_sum(0.000000001)
+        
+        # 
+        for pid in player_ids:
+            position = "RF" if pid == 1 else "SS"
+            mock_player_repo.set_player(pid, create_player(pid, f"Player {pid}", position))
+        
+        mock_player_helper.set_primary_position("RF")
+        
+        # add mock mlb id with player inn position Rf
+        valid_candidate_ids = [100, 101, 102, 103, 104]
+        for cid in valid_candidate_ids:
+            mock_player_repo.add_player(create_player(cid, f"Candidate {cid}", "RF"))
+            mock_roster_repo.set_players_seasons_data(cid, create_player_seasons(cid, 2023))
+        
+        # add candidate with invalid mlbam_id (here we do string ) which should be skipped
+        invalid_candidate = {"mlbam_id": "not_an_int", "name": "Invalid Candidate", "position": "RF"}
+        mock_player_repo.add_player(invalid_candidate)
+        
+        result = await service.recommend_players(player_ids)
+        
+        # Should return 5 valid candidates 
+        assert len(result) == 5
+        returned_ids = [player.id for player in result]
+        assert set(returned_ids) == set(valid_candidate_ids), "invalid candidate with invalid mlb id should be skipped"
+    
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_candidate_with_missing_season_data_is_skipped(
+        self, service, mock_roster_repo, mock_roster_helper, mock_player_repo, mock_player_helper
+    ):
+        """Test that candidates with missing season data are skipped"""
+
+        # mostly same setup as below with rest of the unit test
+        player_ids = list(range(1, 10))
+        
+        # player + rooster data setup
+        for pid in player_ids:
+            mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
+        
+        mock_roster_repo.set_league_avg(create_league_avg())
+        mock_roster_repo.set_league_std(create_league_std())
+        mock_roster_helper.set_adjustment_sum(0.000000001)
+        
+        for pid in player_ids:
+            position = "RF" if pid == 1 else "SS"
+            mock_player_repo.set_player(pid, create_player(pid, f"Player {pid}", position))
+        
+        mock_player_helper.set_primary_position("RF")
+        
+        # add the RF candidates
+        valid_candidate_ids = [100, 101, 102, 103, 104]
+        for cid in valid_candidate_ids:
+            mock_player_repo.add_player(create_player(cid, f"Candidate {cid}", "RF"))
+            mock_roster_repo.set_players_seasons_data(cid, create_player_seasons(cid, 2023))
+        
+        # add candidate with valid mlbam_id bit no season data is added and thus shiud be skipped
+        candidate_no_seasons = create_player(200, "Candidate No Seasons", "RF")
+        mock_player_repo.add_player(candidate_no_seasons)
+        
+        result = await service.recommend_players(player_ids)
+        
+        # return 5 valid candidates still 
+        assert len(result) == 5
+        returned_ids = [player.id for player in result]
+        assert set(returned_ids) == set(valid_candidate_ids), "candidate without season data should be skipped"
+        assert 200 not in returned_ids, "candidate 200 should be skipped since he has no season data"
