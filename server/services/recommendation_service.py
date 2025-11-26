@@ -87,9 +87,6 @@ class RecommendationService:
             )[0]
             player_seasons_map[player_id] = seasons
 
-        if not original_players_adjustment_scores:
-            raise QueryError("Unable to compute adjustment scores for roster")
-
         min_adjustment_score_player_id = min(
             original_players_adjustment_scores, key=original_players_adjustment_scores.get
         )
