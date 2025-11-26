@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 from unittest.mock import patch, Mock, AsyncMock
+from dependency.dependencies import get_recommendation_service
 
 
 @pytest.fixture
@@ -58,8 +59,7 @@ class TestRecommendationsIntegration:
         assert response.status_code == 422
     
     @pytest.mark.integration
-    @patch('dependency.dependencies.get_recommendation_service')
-    def test_recommendations_success_flow(self, mock_service_getter, client):
+    def test_recommendations_success_flow(self, client):
         """Test successful recommendations flow."""
         # Mock the service
         mock_service = Mock()
@@ -72,16 +72,23 @@ class TestRecommendationsIntegration:
                 "years_active": "2020-2024"
             }
         ])
-        mock_service_getter.return_value = mock_service
         
-        response = client.post(
-            "/api/recommendations",
-            json={"player_ids": [660271, 545361]}
-        )
+        # Override the dependency using FastAPI's dependency override
+        app.dependency_overrides[get_recommendation_service] = lambda: mock_service
         
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list)
+        try:
+            # Send at least 9 player IDs as it is more logical and a requirement now for the recommendations
+            response = client.post(
+                "/api/recommendations",
+                json={"player_ids": [660271, 545361, 592450, 543037, 543760, 458015, 430945, 425844, 543037]}
+            )
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert isinstance(data, list)
+        finally:
+            # Clean up the override
+            app.dependency_overrides.clear()
     
     @pytest.mark.integration
     def test_recommendations_trailing_slash(self, client):
