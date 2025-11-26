@@ -156,8 +156,6 @@ class RecommendationService:
         results: List[PlayerSearchResult] = []
         for mlbam_id, contribution in top_5_id_and_score:
             player_data = await self.player_repository.get_player_by_id(mlbam_id)
-            if not player_data:
-                continue
 
             player_result = self.player_domain.build_player_search_result(
                 player_data,
