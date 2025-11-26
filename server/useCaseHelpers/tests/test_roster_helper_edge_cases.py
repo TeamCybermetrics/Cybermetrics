@@ -42,7 +42,6 @@ class TestRosterHelperEdgeCases:
             "Y22": {"plate_appearances": 120, "war": 1.2},
             "Y23": {"plate_appearances": 150, "war": 2.5},
         }
-        # Non-int keys trigger except path; reverse order fallback picks last inserted -> Y23 first then Y22
         result = domain.calculate_player_latest_war(seasons)
         assert result == pytest.approx(2.5)
 
@@ -54,7 +53,6 @@ class TestRosterHelperEdgeCases:
                       "isolated_power": 0.15, "on_base_percentage": 0.310, "base_running": 1.0},
         }
         stats = domain.get_player_latest_stats(seasons)
-        # Fallback selects most recent year (2023) even with zero PA
         assert stats["strikeout_rate"] == pytest.approx(0.22)
         assert stats["isolated_power"] == pytest.approx(0.18)
 
@@ -64,7 +62,6 @@ class TestRosterHelperEdgeCases:
         league_std = {"strikeout_rate": 0.02, "walk_rate": 0.01, "isolated_power": 0.03,
                       "on_base_percentage": 0.015, "base_running": 0.5}
         team_weakness = {k: 0.5 for k in league_avg.keys()}
-        # Pass empty stats dict to trigger default zero-filled path
         result = domain.compute_value_score(
             latest_war=1.5,
             player_latest_stats={},
@@ -74,6 +71,5 @@ class TestRosterHelperEdgeCases:
         )
         assert result["latest_war"] == 1.5
         assert set(result["contributions"].keys()) == set(league_avg.keys())
-        # With zero player stats, contributions for higher-better should be negative (league - player), strikeout positive
         assert result["contributions"]["walk_rate"] < 0
         assert result["contributions"]["strikeout_rate"] > 0

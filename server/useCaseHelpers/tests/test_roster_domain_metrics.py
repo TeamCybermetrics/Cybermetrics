@@ -1,5 +1,5 @@
 """
-Unit tests for adjustment and value score logic in `RosterDomain`.
+unit tests for roster domain: adjustment sums, value scores.
 """
 import pytest
 from useCaseHelpers.roster_helper import RosterDomain
@@ -75,7 +75,6 @@ class TestComputeAdjustmentSum:
             league_std=league_std,
             team_weakness=team_weakness,
         )
-        # Fallback should yield a tiny normalized contribution rather than raising.
         assert contribs["isolated_power"] == pytest.approx(5e-8, rel=1e-2)
         assert adj_sum == pytest.approx(5e-8, rel=1e-2)
 
@@ -99,7 +98,6 @@ class TestComputeValueScore:
         team_avg = domain.compute_unweighted_roster_average_dict(list(roster_resp.stats.values()))
         league_avg, league_std = await fetch_league_vectors(repo)
         team_weakness = domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
-        # pick player 101
         latest_war = players[101]["2023"].get("war", 0.0)
         player_stats = {
             k: v for k, v in players[101]["2023"].items() if k in team_avg.keys()
