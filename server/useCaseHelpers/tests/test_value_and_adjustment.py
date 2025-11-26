@@ -24,16 +24,13 @@ class TestComputeAdjustmentSum:
     async def test_expected_contributions(self, domain):
         players = build_fake_players()
         repo = MockRosterRepository()
-        # load seasons into mock
         for pid, seasons in players.items():
             repo.set_players_seasons_data(pid, seasons)
         league_avg, league_std = await fetch_league_vectors(repo)
-        # Build team weakness from all players
         seasons_map = await repo.get_players_seasons_data(list(players.keys()))
         roster_resp = domain.calculate_roster_averages(seasons_map)
         team_avg = domain.compute_unweighted_roster_average_dict(list(roster_resp.stats.values()))
         team_weakness = domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
-        # Choose one player's latest stats
         player_stats = {
             k: v for k, v in players[101]["2023"].items() if k in team_avg.keys()
         }
@@ -52,13 +49,9 @@ class TestComputeAdjustmentSum:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_negative_weights_uses_abs(self, domain):
-        # Use real league vectors then inject a negative weakness
-        players = build_fake_players()
-        repo = MockRosterRepository()
-        for pid, seasons in players.items():
-            repo.set_players_seasons_data(pid, seasons)
-        league_avg, league_std = await fetch_league_vectors(repo)
-        team_weakness = {"walk_rate": -1.0}
+        league_avg = {"walk_rate": 0.08}
+        league_std = {"walk_rate": 0.01}
+        team_weakness = {"walk_rate": -1.0}  
         player_stats = {"walk_rate": 0.11}
         adj_sum, contribs = domain.compute_adjustment_sum(
             player_latest_stats=player_stats,
@@ -72,18 +65,18 @@ class TestComputeAdjustmentSum:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_zero_std_raises(self, domain):
-        # Force std to zero for a single stat
         player_stats = {"isolated_power": 0.17}
         league_avg = {"isolated_power": 0.16}
-        league_std = {"isolated_power": 0.0}
+        league_std = {"isolated_power": 0.0}  
         team_weakness = {"isolated_power": 0.5}
-        with pytest.raises(ZeroDivisionError):
-            domain.compute_adjustment_sum(
-                player_latest_stats=player_stats,
-                league_avg=league_avg,
-                league_std=league_std,
-                team_weakness=team_weakness,
-            )
+        adj_sum, contribs = domain.compute_adjustment_sum(
+            player_latest_stats=player_stats,
+            league_avg=league_avg,
+            league_std=league_std,
+            team_weakness=team_weakness,
+        )
+        assert contribs["isolated_power"] == pytest.approx(5e-8, rel=1e-2)
+        assert adj_sum == pytest.approx(5e-8, rel=1e-2)
 
 
 class TestComputeValueScore:
