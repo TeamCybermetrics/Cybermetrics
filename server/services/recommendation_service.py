@@ -31,6 +31,7 @@ class RecommendationService:
     async def recommend_players(self, player_ids: List[int]) -> List[PlayerSearchResult]:
         """
         Return 5 recommmended players for there rooster based off of the 
+
         1. Get current team weakness vector (weakness_s) → where each stat's value > 0 means 
         team underperforms the league average. 
         
@@ -39,11 +40,11 @@ class RecommendationService:
         
         3. Fetch all players from firebase (there mlbid) whose position matches with what we need
         
-        4. for each team hypothetiically create a ne weakness vector with this player instead of the replaced player 
+        4. for each team hypothetiically create a new weakness vector with this player instead of the replaced player 
         
-        5. Store the player id with the difference between the sum of old weakness vector - new weakness vector 
+        5. Store the player id with the difference between the new weakness vector - old weakness vector
         
-        6. Return the top 5 mlbid with the higest difference (maybe in a hashmap with mlbid, and the difference)"""
+        6. Return the top 5 mlbid with the higest difference"""
 
         if len(player_ids) < 9:
             raise InputValidationError("A valid roster must contain at least 9 players.")
@@ -142,7 +143,14 @@ class RecommendationService:
             # Compute normalized weakness scores
             potential_team_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
 
-            # 5. Store the player id with the difference between the sum of old weakness vector - new weakness vector 
+            # 5. Store the player id with the difference between the sum of new weakness vector - old weakness vector
+            # NOTE: DUE TO ALGOIRTHM CHANGE, weakness veector with higher values are good and lower is bad since we are using
+            #  z scores now so if u make the team have a higher z score for an  attribute u are contributing to making the team better
+
+            # before the "weakness vector" or in other words, the score X we give to each team regarding the baseball stats, 
+            # were presented so that it would mean u are X percentage worst than the average mlb team at that stat
+            
+            # Essentially right now, the higher number for an attribute is better which was contrary to what was before
             player_contributions[candidate_player_id] = sum(potential_team_weakness_vector.values()) - original_vector_sum 
 
         top_5_id_and_score = sorted(player_contributions.items(), key=lambda x: x[1], reverse=True)[:5]
