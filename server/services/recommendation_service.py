@@ -143,9 +143,9 @@ class RecommendationService:
             potential_team_weakness_vector = self.roster_domain.compute_team_weakness_scores(team_avg, league_avg, league_std)
 
             # 5. Store the player id with the difference between the sum of old weakness vector - new weakness vector 
-            player_contributions[candidate_player_id] = original_vector_sum - sum(potential_team_weakness_vector.values())
+            player_contributions[candidate_player_id] = sum(potential_team_weakness_vector.values()) - original_vector_sum 
 
-        top_5_id_and_score = sorted(player_contributions.items(), key=lambda x: x[1], reverse=False)[:5]
+        top_5_id_and_score = sorted(player_contributions.items(), key=lambda x: x[1], reverse=True)[:5]
         results: List[PlayerSearchResult] = []
         for mlbam_id, contribution in top_5_id_and_score:
             player_data = await self.player_repository.get_player_by_id(mlbam_id)
