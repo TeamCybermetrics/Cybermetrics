@@ -45,12 +45,6 @@ class MockRosterRepository(RosterRepository):
     def set_league_std(self, league_std: Dict[str, float]):
         """Set league standard deviations."""
         self._league_std = league_std.copy()
-    
-    def clear(self):
-        """Clear all mock data."""
-        self._players_seasons_data.clear()
-        self._league_avg.clear()
-        self._league_std.clear()
 
 class MockPlayerRepository(PlayerRepository):
     """Mock implementation of PlayerRepository for testing."""
@@ -90,10 +84,4 @@ class MockPlayerRepository(PlayerRepository):
     def set_player(self, player_id: int, player: Dict):
         """Set a specific player by ID."""
         self._player_by_id[player_id] = player
-    
-    def clear(self):
-        """Clear all mock data."""
-        self._players.clear()
-        self._player_by_id.clear()
-    
 
