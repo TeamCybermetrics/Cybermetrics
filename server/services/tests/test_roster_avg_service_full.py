@@ -166,3 +166,20 @@ class TestRosterAvgServiceFull:
         with pytest.raises(InputValidationError):
             await service.get_team_value_scores([])
 
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_get_team_value_scores_all_skipped_empty_results(self, setup):
+        """All players skipped due to UseCaseError ensuring empty results branch covered."""
+        service, roster_repo, player_repo, domain = setup
+        # Provide seasons so team weakness computation succeeds
+        roster_repo.set_players_seasons_data(21, {"2023": _season(1.0, k=0.22, bb=0.10)})
+        roster_repo.set_players_seasons_data(22, {"2023": _season(2.0, k=0.23, bb=0.09)})
+        # Monkeypatch compute_value_score to always raise UseCaseError so every loop iteration skips
+        original_compute = domain.compute_value_score
+        def always_fail(*args, **kwargs):
+            raise UseCaseError("forced failure")
+        domain.compute_value_score = always_fail
+        results = await service.get_team_value_scores([21,22])
+        assert results == []
+        domain.compute_value_score = original_compute
+
