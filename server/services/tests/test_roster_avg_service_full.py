@@ -183,3 +183,18 @@ class TestRosterAvgServiceFull:
         assert results == []
         domain.compute_value_score = original_compute
 
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_get_team_value_scores_missing_seasons_skipped(self, setup):
+        """Include an ID with no seasons to hit the seasons None skip (unreached lines)."""
+        service, roster_repo, player_repo, domain = setup
+        # Only set seasons for one player
+        roster_repo.set_players_seasons_data(31, {"2023": _season(2.5, k=0.21, bb=0.11)})
+        # Add both players to player repo so name lookup would succeed if seasons existed
+        player_repo.add_player({"mlbam_id":31, "name":"P31"})
+        player_repo.add_player({"mlbam_id":32, "name":"P32"})
+        results = await service.get_team_value_scores([31,32])
+        # Only player with seasons should appear
+        assert len(results) == 1
+        assert results[0].id == 31
+
