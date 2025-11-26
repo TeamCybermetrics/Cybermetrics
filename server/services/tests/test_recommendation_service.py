@@ -6,6 +6,7 @@ from useCaseHelpers.errors import InputValidationError
 from services.tests.mocks.mock_repositories import MockRosterRepository, MockPlayerRepository
 from services.tests.mocks.mock_use_case_helpers import MockRosterHelper, MockPlayerHelper
 from dtos.player_dtos import PlayerSearchResult
+from useCaseHelpers.errors import QueryError
 
 
 # Helper function to create mock data for our testing of recommendation use case
@@ -188,5 +189,26 @@ class TestValidatePlayerIdsCalled:
             # assertion check here
             mock_validate.assert_called_once_with(player_ids)
 
-        
 
+
+class TestMissingSeasonData:
+    """Tests that missing season data triggers QueryError."""
+
+    @pytest.mark.unit
+    @pytest.mark.asyncio
+    async def test_missing_player_season_data_raises_query_error(self, service, mock_roster_repo, mock_roster_helper, mock_player_repo):
+        """Chceks if QueryError is raised when a player dosent have any data from any seasons"""
+
+        player_ids = list(range(1, 10))
+
+        # populate season data for only 8 players leaving the last with no data
+        for pid in player_ids[:-1]:  
+            mock_roster_repo.set_players_seasons_data(pid, create_player_seasons(pid, 2023))
+
+        # Create the data for this mock league
+        mock_roster_repo.set_league_avg(create_league_avg())
+        mock_roster_repo.set_league_std(create_league_std())
+
+        # QueryError should be raised from to missing season data 
+        with pytest.raises(QueryError):
+            await service.recommend_players(player_ids)

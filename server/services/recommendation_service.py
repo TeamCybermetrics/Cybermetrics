@@ -79,7 +79,7 @@ class RecommendationService:
 
             seasons = roster_players_data.get(player_id)
             if seasons is None:
-                raise QueryError(f"Player {player_id} not found or has no season data")
+                raise QueryError(f"Player {player_id} has no season data, could not give recommendations")
 
             latest_stats = self.roster_domain.get_player_latest_stats(seasons) or {}
 
