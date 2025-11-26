@@ -64,7 +64,7 @@ class TestComputeAdjustmentSum:
 
     @pytest.mark.unit
     @pytest.mark.asyncio
-    async def test_zero_std_raises(self, domain):
+    async def test_zero_std_fallback(self, domain):
         player_stats = {"isolated_power": 0.17}
         league_avg = {"isolated_power": 0.16}
         league_std = {"isolated_power": 0.0}  
@@ -75,6 +75,7 @@ class TestComputeAdjustmentSum:
             league_std=league_std,
             team_weakness=team_weakness,
         )
+        # Fallback should yield a tiny normalized contribution rather than raising.
         assert contribs["isolated_power"] == pytest.approx(5e-8, rel=1e-2)
         assert adj_sum == pytest.approx(5e-8, rel=1e-2)
 
