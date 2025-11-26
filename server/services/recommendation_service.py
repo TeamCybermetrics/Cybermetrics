@@ -43,14 +43,10 @@ class RecommendationService:
         
         5. Store the player id with the difference between the sum of old weakness vector - new weakness vector 
         
-        6. Return the top 5 mlbid with the higest difference (maybe in a hashmap with mlbid, and the difference)
-        
-        Placeholder orchestration method for future recommendation flow."""
+        6. Return the top 5 mlbid with the higest difference (maybe in a hashmap with mlbid, and the difference)"""
 
         if len(player_ids) < 9:
             raise InputValidationError("A valid roster must contain at least 9 players.")
-
-        start_time = time.perf_counter()
 
         # 1. Get current team weakness vector (weakness_s) where each stat's value > 0 means team underperforms the league average. 
         self.roster_domain.validate_player_ids(player_ids)
