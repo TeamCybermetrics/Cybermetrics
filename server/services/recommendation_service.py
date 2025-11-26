@@ -12,8 +12,6 @@ from repositories.player_repository import PlayerRepository
 from useCaseHelpers.player_helper import PlayerDomain
 from useCaseHelpers.errors import InputValidationError, QueryError
 
-logger = logging.getLogger(__name__)
-
 
 class RecommendationService:
     """Coordinates domain logic and data access for recommendations."""
@@ -54,8 +52,6 @@ class RecommendationService:
 
         start_time = time.perf_counter()
 
-        logger.info("Starting recommendations for roster with %d players", len(player_ids))
-
         # 1. Get current team weakness vector (weakness_s) where each stat's value > 0 means team underperforms the league average. 
         self.roster_domain.validate_player_ids(player_ids)
 
@@ -93,11 +89,6 @@ class RecommendationService:
 
         if not original_players_adjustment_scores:
             raise QueryError("Unable to compute adjustment scores for roster")
-        logger.debug(
-            "Computed adjustment scores for %d players (min score %.3f)",
-            len(original_players_adjustment_scores),
-            min(original_players_adjustment_scores.values()),
-        )
 
         min_adjustment_score_player_id = min(
             original_players_adjustment_scores, key=original_players_adjustment_scores.get
@@ -122,18 +113,6 @@ class RecommendationService:
             for player in all_players
             if str(player.get("position") or "").strip().upper() == primary_position_upper
         ]
-        logger.info(
-            "Found %d candidate players matching position %s",
-            len(position_matched_players),
-            primary_position_upper,
-        )
-
-        if not position_matched_players:
-            logger.info(
-                "No players found for position %s; returning empty recommendations",
-                primary_position_upper,
-            )
-            return []
 
         player_contributions = {}  # dictionary of key is mlbam_id and value is the difference between the sum of original weakness vector
         # and sum of this vector
@@ -150,7 +129,6 @@ class RecommendationService:
         for player in position_matched_players:
             candidate_player_id = player.get("mlbam_id")
             if not isinstance(candidate_player_id, int):
-                logger.debug("Skipping candidate with invalid mlbam_id: %s", candidate_player_id)
                 continue
 
             candidate_seasons = candidate_seasons_cache.get(candidate_player_id)
@@ -158,7 +136,6 @@ class RecommendationService:
                 candidate_data_map = await self.roster_repository.get_players_seasons_data([candidate_player_id])
                 candidate_seasons = candidate_data_map.get(candidate_player_id)
                 if not candidate_seasons:
-                    logger.debug("Skipping candidate %s due to missing season data", candidate_player_id)
                     continue
                 candidate_seasons_cache[candidate_player_id] = candidate_seasons
 
@@ -174,12 +151,6 @@ class RecommendationService:
 
             # 5. Store the player id with the difference between the sum of old weakness vector - new weakness vector 
             player_contributions[candidate_player_id] = original_vector_sum - sum(potential_team_weakness_vector.values())
-        
-        logger.info(
-            "Calculated contributions for %d candidates in %.2fs",
-            len(player_contributions),
-            time.perf_counter() - start_time,
-        )
 
         top_5_id_and_score = sorted(player_contributions.items(), key=lambda x: x[1], reverse=False)[:5]
         results: List[PlayerSearchResult] = []
@@ -195,13 +166,6 @@ class RecommendationService:
             )
             if player_result:
                 results.append(player_result)
-
-        logger.info(
-            "Returning %d recommendations for roster %s in %.2fs",
-            len(results),
-            player_ids,
-            time.perf_counter() - start_time,
-        )
 
         return results
 
