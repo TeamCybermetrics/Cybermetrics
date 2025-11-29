@@ -150,3 +150,26 @@ describe('LoginPage', () => {
     expect(passwordInput).toBeRequired();
   });
 
+  it('clears previous errors when submitting again', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authActions.login)
+      .mockResolvedValueOnce({ success: false, error: 'First error' })
+      .mockResolvedValueOnce({ success: false, error: 'Second error' });
+    
+    renderLoginPage();
+    
+    await user.type(screen.getByLabelText('Email'), 'test@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('First error')).toBeInTheDocument();
+    });
+    
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+    
+    await waitFor(() => {
+      expect(screen.queryByText('First error')).not.toBeInTheDocument();
+      expect(screen.getByText('Second error')).toBeInTheDocument();
+    });
+  });
