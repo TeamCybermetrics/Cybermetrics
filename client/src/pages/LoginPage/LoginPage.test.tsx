@@ -120,3 +120,11 @@ describe('LoginPage', () => {
     
     vi.useRealTimers();
   });
+
+
+  it('shows error message on failed login', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authActions.login).mockResolvedValue({ 
+      success: false, 
+      error: 'Invalid credentials' 
+    });
