@@ -128,3 +128,25 @@ describe('LoginPage', () => {
       success: false, 
       error: 'Invalid credentials' 
     });
+
+    renderLoginPage();
+    
+    await user.type(screen.getByLabelText('Email'), 'test@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('An error occurred')).toBeInTheDocument();
+    });
+  });
+
+  it('prevents form submission when fields are empty', () => {
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+    const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
+    
+    expect(emailInput).toBeRequired();
+    expect(passwordInput).toBeRequired();
+  });
+
