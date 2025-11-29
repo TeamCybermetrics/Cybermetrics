@@ -173,3 +173,36 @@ describe('LoginPage', () => {
       expect(screen.getByText('Second error')).toBeInTheDocument();
     });
   });
+
+  it('clears success message when submitting again', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authActions.login)
+      .mockResolvedValueOnce({ success: true, data: { token: 'fake' } as any })
+      .mockResolvedValueOnce({ success: false, error: 'Error' });
+    
+    renderLoginPage();
+    
+    await user.type(screen.getByLabelText('Email'), 'test@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Login successful!')).toBeInTheDocument();
+    });
+    
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Login successful!')).not.toBeInTheDocument();
+    });
+  });
+
+
+
+  it('has correct autocomplete attributes', () => {
+    renderLoginPage();
+    
+    expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
+  });
+});
