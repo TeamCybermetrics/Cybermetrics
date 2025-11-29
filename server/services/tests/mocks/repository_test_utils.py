@@ -8,10 +8,16 @@ from repositories.roster_avg_repository import RosterRepository
 
 
 def build_fake_players() -> Dict[int, Dict]:
-    """Construct deterministic multi-season stats for several players.
-
-    Each player includes per-season stat snapshots plus WAR. Plate appearances
-    are used to select the latest valid season.
+    """
+    Builds deterministic fake player data with multi-season statistics for testing.
+    
+    Returns a mapping from player ID to a dictionary of seasons, where each season (keyed by year string)
+    contains numeric fields: `plate_appearances`, `strikeout_rate`, `walk_rate`, `isolated_power`,
+    `on_base_percentage`, `base_running`, and optionally `war`. `plate_appearances` can be used to
+    identify the latest valid season for a player.
+    
+    Returns:
+        players (Dict[int, Dict]): Player ID -> { year (str) -> stat fields (Dict[str, float|int]) }.
     """
     return {
         101: {
@@ -32,6 +38,21 @@ def build_fake_players() -> Dict[int, Dict]:
 
 
 def _extract_latest_stats(seasons: Dict) -> Dict[str, float]:
+    """
+    Return the most recent season's batting-rate statistics from a seasons mapping.
+    
+    Parameters:
+    	seasons (Dict): Mapping from year (string) to a season-stats dict. Each season dict may contain keys
+    		"plate_appearances", "strikeout_rate", "walk_rate", "isolated_power",
+    		"on_base_percentage", and "base_running".
+    
+    Returns:
+    	Dict[str, float]: A dict with keys "strikeout_rate", "walk_rate", "isolated_power",
+    		"on_base_percentage", and "base_running" containing float values taken from the most
+    		recent season that has plate_appearances > 0. If no such season exists or `seasons`
+    		is empty, returns an empty dict. Missing or falsy values in the chosen season are
+    		converted to 0.0.
+    """
     if not seasons:
         return {}
     ordered = sorted((int(y) for y in seasons.keys()), reverse=True)
@@ -49,6 +70,18 @@ def _extract_latest_stats(seasons: Dict) -> Dict[str, float]:
 
 
 def _average_dicts(dicts: List[Dict[str, float]]) -> Dict[str, float]:
+    """
+    Compute the element-wise average of numeric statistic dictionaries.
+    
+    Parameters:
+        dicts (List[Dict[str, float]]): A list of dictionaries mapping stat names to numeric values.
+            The function assumes keys are consistent across entries (uses keys from the first dict).
+    
+    Returns:
+        Dict[str, float]: A dictionary where each key maps to the average of that key across all input dictionaries.
+        If `dicts` is empty, returns a dictionary with keys "strikeout_rate", "walk_rate", "isolated_power",
+        "on_base_percentage", and "base_running" all set to 0.
+    """
     if not dicts:
         return {"strikeout_rate": 0, "walk_rate": 0, "isolated_power": 0, "on_base_percentage": 0, "base_running": 0}
     keys = dicts[0].keys()
@@ -56,6 +89,15 @@ def _average_dicts(dicts: List[Dict[str, float]]) -> Dict[str, float]:
 
 
 def _std_dicts(dicts: List[Dict[str, float]]) -> Dict[str, float]:
+    """
+    Compute the element-wise population standard deviation across a list of numeric stat dictionaries.
+    
+    Parameters:
+        dicts (List[Dict[str, float]]): A list of dictionaries sharing the same numeric keys (e.g., strikeout_rate, walk_rate, isolated_power, on_base_percentage, base_running).
+    
+    Returns:
+        Dict[str, float]: A dictionary mapping each key to its standard deviation across the input dictionaries. If `dicts` is empty, returns zeros for all expected keys. Any computed zero standard deviation is replaced with 1e-9 to avoid exact zero variance.
+    """
     if not dicts:
         return {"strikeout_rate": 0, "walk_rate": 0, "isolated_power": 0, "on_base_percentage": 0, "base_running": 0}
     avg = _average_dicts(dicts)
@@ -70,5 +112,11 @@ def _std_dicts(dicts: List[Dict[str, float]]) -> Dict[str, float]:
 
 
 async def fetch_league_vectors(repo: RosterRepository) -> tuple[Dict[str, float], Dict[str, float]]:
-    """Return (league_avg, league_std) using repository accessors."""
+    """
+    Fetch league-average and league-standard-deviation stat vectors from the repository.
+    
+    Returns:
+        league_avg (Dict[str, float]): Mapping from stat name to the league average value.
+        league_std (Dict[str, float]): Mapping from stat name to the league standard deviation.
+    """
     return await repo.get_league_unweighted_average(), await repo.get_league_unweighted_std()
