@@ -45,3 +45,33 @@ describe('LoginPage', () => {
     expect(screen.getByText("Don't have an account?")).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', ROUTES.SIGNUP);
   });
+
+    it('updates email input bar when user types', async () => {
+    const user = userEvent.setup();
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+    await user.type(emailInput, 'jaela@example.com');
+    
+    expect(emailInput.value).toBe('jaela@example.com');
+  });
+
+    it('updates password input value when user types', async () => {
+    const user = userEvent.setup();
+    renderLoginPage();
+    
+    const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
+    await user.type(passwordInput, '123');
+    
+    expect(passwordInput.value).toBe('123');
+  });
+
+    it('disables form inputs while loading', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authActions.login).mockImplementation(() => 
+      new Promise(resolve => setTimeout(() => resolve({ 
+        success: true,
+        data: { token: 'fake-token' } as any 
+      }), 100))
+    );
+    
