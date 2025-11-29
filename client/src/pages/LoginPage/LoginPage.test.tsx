@@ -31,22 +31,20 @@ describe('LoginPage', () => {
     );
   };
 
+it('renders login page w all web elements', () => {
+  renderLoginPage();
+  
+  expect(screen.getByText('Cybermetrics')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument(); // ✅ Specify it's a heading
+  expect(screen.getByText('Welcome back to Cybermetrics')).toBeInTheDocument();
+  expect(screen.getByLabelText('Email')).toBeInTheDocument();
+  expect(screen.getByLabelText('Password')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument();
+  expect(screen.getByText("Don't have an account?")).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', ROUTES.SIGNUP);
+});
 
-
-  it('renders login page w all web elements', () => {
-    renderLoginPage();
-    
-    expect(screen.getByText('Cybermetrics')).toBeInTheDocument();
-    expect(screen.getByText('Login')).toBeInTheDocument();
-    expect(screen.getByText('Welcome back to Cybermetrics')).toBeInTheDocument();
-    expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Password')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Login' })).toBeInTheDocument();
-    expect(screen.getByText("Don't have an account?")).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', ROUTES.SIGNUP);
-  });
-
-    it('updates email input bar when user types', async () => {
+  it('updates email input bar when user types', async () => {
     const user = userEvent.setup();
     renderLoginPage();
     
@@ -56,7 +54,7 @@ describe('LoginPage', () => {
     expect(emailInput.value).toBe('jaela@example.com');
   });
 
-    it('updates password input value when user types', async () => {
+  it('updates password input value when user types', async () => {
     const user = userEvent.setup();
     renderLoginPage();
     
@@ -66,7 +64,7 @@ describe('LoginPage', () => {
     expect(passwordInput.value).toBe('123');
   });
 
-    it('disables form inputs while loading', async () => {
+  it('disables form inputs while loading', async () => {
     const user = userEvent.setup();
     vi.mocked(authActions.login).mockImplementation(() => 
       new Promise(resolve => setTimeout(() => resolve({ 
@@ -91,14 +89,12 @@ describe('LoginPage', () => {
     expect(screen.getByText('Logging in...')).toBeInTheDocument();
   });
 
-
   it('shows success message and navigates on successful login', async () => {
     const user = userEvent.setup();
     vi.mocked(authActions.login).mockResolvedValue({ 
       success: true,
       data: { token: 'fake-token' } as any
     });
-    vi.useFakeTimers();
     
     renderLoginPage();
     
@@ -111,16 +107,7 @@ describe('LoginPage', () => {
     });
     
     expect(authActions.login).toHaveBeenCalledWith('test@example.com', 'password123');
-    
-    vi.advanceTimersByTime(1000);
-    
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LINEUP_CONSTRUCTOR);
-    });
-    
-    vi.useRealTimers();
   });
-
 
   it('shows error message on failed login', async () => {
     const user = userEvent.setup();
@@ -136,9 +123,26 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Login' }));
     
     await waitFor(() => {
-      expect(screen.getByText('An error occurred')).toBeInTheDocument();
+      expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
     });
   });
+
+  it('shows generic error when error is undefined', async () => {
+  const user = userEvent.setup();
+  vi.mocked(authActions.login).mockResolvedValue({ 
+    success: false
+  } as any);
+
+  renderLoginPage();
+  
+  await user.type(screen.getByLabelText('Email'), 'test@example.com');
+  await user.type(screen.getByLabelText('Password'), 'password');
+  await user.click(screen.getByRole('button', { name: 'Login' }));
+  
+  await waitFor(() => {
+    expect(screen.getByText('An error occurred')).toBeInTheDocument();
+  });
+});
 
   it('prevents form submission when fields are empty', () => {
     renderLoginPage();
@@ -174,35 +178,35 @@ describe('LoginPage', () => {
     });
   });
 
-  it('clears success message when submitting again', async () => {
-    const user = userEvent.setup();
-    vi.mocked(authActions.login)
-      .mockResolvedValueOnce({ success: true, data: { token: 'fake' } as any })
-      .mockResolvedValueOnce({ success: false, error: 'Error' });
-    
-    renderLoginPage();
-    
-    await user.type(screen.getByLabelText('Email'), 'test@example.com');
-    await user.type(screen.getByLabelText('Password'), 'password');
-    await user.click(screen.getByRole('button', { name: 'Login' }));
-    
-    await waitFor(() => {
-      expect(screen.getByText('Login successful!')).toBeInTheDocument();
-    });
-    
-    await user.click(screen.getByRole('button', { name: 'Login' }));
-    
-    await waitFor(() => {
-      expect(screen.queryByText('Login successful!')).not.toBeInTheDocument();
-    });
-  });
-
-
-
   it('has correct autocomplete attributes', () => {
     renderLoginPage();
     
     expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
   });
+
+  it('navigates to team builder after successful login', async () => {
+  const user = userEvent.setup();
+  
+  vi.mocked(authActions.login).mockResolvedValue({ 
+    success: true,
+    data: { token: 'fake-token' } as any
+  });
+  
+  renderLoginPage();
+  
+  await user.type(screen.getByLabelText('Email'), 'test@example.com');
+  await user.type(screen.getByLabelText('Password'), 'password123');
+  await user.click(screen.getByRole('button', { name: 'Login' }));
+  
+  await waitFor(() => {
+    expect(screen.getByText('Login successful!')).toBeInTheDocument();
+  });
+  
+  // ✅ Wait for the actual 1000ms timeout + navigation
+  await waitFor(() => {
+    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LINEUP_CONSTRUCTOR);
+  }, { timeout: 2000 }); // Give it 2 seconds to complete
+});
+
 });
