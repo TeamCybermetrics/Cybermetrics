@@ -75,3 +75,48 @@ describe('LoginPage', () => {
       }), 100))
     );
     
+    renderLoginPage();
+    
+    const emailInput = screen.getByLabelText('Email');
+    const passwordInput = screen.getByLabelText('Password');
+    const submitButton = screen.getByRole('button', { name: 'Login' });
+    
+    await user.type(emailInput, 'jaela@example.com');
+    await user.type(passwordInput, '123');
+    await user.click(submitButton);
+    
+    expect(emailInput).toBeDisabled();
+    expect(passwordInput).toBeDisabled();
+    expect(submitButton).toBeDisabled();
+    expect(screen.getByText('Logging in...')).toBeInTheDocument();
+  });
+
+
+  it('shows success message and navigates on successful login', async () => {
+    const user = userEvent.setup();
+    vi.mocked(authActions.login).mockResolvedValue({ 
+      success: true,
+      data: { token: 'fake-token' } as any
+    });
+    vi.useFakeTimers();
+    
+    renderLoginPage();
+    
+    await user.type(screen.getByLabelText('Email'), 'test@example.com');
+    await user.type(screen.getByLabelText('Password'), 'password123');
+    await user.click(screen.getByRole('button', { name: 'Login' }));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Login successful!')).toBeInTheDocument();
+    });
+    
+    expect(authActions.login).toHaveBeenCalledWith('test@example.com', 'password123');
+    
+    vi.advanceTimersByTime(1000);
+    
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LINEUP_CONSTRUCTOR);
+    });
+    
+    vi.useRealTimers();
+  });
