@@ -17,6 +17,12 @@ class TestComputeAdjustmentSum:
 
     @pytest.fixture
     def domain(self):
+        """
+        Provide a fresh RosterDomain instance for tests.
+        
+        Returns:
+            RosterDomain: a new, independent RosterDomain object.
+        """
         return RosterDomain()
 
     @pytest.mark.unit
@@ -84,6 +90,12 @@ class TestComputeValueScore:
 
     @pytest.fixture
     def domain(self):
+        """
+        Provide a fresh RosterDomain instance for tests.
+        
+        Returns:
+            RosterDomain: a new, independent RosterDomain object.
+        """
         return RosterDomain()
 
     @pytest.mark.unit

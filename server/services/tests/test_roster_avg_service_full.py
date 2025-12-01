@@ -7,7 +7,23 @@ from useCaseHelpers.errors import InputValidationError, QueryError, UseCaseError
 
 def _season(war: float, pa: int = 100, k: float = 0.20, bb: float = 0.10, iso: float = 0.150,
            obp: float = 0.330, bsr: float = 1.5):
-    return {
+    """
+           Create a season stat dictionary for a player with sensible defaults.
+           
+           Parameters:
+               war (float): Wins Above Replacement for the season.
+               pa (int): Plate appearances in the season (default 100).
+               k (float): Strikeout rate as a fraction (default 0.20).
+               bb (float): Walk rate as a fraction (default 0.10).
+               iso (float): Isolated power (slugging minus batting average) (default 0.150).
+               obp (float): On-base percentage (default 0.330).
+               bsr (float): Base running value (default 1.5).
+           
+           Returns:
+               dict: A mapping with keys "plate_appearances", "war", "strikeout_rate",
+               "walk_rate", "isolated_power", "on_base_percentage", and "base_running".
+           """
+           return {
         "plate_appearances": pa,
         "war": war,
         "strikeout_rate": k,
@@ -57,6 +73,12 @@ class TestRosterAvgServiceFull:
     @pytest.mark.unit
     @pytest.mark.asyncio
     async def test_get_team_weakness_scores_success(self, setup):
+        """
+        Verifies that computing team weakness scores for two players returns the expected set of metric keys.
+        
+        Sets up two players' 2023 season data and asserts the returned scores dictionary contains exactly:
+        "strikeout_rate", "walk_rate", "isolated_power", "on_base_percentage", and "base_running".
+        """
         service, roster_repo, player_repo, domain = setup
         roster_repo.set_players_seasons_data(7, {"2023": _season(2.0, k=0.22, bb=0.09)})
         roster_repo.set_players_seasons_data(8, {"2023": _season(3.1, k=0.24, bb=0.08)})
@@ -146,6 +168,19 @@ class TestRosterAvgServiceFull:
         original_compute = domain.compute_value_score
 
         def fake_compute(latest_war, player_latest_stats, league_avg, league_std, team_weakness):
+            """
+            Test helper that proxies value-score computation while injecting deterministic failures for specific WAR sentinels.
+            
+            Parameters:
+                latest_war (float): Player's latest WAR; if 2.2 this raises UseCaseError("domain issue"), if 3.3 this raises RuntimeError("unexpected").
+            
+            Returns:
+                The computed value-score result for the player (as produced by the original compute function).
+            
+            Raises:
+                UseCaseError: when `latest_war` is 2.2.
+                RuntimeError: when `latest_war` is 3.3.
+            """
             if latest_war == 2.2:
                 raise UseCaseError("domain issue")
             if latest_war == 3.3:
@@ -177,6 +212,12 @@ class TestRosterAvgServiceFull:
         # Monkeypatch compute_value_score to always raise UseCaseError so every loop iteration skips
         original_compute = domain.compute_value_score
         def always_fail(*args, **kwargs):
+            """
+            Always raises a UseCaseError to force a failure.
+            
+            Raises:
+                UseCaseError: Always raised with the message "forced failure".
+            """
             raise UseCaseError("forced failure")
         domain.compute_value_score = always_fail
         results = await service.get_team_value_scores([21,22])
@@ -197,4 +238,3 @@ class TestRosterAvgServiceFull:
         # Only player with seasons should appear
         assert len(results) == 1
         assert results[0].id == 31
-

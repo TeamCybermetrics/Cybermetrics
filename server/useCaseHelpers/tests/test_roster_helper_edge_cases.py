@@ -6,6 +6,12 @@ from useCaseHelpers.errors import InputValidationError
 class TestRosterHelperEdgeCases:
     @pytest.fixture
     def domain(self):
+        """
+        Provide a fresh RosterDomain instance for tests.
+        
+        Returns:
+            RosterDomain: A new RosterDomain instance.
+        """
         return RosterDomain()
 
     def test_validate_player_ids_empty_raises(self, domain):
@@ -16,6 +22,11 @@ class TestRosterHelperEdgeCases:
         assert domain.calculate_player_averages({}) is None
 
     def test_calculate_player_averages_all_zero_pa(self, domain):
+        """
+        Asserts that calculate_player_averages returns None when all provided seasons have zero plate appearances.
+        
+        Tests behavior with multiple season entries where each season's `plate_appearances` is 0 and some rate fields are present.
+        """
         seasons = {
             "2022": {"plate_appearances": 0, "strikeout_rate": 0.25},
             "2023": {"plate_appearances": 0, "walk_rate": 0.10},
