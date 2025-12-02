@@ -16,7 +16,7 @@ Baseball roster management is complex. Teams need to understand:
 Traditional approaches rely on gut instinct or generic player rankings (like WAR), but these don't account for team-specific needs. A high-WAR power hitter might make a strikeout-heavy team worse, not better.
 
 **Cybermetrics solves this** by using statistical analysis to:
-1. Calculate team weakness vectors using z-scores across 5 key offensive metrics
+1. Calculate team statistic scores using z-scores across 5 key offensive metrics
 2. Identify the weakest player on your roster using adjustment scores
 3. Simulate replacements and recommend players who specifically address your team's weaknesses
 
@@ -162,7 +162,7 @@ pybaseball (Baseball Data)
 
 1. **Sign Up**: Create an account at [https://cybermetrics.vercel.app/](https://cybermetrics.vercel.app/)
 2. **Build Your Roster**: Navigate to "Team Builder" and add 9 players to your lineup
-3. **View Team Analysis**: See your team's weakness vector visualized on a radar chart
+3. **View Team Analysis**: See your team's statistics visualized on a radar chart
 4. **Get Recommendations**: Click "Get Recommendations" to see top 5 replacement candidates
 
 ### Key Features
@@ -180,7 +180,7 @@ pybaseball (Baseball Data)
 ### Player Recommendations
 - Automatically identifies weakest player on your roster
 - Simulates replacements with all available players at that position
-- Ranks candidates by how much they improve your team's weakness vector
+- Ranks candidates by how much they improve your team's statistics
 - Shows improvement score for each recommendation
 
 ### Algorithm Explanation
@@ -190,7 +190,7 @@ pybaseball (Baseball Data)
 
 ### Understanding the Results
 
-- **Weakness Vector**: Negative z-scores = weaknesses, positive = strengths
+- **Team Statistics**: Negative z-scores = weaknesses, positive = strengths
 - **Adjustment Score**: How well a player addresses your team's weaknesses
 - **Improvement Score**: How much a replacement reduces your total weakness
 - **Recommendations**: Top 5 players ranked by improvement score
@@ -218,7 +218,7 @@ We're a team of developers passionate about baseball analytics and data science.
 ## Features
 
 - **User Authentication**: Secure signup/login with Firebase Auth
-- **Team Analysis**: Z-score based weakness vector visualization
+- **Team Analysis**: Z-score based team statistics visualization
 - **Player Search**: Search MLB player database with fuzzy matching
 - **Smart Recommendations**: Data-driven player replacement suggestions
 - **Statistical Analysis**: Career averages, league comparisons, z-scores
