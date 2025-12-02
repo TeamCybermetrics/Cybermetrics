@@ -199,7 +199,7 @@ pybaseball (Baseball Data)
 
 ## Authors
 
-Ethan Qui, Raymond Chan, Alec Jiang, Kahn Shah, Jayla Kwok
+Ethan Qui, Raymond Chan, Alec Jiang, Kahn Shah, Hiu Yan Kwok (Jaela)
 
 ---
 
