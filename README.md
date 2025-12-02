@@ -124,7 +124,7 @@ CybermetricsReal/
 ### Hosting & Deployment
 
 - **Frontend**: Hosted on Vercel at [https://cybermetrics.vercel.app/](https://cybermetrics.vercel.app/)
-- **Backend**: FastAPI server (deploymed on Fly)
+- **Backend**: FastAPI server (deployed on Fly)
 - **Database**: Firebase Firestore
 - **Authentication**: Firebase Authentication (JWT tokens)
 
