@@ -1,6 +1,6 @@
 # Cybermetrics
 
-**2025 FTL BaiT Project**
+## 2025 FTL BaiT Project
 
 A data-driven baseball roster analysis platform that helps teams identify weaknesses and find optimal player replacements
 
@@ -30,7 +30,7 @@ The result: **personalized, data-driven recommendations** instead of generic "be
 
 The client follows a **layered architecture** with strict separation of concerns:
 
-```
+```text
 Components → Pages → Actions → API → Backend
 ```
 
@@ -49,7 +49,7 @@ Components → Pages → Actions → API → Backend
 
 The server uses **Clean Architecture** with dependency injection:
 
-```
+```text
 Routes → Services → Domain → Infrastructure
 ```
 
@@ -71,7 +71,7 @@ Routes → Services → Domain → Infrastructure
 
 The repository is organized by **frontend/backend separation** with **layer-based structure** within each:
 
-```
+```text
 CybermetricsReal/
 ├── client/                 # React + TypeScript frontend
 │   ├── src/
@@ -130,7 +130,7 @@ CybermetricsReal/
 
 ### System Connections
 
-```
+```text
 User Browser
     ↓
 Vercel (Frontend)
@@ -167,23 +167,23 @@ pybaseball (Baseball Data)
 
 ### Key Features
 
-**Team Builder**
+### Team Builder
 - Add players by searching MLB player database
 - View your roster with player cards showing key stats
 - See team averages and league comparisons
 
-**Team Analysis**
+### Team Analysis
 - Visualize team weaknesses using z-score radar chart
 - Understand where your team underperforms league averages
 - Identify which stats need improvement
 
-**Player Recommendations**
+### Player Recommendations
 - Automatically identifies weakest player on your roster
 - Simulates replacements with all available players at that position
 - Ranks candidates by how much they improve your team's weakness vector
 - Shows improvement score for each recommendation
 
-**Algorithm Explanation**
+### Algorithm Explanation
 - Learn how z-scores work
 - Understand adjustment scores and value scores
 - See the mathematical foundation behind recommendations
