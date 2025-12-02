@@ -217,13 +217,13 @@ We're a team of developers passionate about baseball analytics and data science.
 
 ## Features
 
-- 🔐 **User Authentication**: Secure signup/login with Firebase Auth
-- 📊 **Team Analysis**: Z-score based weakness vector visualization
-- 🔍 **Player Search**: Search MLB player database with fuzzy matching
-- 🎯 **Smart Recommendations**: Data-driven player replacement suggestions
-- 📈 **Statistical Analysis**: Career averages, league comparisons, z-scores
-- 🎨 **Modern UI**: Clean, responsive design with radar charts
-- ⚡ **Fast Performance**: Optimized API calls and caching
+- **User Authentication**: Secure signup/login with Firebase Auth
+- **Team Analysis**: Z-score based weakness vector visualization
+- **Player Search**: Search MLB player database with fuzzy matching
+- **Smart Recommendations**: Data-driven player replacement suggestions
+- **Statistical Analysis**: Career averages, league comparisons, z-scores
+- **Modern UI**: Clean, responsive design with radar charts
+- **Fast Performance**: Optimized API calls and caching
 
 ---
 
