@@ -31,7 +31,7 @@ describe('LoginPage', () => {
     );
   };
 
-it('renders login page w all web elements', () => {
+it('renders login page with all web elements', () => {
   renderLoginPage();
 
   // Verify static UI elements
@@ -59,7 +59,6 @@ it('renders login page w all web elements', () => {
     const user = userEvent.setup();
     renderLoginPage();
 
-    // disable form inputs while loading
     const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
     await user.type(passwordInput, '123');
     
@@ -132,39 +131,12 @@ it('renders login page w all web elements', () => {
   });
 
   it('shows generic error when error is undefined', async () => {
-  const user = userEvent.setup();
-  // No error message returned -> component should show generic message
-  vi.mocked(authActions.login).mockResolvedValue({ 
-    success: false
-  } as any);
-
-  renderLoginPage();
-  
-  await user.type(screen.getByLabelText('Email'), 'test@example.com');
-  await user.type(screen.getByLabelText('Password'), 'password');
-  await user.click(screen.getByRole('button', { name: 'Login' }));
-  
-  await waitFor(() => {
-    expect(screen.getByText('An error occurred')).toBeInTheDocument();
-  });
-});
-
-  it('prevents form submission when fields are empty', () => {
-    renderLoginPage();
-    
-    const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
-    const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
-    
-    expect(emailInput).toBeRequired();
-    expect(passwordInput).toBeRequired();
-  });
-
-  it('clears previous errors when submitting again', async () => {
     const user = userEvent.setup();
-    vi.mocked(authActions.login)
-      .mockResolvedValueOnce({ success: false, error: 'First error' })
-      .mockResolvedValueOnce({ success: false, error: 'Second error' });
-    
+    // No error message returned -> component should show generic message
+    vi.mocked(authActions.login).mockResolvedValue({ 
+      success: false
+    } as any);
+
     renderLoginPage();
     
     await user.type(screen.getByLabelText('Email'), 'test@example.com');
@@ -172,46 +144,72 @@ it('renders login page w all web elements', () => {
     await user.click(screen.getByRole('button', { name: 'Login' }));
     
     await waitFor(() => {
-      expect(screen.getByText('First error')).toBeInTheDocument();
-    });
-    
-    await user.click(screen.getByRole('button', { name: 'Login' }));
-    
-    await waitFor(() => {
-      expect(screen.queryByText('First error')).not.toBeInTheDocument();
-      expect(screen.getByText('Second error')).toBeInTheDocument();
+      expect(screen.getByText('An error occurred')).toBeInTheDocument();
     });
   });
 
-  it('has correct autocomplete attributes', () => {
-    renderLoginPage();
-    
-    expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
-    expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
-  });
+    it('prevents form submission when fields are empty', () => {
+      renderLoginPage();
+      
+      const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
+      const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
+      
+      expect(emailInput).toBeRequired();
+      expect(passwordInput).toBeRequired();
+    });
 
-  it('navigates to team builder after successful login', async () => {
-  const user = userEvent.setup();
-  
-  vi.mocked(authActions.login).mockResolvedValue({ 
-    success: true,
-    data: { token: 'fake-token' } as any
-  });
-  
-  renderLoginPage();
-  
-  await user.type(screen.getByLabelText('Email'), 'test@example.com');
-  await user.type(screen.getByLabelText('Password'), 'password123');
-  await user.click(screen.getByRole('button', { name: 'Login' }));
-  
-  await waitFor(() => {
-    expect(screen.getByText('Login successful!')).toBeInTheDocument();
-  });
-  
-  // Wait for setTimeout navigation
-  await waitFor(() => {
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LINEUP_CONSTRUCTOR);
-  }, { timeout: 2000 });
-});
+    it('clears previous errors when submitting again', async () => {
+      const user = userEvent.setup();
+      vi.mocked(authActions.login)
+        .mockResolvedValueOnce({ success: false, error: 'First error' })
+        .mockResolvedValueOnce({ success: false, error: 'Second error' });
+      
+      renderLoginPage();
+      
+      await user.type(screen.getByLabelText('Email'), 'test@example.com');
+      await user.type(screen.getByLabelText('Password'), 'password');
+      await user.click(screen.getByRole('button', { name: 'Login' }));
+      
+      await waitFor(() => {
+        expect(screen.getByText('First error')).toBeInTheDocument();
+      });
+      
+      await user.click(screen.getByRole('button', { name: 'Login' }));
+      
+      await waitFor(() => {
+        expect(screen.queryByText('First error')).not.toBeInTheDocument();
+        expect(screen.getByText('Second error')).toBeInTheDocument();
+      });
+    });
 
-});
+    it('has correct autocomplete attributes', () => {
+      renderLoginPage();
+      
+      expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
+      expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
+    });
+
+      it('navigates to lineup constructor after successful login', async () => {
+      const user = userEvent.setup();
+      
+      vi.mocked(authActions.login).mockResolvedValue({ 
+        success: true,
+        data: { token: 'fake-token' } as any
+      });
+      
+      renderLoginPage();
+      
+      await user.type(screen.getByLabelText('Email'), 'test@example.com');
+      await user.type(screen.getByLabelText('Password'), 'password123');
+      await user.click(screen.getByRole('button', { name: 'Login' }));
+      
+      await waitFor(() => {
+        expect(screen.getByText('Login successful!')).toBeInTheDocument();
+      });
+      
+      // Wait for setTimeout navigation
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LINEUP_CONSTRUCTOR);
+      }, { timeout: 2000 });
+    });
+  });
