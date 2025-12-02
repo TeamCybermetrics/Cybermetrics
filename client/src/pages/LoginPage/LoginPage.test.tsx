@@ -33,7 +33,8 @@ describe('LoginPage', () => {
 
 it('renders login page w all web elements', () => {
   renderLoginPage();
-  
+
+  // Verify static UI elements
   expect(screen.getByText('Cybermetrics')).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument(); // ✅ Specify it's a heading
   expect(screen.getByText('Welcome back to Cybermetrics')).toBeInTheDocument();
@@ -47,7 +48,7 @@ it('renders login page w all web elements', () => {
   it('updates email input bar when user types', async () => {
     const user = userEvent.setup();
     renderLoginPage();
-    
+
     const emailInput = screen.getByLabelText('Email') as HTMLInputElement;
     await user.type(emailInput, 'jaela@example.com');
     
@@ -57,7 +58,8 @@ it('renders login page w all web elements', () => {
   it('updates password input value when user types', async () => {
     const user = userEvent.setup();
     renderLoginPage();
-    
+
+    // disable form inputs while loading
     const passwordInput = screen.getByLabelText('Password') as HTMLInputElement;
     await user.type(passwordInput, '123');
     
@@ -66,6 +68,7 @@ it('renders login page w all web elements', () => {
 
   it('disables form inputs while loading', async () => {
     const user = userEvent.setup();
+    // Simulate pending login to trigger loading state
     vi.mocked(authActions.login).mockImplementation(() => 
       new Promise(resolve => setTimeout(() => resolve({ 
         success: true,
@@ -75,6 +78,7 @@ it('renders login page w all web elements', () => {
     
     renderLoginPage();
     
+    // shows success message and navigates on successful login
     const emailInput = screen.getByLabelText('Email');
     const passwordInput = screen.getByLabelText('Password');
     const submitButton = screen.getByRole('button', { name: 'Login' });
@@ -129,6 +133,7 @@ it('renders login page w all web elements', () => {
 
   it('shows generic error when error is undefined', async () => {
   const user = userEvent.setup();
+  // No error message returned -> component should show generic message
   vi.mocked(authActions.login).mockResolvedValue({ 
     success: false
   } as any);
@@ -203,10 +208,10 @@ it('renders login page w all web elements', () => {
     expect(screen.getByText('Login successful!')).toBeInTheDocument();
   });
   
-  // ✅ Wait for the actual 1000ms timeout + navigation
+  // Wait for setTimeout navigation
   await waitFor(() => {
     expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LINEUP_CONSTRUCTOR);
-  }, { timeout: 2000 }); // Give it 2 seconds to complete
+  }, { timeout: 2000 });
 });
 
 });
