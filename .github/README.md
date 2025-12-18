@@ -1,129 +1,256 @@
-# GitHub Actions CI Setup
+# Cybermetrics
 
-## Overview
+## 2025 FTL BaiT Project
 
-This project uses **two separate, independent CI pipelines**:
-
-1. **Frontend CI** (`frontend-ci.yml`) - Tests React/Vite client
-2. **Backend CI** (`backend-ci.yml`) - Tests FastAPI server
-
-**Both pipelines must pass before a PR can be merged.**
-
-### Smart Triggering
-- **Frontend CI** only runs when files in `client/` change
-- **Backend CI** only runs when files in `server/` change
-- Both run in parallel and independently
+A data-driven baseball roster analysis platform that helps teams identify weaknesses and find optimal player replacements
 
 ---
 
-## Quick Setup
+## Problem Domain & Problem Statement
 
-### 1. Add Firebase Credentials Secret
+Baseball roster management is complex. Teams need to understand:
+- **Where is my team weak?** What skills are missing compared to league averages?
+- **Which player should I replace?** Who's dragging the team down the most?
+- **Who should I replace them with?** Which available players actually fix our specific problems?
 
-**Required for Backend CI to work**
+Traditional approaches rely on gut instinct or generic player rankings (like WAR), but these don't account for team-specific needs. A high-WAR power hitter might make a strikeout-heavy team worse, not better.
 
-1. Go to your GitHub repository
-2. Navigate to **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
-4. Name: `FIREBASE_CREDENTIALS`
-5. Value: Paste the entire contents of `server/serviceAccountKey.json`
-6. Click **Add secret**
+**Cybermetrics solves this** by using statistical analysis to:
+1. Calculate team statistic scores using z-scores across 5 key offensive metrics
+2. Identify the weakest player on your roster using adjustment scores
+3. Simulate replacements and recommend players who specifically address your team's weaknesses
 
-### 2. Secure Your Credentials
+The result: **personalized, data-driven recommendations** instead of generic "best available" lists.
 
-Add to `.gitignore`:
-```bash
-server/serviceAccountKey.json
+---
+
+## Code Architecture
+
+### Frontend Architecture (Client)
+
+The client follows a **layered architecture** with strict separation of concerns:
+
+```text
+Components → Pages → Actions → API → Backend
 ```
 
-### 3. Push and Test
+- **Components**: Reusable UI building blocks (Button, PlayerCard, Radar, etc.)
+- **Pages**: Route-level components that assemble components
+- **Actions**: Business logic and error handling layer
+- **API**: HTTP communication layer (Axios wrapper)
+- **Backend**: FastAPI server
 
-```bash
-git add .
-git commit -m "Add CI pipelines"
-git push origin main
+**Naming Conventions:**
+- Components/Pages: `PascalCase/` folders with `PascalCase.tsx` files
+- Actions/API: `camelCase.ts` files
+- Styles: `ComponentName.module.css` (CSS Modules)
+
+### Backend Architecture (Server)
+
+The server uses **Clean Architecture** with dependency injection:
+
+```text
+Routes → Services → Domain → Infrastructure
 ```
 
-Check the **Actions** tab to see both pipelines run!
+- **Routes**: HTTP request/response handling (FastAPI endpoints)
+- **Services**: Use case orchestration (no business logic)
+- **Domain** (useCaseHelpers): Pure business logic and validation
+- **Infrastructure**: External dependencies (Firebase, data access)
+- **Repositories**: Abstract interfaces for data access
+
+**Naming Conventions:**
+- Files: `snake_case.py`
+- Services: `feature_service.py`
+- Domain: `feature_helper.py` (in `useCaseHelpers/`)
+- Repositories: `feature_repository.py`
 
 ---
 
-## How It Works
+## Repository Organization
 
+The repository is organized by **frontend/backend separation** with **layer-based structure** within each:
+
+```text
+CybermetricsReal/
+├── client/                 # React + TypeScript frontend
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── pages/          # Route-level pages
+│   │   ├── actions/        # Business logic layer
+│   │   ├── api/            # HTTP client layer
+│   │   └── config/         # Constants and configuration
+│   └── package.json
+│
+└── server/                 # FastAPI + Python backend
+    ├── routes/             # API endpoints
+    ├── services/           # Use case orchestration
+    ├── useCaseHelpers/     # Business logic (domain)
+    ├── repositories/       # Abstract data interfaces
+    ├── infrastructure/     # Concrete implementations (Firebase)
+    ├── dtos/              # Data transfer objects
+    ├── entities/          # Domain entities
+    ├── middleware/        # Auth, error handling, rate limiting
+    └── main.py            # FastAPI app entry point
 ```
-Pull Request Created
-        ↓
-   ┌────┴────┐
-   ↓         ↓
-Frontend CI  Backend CI
-(separate)   (separate)
-   ↓         ↓
- Install   Install
-   ↓         ↓
-  Build    Verify
-   ↓         ↓
- Verify   Test Run
-   ↓         ↓
-   ✅        ✅
-   └────┬────┘
-        ↓
-  Both Must Pass
-        ↓
-   PR Can Merge
+
+**Key Principles:**
+- **Frontend**: Layered architecture with one-way data flow
+- **Backend**: Clean Architecture with dependency injection
+- **Separation**: Frontend and backend are completely independent
+- **Testing**: Both have comprehensive test suites
+
+---
+
+## System Architecture
+
+### Tech Stack
+
+**Frontend:**
+- React 19 + TypeScript 5
+- Vite 6 (build tool)
+- React Router 7 (routing)
+- Axios (HTTP client)
+- CSS Modules (styling)
+
+**Backend:**
+- FastAPI (Python web framework)
+- Python 3.10+
+- Firebase Admin SDK (authentication & database)
+- pybaseball (baseball data)
+- Pydantic (data validation)
+- Uvicorn (ASGI server)
+
+### Hosting & Deployment
+
+- **Frontend**: Hosted on Vercel at [https://cybermetrics.vercel.app/](https://cybermetrics.vercel.app/)
+- **Backend**: FastAPI server (deployed on Fly)
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Authentication (JWT tokens)
+
+### System Connections
+
+```text
+User Browser
+    ↓
+Vercel (Frontend)
+    ↓ HTTPS
+FastAPI Backend
+    ↓
+Firebase (Auth + Firestore)
+    ↓
+pybaseball (Baseball Data)
 ```
 
----
-
-## Viewing CI Results
-
-1. Go to your repository on GitHub
-2. Click the **Actions** tab
-3. You'll see two workflows: **Frontend CI** and **Backend CI**
-4. Click any run to see detailed logs
-5. ✅ Green = Passed | ❌ Red = Failed
+**Communication Flow:**
+1. User interacts with React frontend on Vercel
+2. Frontend makes API calls to FastAPI backend
+3. Backend authenticates via Firebase Auth
+4. Backend reads/writes data from Firestore
+5. Backend fetches baseball statistics from pybaseball
+6. Responses flow back through the stack
 
 ---
 
-## What Gets Tested
+## User Guide
 
-### Frontend CI (`frontend-ci.yml`)
-**Triggers:** Changes to `client/` folder
-- ✅ Node.js 20 setup
-- ✅ npm dependencies install (`npm ci`)
-- ✅ TypeScript compilation
-- ✅ Vite build succeeds (`npm run build`)
-- ✅ Build artifacts created in `dist/`
+### For Baseball Managers & Analysts
 
-### Backend CI (`backend-ci.yml`)
-**Triggers:** Changes to `server/` folder
-- ✅ Python 3.11 setup
-- ✅ pip dependencies install
-- ✅ Firebase credentials loaded from GitHub Secret
-- ✅ All imports work (FastAPI, Firebase, Pybaseball, RapidFuzz)
-- ✅ App can start (basic smoke test)
+**Persona**: You're a fantasy baseball manager or team analyst who needs to optimize your roster using data, not guesswork.
+
+### Getting Started
+
+1. **Sign Up**: Create an account at [https://cybermetrics.vercel.app/](https://cybermetrics.vercel.app/)
+2. **Build Your Roster**: Navigate to "Team Builder" and add 9 players to your lineup
+3. **View Team Analysis**: See your team's statistics visualized on a radar chart
+4. **Get Recommendations**: Click "Get Recommendations" to see top 5 replacement candidates
+
+### Key Features
+
+### Team Builder
+- Add players by searching MLB player database
+- View your roster with player cards showing key stats
+- See team averages and league comparisons
+
+### Team Analysis
+- Visualize team weaknesses using z-score radar chart
+- Understand where your team underperforms league averages
+- Identify which stats need improvement
+
+### Player Recommendations
+- Automatically identifies weakest player on your roster
+- Simulates replacements with all available players at that position
+- Ranks candidates by how much they improve your team's statistics
+- Shows improvement score for each recommendation
+
+### Algorithm Explanation
+- Learn how z-scores work
+- Understand adjustment scores and value scores
+- See the mathematical foundation behind recommendations
+
+### Understanding the Results
+
+- **Team Statistics**: Negative z-scores = weaknesses, positive = strengths
+- **Adjustment Score**: How well a player addresses your team's weaknesses
+- **Improvement Score**: How much a replacement reduces your total weakness
+- **Recommendations**: Top 5 players ranked by improvement score
 
 ---
 
-## Troubleshooting
+## Authors
 
-| Issue | Solution |
-|-------|----------|
-| `FIREBASE_CREDENTIALS secret not found` | Add the secret in Settings → Secrets → Actions |
-| `npm ci failed` | Ensure `client/package-lock.json` exists |
-| `pip install failed` | Check `server/requirements.txt` is valid |
-| `Import errors` | Verify all dependencies are in `requirements.txt` |
-| Pipeline doesn't run | Check that files in `client/` or `server/` changed |
+Ethan Qui, Raymond Chan, Alec Jiang, Kahn Shah, Hiu Yan Kwok (Jaela)
 
 ---
 
-## Require CI Before Merging (Optional)
+## Team Bios
 
-To prevent merging PRs with failing tests:
+**Techy Blinders** - 2025 FTL BaiT Project Team
 
-1. Go to **Settings** → **Branches**
-2. Add branch protection rule for `main`
-3. Enable **Require status checks to pass before merging**
-4. Select **Frontend CI** and **Backend CI**
-5. Save changes
+We're a team of developers passionate about baseball analytics and data science. Cybermetrics combines our love of the game with modern web development and statistical analysis.
 
-Now PRs can only merge if both pipelines pass! ✅
+**Our Mission**: Make advanced baseball analytics accessible to everyone, from fantasy managers to professional analysts.
+
+**Live Application**: [https://cybermetrics.vercel.app/](https://cybermetrics.vercel.app/)
+
+---
+
+## Features
+
+- **User Authentication**: Secure signup/login with Firebase Auth
+- **Team Analysis**: Z-score based team statistics visualization
+- **Player Search**: Search MLB player database with fuzzy matching
+- **Smart Recommendations**: Data-driven player replacement suggestions
+- **Statistical Analysis**: Career averages, league comparisons, z-scores
+- **Modern UI**: Clean, responsive design with radar charts
+- **Fast Performance**: Optimized API calls and caching
+
+---
+
+## Development
+
+### Code Quality
+
+- **Frontend**: ESLint + TypeScript strict mode
+- **Backend**: Pytest with comprehensive test coverage
+- **Architecture**: Clean separation of concerns, dependency injection
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## Acknowledgments
+
+- **pybaseball**: For providing comprehensive MLB statistics
+- **Firebase**: For authentication and database infrastructure
+- **FastAPI**: For the excellent Python web framework
+- **React Team**: For the powerful UI library
+
+---
+
